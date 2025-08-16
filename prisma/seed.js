@@ -1,61 +1,57 @@
-import { PrismaClient, Role } from "@prisma/client";
-import bcrypt from "bcryptjs";
+// seed.js
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
 
-const prisma = new PrismaClient();
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
+
+async function getOrCreateCategory(name) {
+  const { data: existing, error: selErr } = await supabase
+    .from('expense_categories')
+    .select('id, name')
+    .eq('name', name)
+    .maybeSingle();
+
+  if (selErr) throw selErr;
+  if (existing) return existing;
+
+  const { data: inserted, error: insErr } = await supabase
+    .from('expense_categories')
+    .insert([{ name }])
+    .select('id, name')
+    .single();
+
+  if (insErr) throw insErr;
+  return inserted;
+}
 
 async function main() {
-  // aici scrii direct valorile dorite
-  const username = "admin";
-  const rawPass  = "admin";
-  const nickname = "Admin"; // orice text vrei
-  const hash = await bcrypt.hash(rawPass, 12);
-
-  // creează sau actualizează admin
-  await prisma.user.upsert({
-    where: { username },
-    update: { password: hash, role: Role.ADMIN, nickname },
-    create: { username, password: hash, role: Role.ADMIN, nickname },
-  });
-
-  // categorii default
   const categories = [
-    { name: "Chirie",     isFixed: true },
-    { name: "Utilități",  isFixed: true },
-    { name: "Internet",   isFixed: true },
-    { name: "Telefon",    isFixed: true },
-    { name: "Mâncare",    isFixed: false },
-    { name: "Transport",  isFixed: false },
-    { name: "Altele",     isFixed: false },
+    { name: 'Bani curați' },
+    { name: 'Bani murdari' },
+    { name: 'Verificare taxă' },
+    { name: 'Materiale' }, // placeholder
   ];
 
-  await Promise.all(
-    categories.map(c =>
-      prisma.expenseCategory.upsert({
-        where: { name: c.name },
-        update: {},
-        create: c,
-      })
-    )
-  );
+  for (const c of categories) {
+    await getOrCreateCategory(c.name);
+  }
 
-  // foaie pentru luna curentă
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-
-  await prisma.monthlySheet.upsert({
-    where: { year_month: { year, month } },
-    update: {},
-    create: { year, month },
-  });
-
-  console.log("Seed OK: admin + categorii + foaie lunară curentă");
+  console.log('Seed /taxe complet ✅');
 }
 
 main()
-  .then(() => prisma.$disconnect())
-  .catch(e => {
-    console.error(e);
-    prisma.$disconnect();
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Seed a eșuat:', err);
     process.exit(1);
   });
