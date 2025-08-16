@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -82,17 +83,20 @@ model TaxEntry {
   validUntil DateTime?
   createdAt  DateTime   @default(now())
   cnp        String     @db.VarChar(6)
-  payment    String?    // ADĂUGAT: stocăm metoda ('curat','murdar','otel','praf','gratis','drill')
+  payment    String?    // 'curat' | 'murdar' | 'otel' | 'praf' | 'gratis' | 'Bani murdari' (drill)
 
   user     User?   @relation(fields: [userId], references: [id])
   userId   Int?
   family   Family? @relation(fields: [familyId], references: [id])
   familyId Int?
+
+  @@index([cnp, createdAt])
+  @@index([validUntil])
 }
 
 model DrillJob {
   id        Int       @id @default(autoincrement())
-  cnp       String    @db.VarChar(6)  // ADĂUGAT
+  cnp       String    @db.VarChar(6)
   processed Int
   cadru     Int       @default(0)
   mecanism  Int       @default(0)
@@ -106,4 +110,6 @@ model DrillJob {
   userId   Int
   family   Family? @relation(fields: [familyId], references: [id])
   familyId Int?
+
+  @@index([familyId, createdAt])
 }
