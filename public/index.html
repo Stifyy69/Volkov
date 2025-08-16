@@ -1,165 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>/taxe</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8" />
+  <title>Volkov Panel RP</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    .active { background: #d4ffd4; margin: 10px 0; padding: 8px; border-radius: 6px; }
+    .drill { background: #d4e9ff; margin: 10px 0; padding: 8px; border-radius: 6px; }
+  </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="card">
-      <h2>Taxe</h2>
-      <form id="taxeForm">
-        <label>CNP (max 6 cifre)
-          <input type="text" id="cnp" maxlength="6" inputmode="numeric" pattern="\d{1,6}" required />
-        </label>
+  <h2>Plată Taxe</h2>
+  <form id="taxeForm">
+    <label>CNP (max 6):</label><br>
+    <input type="text" id="cnp" maxlength="6" required><br><br>
 
-        <label>Metodă de plată
-          <select id="metoda" required>
-            <option value="card">Card</option>
-            <option value="numerar">Numerar</option>
-            <option value="transfer">Transfer</option>
-            <option value="gratis">Gratis</option>
-          </select>
-        </label>
+    <label>Metodă de plată:</label><br>
+    <select id="metoda">
+      <option value="CLEAN">Bani curați - 40.000$</option>
+      <option value="DIRTY">Bani murdari - 60.000$</option>
+      <option value="FREE">Gratis</option>
+    </select><br><br>
 
-        <div id="gratisBox" class="row" hidden>
-          <label style="width:100%">Selectează familia (pentru „Gratis”)
-            <select id="gratisFamilie">
-              <option value="Medelin Cartel">Medelin Cartel</option>
-              <option value="818">818</option>
-              <option value="Stefanos Cartel">Stefanos Cartel</option>
-            </select>
-          </label>
-        </div>
+    <div id="familieDiv" style="display:none">
+      <label>Alege Familia:</label><br>
+      <select id="familie">
+        <option value="Medelin">Medelin</option>
+        <option value="818">818</option>
+        <option value="Stefanos">Stefanos</option>
+      </select><br><br>
+    </div>
 
-        <div class="grid">
-          <button data-opt="curat" class="opt">Bani curați – 40.000 $</button>
-          <button data-opt="murdar" class="opt">Bani murdari – 60.000 $</button>
-          <button data-opt="otel" class="opt">Oțel – 15 buc</button>
-          <button data-opt="praf" class="opt">Praf de pușcă – 25 buc</button>
-        </div>
+    <button type="submit">Trimite</button>
+  </form>
 
-        <p class="hint green">Termen: 4 ore de când începe</p>
-      </form>
+  <h3>Taxe active</h3>
+  <div id="active"></div>
 
-      <h3>CNP-uri active</h3>
-      <ul id="cnpList"></ul>
-    </section>
+  <hr>
 
-    <section class="card">
-      <h2>Burghiu</h2>
-      <form id="burghiuForm">
-        <label>CNP
-          <input type="text" id="cnpBurghiu" maxlength="6" inputmode="numeric" pattern="\d{1,6}" required />
-        </label>
+  <h2>Burghiu</h2>
+  <form id="drillForm">
+    <label>CNP:</label><br>
+    <input type="text" id="drillCnp" maxlength="6" required><br><br>
 
-        <label>Ce vrea să facă?
-          <select id="actiune" required>
-            <option value="cadru">Cadru</option>
-            <option value="teava">Țeavă</option>
-            <option value="mecanism">Mecanism</option>
-            <option value="fixare">Elemente de fixare</option>
-          </select>
-        </label>
+    <label>Piesă:</label><br>
+    <select id="part">
+      <option value="CADRU">Cadru</option>
+      <option value="TEAVA">Țeavă</option>
+      <option value="MECANISM">Mecanism</option>
+      <option value="FIXARE">Elemente Fixare</option>
+    </select><br><br>
 
-        <label>Familie
-          <select id="familie" required>
-            <option value="Medelin Cartel">Medelin Cartel</option>
-            <option value="818">818</option>
-            <option value="Stefanos Cartel">Stefanos Cartel</option>
-            <option value="Bogota Thugs">Bogota Thugs</option>
-            <option value="LowLine">LowLine</option>
-            <option value="Casa Blanca">Casa Blanca</option>
-            <option value="LaPuentes">LaPuentes</option>
-            <option value="Mali Strip">Mali Strip</option>
-            <option value="Garda Veche">Garda Veche</option>
-            <option value="NDR">NDR</option>
-            <option value="Velvet">Velvet</option>
-            <option value="Santos Gruppo">Santos Gruppo</option>
-            <option value="Mayans MC">Mayans MC</option>
-            <option value="La CosaNostra">La CosaNostra</option>
-            <option value="Hells Riders">Hells Riders</option>
-            <option value="BACM">BACM</option>
-          </select>
-        </label>
+    <label>Familie:</label><br>
+    <select id="drillFamily">
+      <option value="Medelin">Medelin</option>
+      <option value="Stefanos">Stefanos</option>
+      <option value="Bogota Thugs">Bogota Thugs</option>
+      <option value="LowLine">LowLine</option>
+      <option value="Casa Blanca">Casa Blanca</option>
+      <option value="LaPuentes">LaPuentes</option>
+      <option value="Mali Strip">Mali Strip</option>
+      <option value="Garda Veche">Garda Veche</option>
+      <option value="NDR">NDR</option>
+      <option value="Velvet">Velvet</option>
+      <option value="Santos Gruppo">Santos Gruppo</option>
+      <option value="Mayans MC">Mayans MC</option>
+      <option value="La CosaNostra">La CosaNostra</option>
+      <option value="Hells Riders">Hells Riders</option>
+      <option value="BACM">BACM</option>
+    </select><br><br>
 
-        <label>Cantitate
-          <input type="number" id="cantitate" min="1" step="1" value="1" required />
-        </label>
+    <label>Cantitate:</label><br>
+    <input type="number" id="quantity" min="1" required><br><br>
 
-        <div class="row">
-          <button id="sendBurghiu" class="primary" type="submit">Trimite</button>
-        </div>
-      </form>
-    </section>
-  </main>
+    <button type="submit">Adaugă</button>
+  </form>
+
+  <h3>Burghiu Jobs</h3>
+  <div id="drillJobs"></div>
 
   <script>
-    const $metoda = document.getElementById('metoda');
-    const $gratisBox = document.getElementById('gratisBox');
-    const $gratisFamilie = document.getElementById('gratisFamilie');
-    const $cnp = document.getElementById('cnp');
-    const $cnpList = document.getElementById('cnpList');
+    // TAXE
+    const form = document.getElementById("taxeForm");
+    const metodaSel = document.getElementById("metoda");
+    const familieDiv = document.getElementById("familieDiv");
 
-    $metoda.addEventListener('change', () => {
-      $gratisBox.hidden = $metoda.value !== 'gratis';
+    metodaSel.addEventListener("change", () => {
+      familieDiv.style.display = metodaSel.value === "FREE" ? "block" : "none";
     });
 
-    document.querySelectorAll('.opt').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const optiune = btn.dataset.opt;
-        const cnp = $cnp.value.trim();
-        const metoda = $metoda.value;
-        if (!/^\d{1,6}$/.test(cnp)) { alert('CNP invalid (max 6 cifre)'); return; }
-        let body = { cnp, metoda, optiune };
-        if (metoda === 'gratis') body.gratisFamilie = $gratisFamilie.value;
-
-        const r = await fetch('/taxe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (!r.ok) { const j = await r.json().catch(()=>({})); alert(j.error || 'Eroare'); return; }
-        loadCnpList();
-      });
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const data = {
+        cnp: document.getElementById("cnp").value,
+        metoda: metodaSel.value,
+        family: metodaSel.value === "FREE" ? document.getElementById("familie").value : null
+      };
+      await fetch("/taxe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      loadTaxe();
     });
 
-    async function loadCnpList() {
-      const r = await fetch('/taxe');
-      const data = await r.json().catch(()=>[]);
-      $cnpList.innerHTML = '';
-      data.forEach(x => {
-        const li = document.createElement('li');
-        li.textContent = `${x.cnp} — ${x.descriere} (${x.amount}) — ${x.remaining}`;
-        if (x.metoda === 'gratis' && x.gratisFamilie) {
-          li.textContent += ` — Gratis: ${x.gratisFamilie}`;
-        }
-        $cnpList.appendChild(li);
+    async function loadTaxe() {
+      const res = await fetch("/taxe");
+      const list = await res.json();
+      const div = document.getElementById("active");
+      div.innerHTML = "";
+      list.forEach(t => {
+        div.innerHTML += `<div class="active">CNP ${t.cnp} - ${t.metoda} ${t.amount}$ ${t.family ?? ""} (expiră în ${t.timeLeft})</div>`;
       });
     }
 
-    document.getElementById('burghiuForm').addEventListener('submit', async (e)=>{
+    // BURGHIU
+    const drillForm = document.getElementById("drillForm");
+    drillForm.addEventListener("submit", async e => {
       e.preventDefault();
-      const cnp = document.getElementById('cnpBurghiu').value.trim();
-      const actiune = document.getElementById('actiune').value;
-      const familie = document.getElementById('familie').value;
-      const cantitate = Number(document.getElementById('cantitate').value);
-      if (!/^\d{1,6}$/.test(cnp)) { alert('CNP invalid (max 6 cifre)'); return; }
-      if (!Number.isFinite(cantitate) || cantitate <= 0) { alert('Cantitate invalidă'); return; }
-
-      const r = await fetch('/burghiu', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ cnp, actiune, familie, cantitate, cashType:'CLEAN', unitPrice:0 })
-      });
-      if (!r.ok) { const j = await r.json().catch(()=>({})); alert(j.error || 'Eroare'); return; }
-      alert('Salvat.');
+      const data = {
+        cnp: document.getElementById("drillCnp").value,
+        part: document.getElementById("part").value,
+        family: document.getElementById("drillFamily").value,
+        quantity: parseInt(document.getElementById("quantity").value)
+      };
+      await fetch("/drill", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      loadDrill();
     });
 
-    loadCnpList();
+    async function loadDrill() {
+      const res = await fetch("/drill");
+      const list = await res.json();
+      const div = document.getElementById("drillJobs");
+      div.innerHTML = "";
+      list.forEach(j => {
+        div.innerHTML += `<div class="drill">CNP ${j.cnp} - ${j.part} x${j.quantity} (${j.family})</div>`;
+      });
+    }
+
+    loadTaxe();
+    loadDrill();
   </script>
 </body>
 </html>
