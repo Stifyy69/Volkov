@@ -264,9 +264,7 @@ app.post("/taxe", auth(), async (req, res) => {
     }
     if (metoda === "gratis") {
       if (!["Medelin Cartel", "818", "Stefanos Cartel"].includes(gratisFamilie))
-        return res
-          .status(400)
-          .json({ error: "familie invalidă pt. gratis" });
+        return res.status(400).json({ error: "familie invalidă pt. gratis" });
       const fam = await prisma.family.findUnique({
         where: { name: gratisFamilie },
       });
@@ -362,7 +360,7 @@ app.post("/drill", auth(), async (req, res) => {
       userId: req.user.id,
       familyId: famId,
     };
-       if (part === "cadru") data.cadru = qty;
+    if (part === "cadru") data.cadru = qty;
     if (part === "mecanism") data.mecanism = qty;
     if (part === "teava") data.teava = qty;
     if (part === "fixare") data.fixare = qty;
@@ -370,12 +368,12 @@ app.post("/drill", auth(), async (req, res) => {
     // creează job-ul de burghiu
     const job = await prisma.drillJob.create({ data });
 
-    // creează și o înregistrare de taxEntry pentru tracking
+    // log pentru bani (contorizare separată CLEAN/DIRTY)
     await prisma.taxEntry.create({
       data: {
         type: TaxType.BURGHIU,
         currency: isDirty ? Currency.DIRTY : Currency.CLEAN,
-        amount: qty * unitPrice,
+        amount: qty * unitPrice, // suma totală
         cnp,
         userId: req.user.id,
         familyId: famId,
@@ -459,4 +457,3 @@ app.get(
     console.log(`Listening on http://${HOST}:${PORT}`)
   );
 })();
-"
