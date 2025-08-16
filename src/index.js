@@ -5,6 +5,7 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 8081;
 
+app.get("/", (req, res) => res.send("Volkov /taxe API este UP ✅"));
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => console.log("Listening on :" + PORT));
