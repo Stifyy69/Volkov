@@ -1,13 +1,20 @@
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto;margin:0;background:#f5f7fb;color:#111}
-.wrap{max-width:900px;margin:24px auto;padding:0 16px}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.04);padding:16px;margin-bottom:16px}
+:root{--bg:#f7f9fc;--fg:#111;--card:#fff;--border:#e5e7eb;--muted:#6b7280;--primary:#111;--accent:#2563eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
+.wrap{max-width:980px;margin:24px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.04);padding:16px;margin-bottom:16px}
 h2{margin:0 0 12px}
-label{display:block;margin-bottom:10px}
-input,select,button{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
-.opt{background:#111;color:#fff;border:none}
-.primary{background:#2563eb;color:#fff;border:none}
-.row{display:flex;gap:12px;margin-top:10px}
-.hint{color:#059669}
-.green{font-weight:600}
-ul{padding-left:18px}
+label{display:flex;flex-direction:column;gap:6px;min-width:180px}
+input,select{padding:10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+button{padding:10px 12px;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border:none}
+button.ghost{background:#fff}
+.tabs{display:flex;gap:8px;margin-bottom:10px}
+.tab{padding:8px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:#fff}
+.tab.active{background:#111;color:#fff;border-color:#111}
+.hidden{display:none}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{background:var(--primary);color:#fff;border:none}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px;margin-top:6px}
+ul{margin:8px 0 0 18px}
