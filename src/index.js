@@ -362,5 +362,101 @@ app.post("/drill", auth(), async (req, res) => {
       userId: req.user.id,
       familyId: famId,
     };
-    if (part === "cadru") data.cadru = qty;
-    if (part === "
+       if (part === "cadru") data.cadru = qty;
+    if (part === "mecanism") data.mecanism = qty;
+    if (part === "teava") data.teava = qty;
+    if (part === "fixare") data.fixare = qty;
+
+    // creează job-ul de burghiu
+    const job = await prisma.drillJob.create({ data });
+
+    // creează și o înregistrare de taxEntry pentru tracking
+    await prisma.taxEntry.create({
+      data: {
+        type: TaxType.BURGHIU,
+        currency: isDirty ? Currency.DIRTY : Currency.CLEAN,
+        amount: qty * unitPrice,
+        cnp,
+        userId: req.user.id,
+        familyId: famId,
+        payment: isDirty ? "Bani murdari" : "Bani curați",
+      },
+    });
+
+    res.json({ ok: true, id: job.id, cost: qty * unitPrice });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "eroare server" });
+  }
+});
+
+app.get("/drill", auth(), async (_req, res) => {
+  try {
+    const list = await prisma.drillJob.findMany({
+      include: { family: true },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    res.json(
+      list.map((j) => ({
+        id: j.id,
+        cnp: j.cnp,
+        cadru: j.cadru,
+        mecanism: j.mecanism,
+        teava: j.teava,
+        fixare: j.fixare,
+        qty: j.processed,
+        metodaPlata: j.cashType === "DIRTY" ? "Bani murdari" : "Bani curați",
+        costTotal: j.processed * j.unitPrice,
+        family: j.family?.name || null,
+        createdAt: j.createdAt,
+      }))
+    );
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "eroare server" });
+  }
+});
+
+// ========= FAMILII =========
+app.get("/families", auth(false), async (_req, res) => {
+  const list = await prisma.family.findMany({ orderBy: { name: "asc" } });
+  res.json(list);
+});
+
+// ========= ADMIN DASHBOARD =========
+app.get(
+  "/admin/stats",
+  auth(),
+  requireRole(Role.ADMIN, Role.HEAD_OPERATOR),
+  async (_req, res) => {
+    try {
+      const users = await prisma.user.findMany({
+        include: {
+          taxEntries: true,
+          drillJobs: true,
+        },
+      });
+      const stats = users.map((u) => ({
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        taxeCount: u.taxEntries.length,
+        drillCount: u.drillJobs.length,
+      }));
+      res.json(stats);
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "eroare server" });
+    }
+  }
+);
+
+(async () => {
+  await ensureFamilies();
+  await bootstrapAdminInvite();
+  app.listen(PORT, HOST, () =>
+    console.log(`Listening on http://${HOST}:${PORT}`)
+  );
+})();
+"
