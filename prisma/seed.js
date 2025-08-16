@@ -4,9 +4,10 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const username = process.env.ADMIN_USER ?? "admin";
-  const rawPass  = process.env.ADMIN_PASS ?? "admin";
-  const nickname = process.env.ADMIN_NICKNAME ?? "Admin"; // <-- nou
+  // aici scrii direct valorile dorite
+  const username = "admin";
+  const rawPass  = "admin";
+  const nickname = "Admin"; // orice text vrei
   const hash = await bcrypt.hash(rawPass, 12);
 
   // creează sau actualizează admin
