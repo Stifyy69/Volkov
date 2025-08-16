@@ -218,7 +218,7 @@ app.get(
 
 // ========= TAXE =========
 // metoda: 'curat' | 'murdar' | 'otel' | 'praf' | 'gratis'
-// NU se permite a doua taxă pe același CNP cât timp prima e activă (4h)
+// NU acceptăm taxă dublă pe același CNP cât timp există una activă (4h)
 app.post("/taxe", auth(), async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
@@ -230,11 +230,7 @@ app.post("/taxe", auth(), async (req, res) => {
     // verificare dubluri active (4h)
     const now = new Date();
     const existing = await prisma.taxEntry.findFirst({
-      where: {
-        type: TaxType.TAXA,
-        cnp,
-        validUntil: { gt: now },
-      },
+      where: { type: TaxType.TAXA, cnp, validUntil: { gt: now } },
       orderBy: { createdAt: "desc" },
     });
     if (existing) {
@@ -334,6 +330,7 @@ app.get("/taxe", auth(), async (_req, res) => {
 });
 
 // ========= BURGHIU =========
+// "Metodă plată" = CLEAN (Bani curați) 650$/buc, DIRTY (Bani murdari) 1000$/buc
 app.post("/drill", auth(), async (req, res) => {
   try {
     const { cnp, part, family, quantity, cashType } = req.body || {};
@@ -345,129 +342,25 @@ app.post("/drill", auth(), async (req, res) => {
     if (!Number.isFinite(qty) || qty <= 0)
       return res.status(400).json({ error: "cantitate invalidă" });
 
+    const isDirty = String(cashType).toUpperCase() === "DIRTY";
+    const unitPrice = isDirty ? 1000 : 650;
+
     const fam = family
       ? await prisma.family.findUnique({ where: { name: family } })
       : null;
     const famId = fam ? fam.id : null;
 
     const data = {
+      cnp,
       processed: qty,
       cadru: 0,
       mecanism: 0,
       teava: 0,
       fixare: 0,
-      cashType: cashType === "DIRTY" ? CashType.DIRTY : CashType.CLEAN,
-      unitPrice: 0,
+      cashType: isDirty ? CashType.DIRTY : CashType.CLEAN,
+      unitPrice,
       userId: req.user.id,
       familyId: famId,
     };
     if (part === "cadru") data.cadru = qty;
-    if (part === "mecanism") data.mecanism = qty;
-    if (part === "teava") data.teava = qty;
-    if (part === "fixare") data.fixare = qty;
-
-    const job = await prisma.drillJob.create({ data: { ...data, cnp } });
-
-    await prisma.taxEntry.create({
-      data: {
-        type: TaxType.BURGHIU,
-        currency:
-          data.cashType === CashType.DIRTY ? Currency.DIRTY : Currency.CLEAN,
-        amount: qty,
-        cnp,
-        userId: req.user.id,
-        familyId: famId,
-        payment: "job",
-      },
-    });
-
-    res.json({ ok: true, id: job.id });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "eroare server" });
-  }
-});
-
-app.get("/drill", auth(), async (_req, res) => {
-  const list = await prisma.drillJob.findMany({
-    include: { family: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
-  res.json(
-    list.map((j) => ({
-      id: j.id,
-      cnp: j.cnp,
-      cadru: j.cadru,
-      mecanism: j.mecanism,
-      teava: j.teava,
-      fixare: j.fixare,
-      qty: j.processed,
-      cashType: j.cashType,
-      family: j.family?.name || null,
-      createdAt: j.createdAt,
-    }))
-  );
-});
-
-app.get("/families", auth(false), async (_req, res) => {
-  const list = await prisma.family.findMany({ orderBy: { name: "asc" } });
-  res.json(list);
-});
-
-// ========= DASHBOARD =========
-// Admin/Head: statistici pentru TOȚI; altfel, doar pentru userul curent
-app.get("/stats/users", auth(), async (req, res) => {
-  const isAdmin =
-    req.user.role === "ADMIN" || req.user.role === "HEAD_OPERATOR";
-
-  if (isAdmin) {
-    const group = await prisma.taxEntry.groupBy({
-      by: ["userId"],
-      where: { type: TaxType.TAXA },
-      _count: { _all: true },
-    });
-    const userIds = group.map((g) => g.userId).filter(Boolean);
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, username: true, role: true },
-    });
-    const byId = Object.fromEntries(users.map((u) => [u.id, u]));
-    const rows = group
-      .map((g) => ({
-        userId: g.userId,
-        username: byId[g.userId]?.username || "(șters)",
-        role: byId[g.userId]?.role || "N/A",
-        taxes: g._count._all,
-      }))
-      .sort((a, b) => b.taxes - a.taxes);
-    return res.json({ scope: "ALL", rows });
-  } else {
-    const myCount = await prisma.taxEntry.count({
-      where: { type: TaxType.TAXA, userId: req.user.id },
-    });
-    const myJobs = await prisma.drillJob.count({
-      where: { userId: req.user.id },
-    });
-    return res.json({
-      scope: "ME",
-      rows: [
-        {
-          userId: req.user.id,
-          username: req.user.username,
-          role: req.user.role,
-          taxes: myCount,
-          jobs: myJobs,
-        },
-      ],
-    });
-  }
-});
-
-(async () => {
-  await ensureFamilies();
-  await bootstrapAdminInvite();
-  app.listen(PORT, HOST, () =>
-    console.log(`Listening on ${HOST}:${PORT}`)
-  );
-})();
+    if (part === "
