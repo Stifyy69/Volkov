@@ -1,57 +1,38 @@
-// prisma/seed.js
-import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+// prisma/seed.js  (ESM)
+import { PrismaClient } from "@prisma/client";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const prisma = new PrismaClient();
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
-
-async function getOrCreateCategory(name) {
-  const { data: existing, error: selErr } = await supabase
-    .from('expense_categories')
-    .select('id, name')
-    .eq('name', name)
-    .maybeSingle();
-
-  if (selErr) throw selErr;
-  if (existing) return existing;
-
-  const { data: inserted, error: insErr } = await supabase
-    .from('expense_categories')
-    .insert([{ name }])
-    .select('id, name')
-    .single();
-
-  if (insErr) throw insErr;
-  return inserted;
-}
+const FAMILIES = [
+  { name: "Medelin Cartel", colorHex: "#ff7bac" },
+  { name: "818", colorHex: "#cccccc" },
+  { name: "Stefanos Cartel", colorHex: "#40e0d0" },
+  { name: "Bogota Thugs", colorHex: "#ffd700" },
+  { name: "LowLine", colorHex: "#001f3f" },
+  { name: "Casa Blanca", colorHex: "#87cefa" },
+  { name: "LaPuentes", colorHex: "#8b5cf6" },
+  { name: "Mali Strip", colorHex: "#8B6E4E" },
+  { name: "Garda Veche", colorHex: "#808080" },
+  { name: "NDR", colorHex: "#8b0000" },
+  { name: "Velvet", colorHex: "#2ecc71" },
+  { name: "Santos Gruppo", colorHex: "#ffffff" },
+  { name: "Mayans MC", colorHex: "#000000" },
+  { name: "La CosaNostra", colorHex: "#ffa500" },
+  { name: "Hells Riders", colorHex: "#ff6666" },
+  { name: "BACM", colorHex: "#d4af37" }
+];
 
 async function main() {
-  const categories = [
-    { name: 'Bani curați' },
-    { name: 'Bani murdari' },
-    { name: 'Verificare taxă' },
-    { name: 'Materiale' }, // placeholder
-  ];
-
-  for (const c of categories) {
-    await getOrCreateCategory(c.name);
+  for (const f of FAMILIES) {
+    await prisma.family.upsert({
+      where: { name: f.name },
+      create: f,
+      update: { colorHex: f.colorHex }
+    });
   }
-
-  console.log('Seed /taxe complet ✅');
+  console.log("Seed OK");
 }
 
 main()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error('Seed a eșuat:', err);
-    process.exit(1);
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });
