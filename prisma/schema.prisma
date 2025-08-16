@@ -74,7 +74,7 @@ model Family {
 }
 
 model TaxEntry {
-  id         Int       @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
   type       TaxType
   currency   Currency
   material   Material?
@@ -82,7 +82,7 @@ model TaxEntry {
   validUntil DateTime?
   createdAt  DateTime   @default(now())
   cnp        String     @db.VarChar(6)
-  payment    String?    // "card" | "numerar" | "transfer" | "gratis"
+  payment    String?    // ADĂUGAT: stocăm metoda ('curat','murdar','otel','praf','gratis','drill')
 
   user     User?   @relation(fields: [userId], references: [id])
   userId   Int?
@@ -92,6 +92,7 @@ model TaxEntry {
 
 model DrillJob {
   id        Int       @id @default(autoincrement())
+  cnp       String    @db.VarChar(6)  // ADĂUGAT
   processed Int
   cadru     Int       @default(0)
   mecanism  Int       @default(0)
