@@ -1,82 +1,148 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ro">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Volkov · /taxe</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <div class="wrap">
-      <header>
-        <h1>/taxe</h1>
-        <div id="status" class="status">offline</div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volkov Taxe</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h2 { margin-top: 30px; color: #333; }
+    .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    label { display: block; margin-bottom: 6px; }
+    input, select, button { margin-bottom: 12px; padding: 8px; width: 100%; }
+    button { cursor: pointer; border: none; border-radius: 5px; }
+    .green { color: green; font-weight: bold; }
+    .family-option { font-weight: bold; }
+    .Medelin { color: pink; }
+    .Stefanos { color: turquoise; }
+    .Bogota { color: gold; }
+    .LowLine { color: navy; }
+    .CasaBlanca { color: lightblue; }
+    .LaPuentes { color: purple; }
+    .Mali { color: saddlebrown; }
+    .Garda { color: gray; }
+    .NDR { color: darkred; }
+    .Velvet { color: green; }
+    .Santos { color: black; background: white; }
+    .Mayans { color: black; }
+    .CosaNostra { color: orange; }
+    .Hells { color: red; }
+    .BACM { color: goldenrod; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 4px 0; }
+  </style>
+</head>
+<body>
 
-      <form id="taxe-form" autocomplete="off" novalidate>
-        <div class="grid">
-          <label>
-            <span>CNP</span>
-            <input type="text" name="cnp" maxlength="13" placeholder="13 cifre" required />
-            <small class="hint">Trebuie să aibă 13 cifre și să treacă cifra de control.</small>
-          </label>
+  <div class="card">
+    <h2>Taxe</h2>
+    <form id="taxeForm">
+      <label for="cnp">CNP (max 6 cifre)</label>
+      <input type="text" id="cnp" maxlength="6" required />
 
-          <label>
-            <span>Nume</span>
-            <input type="text" name="nume" placeholder="Nume complet" />
-          </label>
+      <label for="metoda">Metoda de plată</label>
+      <select id="metoda" required>
+        <option value="card">Card</option>
+        <option value="numerar">Numerar</option>
+        <option value="transfer">Transfer</option>
+      </select>
 
-          <label>
-            <span>Suma</span>
-            <input type="number" step="0.01" name="suma" placeholder="0.00" required />
-          </label>
+      <button type="submit">Trimite</button>
+    </form>
 
-          <label>
-            <span>Tip sumă</span>
-            <select name="tip_suma">
-              <option value="net">Net</option>
-              <option value="brut">Brut</option>
-            </select>
-          </label>
+    <p class="green">Bani curați: 40,000 $</p>
+    <p class="green">Bani murdari: 60,000 $</p>
+    <p class="green">Oțel: 15 bucăți</p>
+    <p class="green">Praf de pușcă: 25 bucăți</p>
+    <p><b>Bonus:</b> Gratis la 3 familii Medelin, 818 și Stefanos Cartel.<br>Termen: 4 ore</p>
 
-          <label>
-            <span>Acțiune</span>
-            <select name="actiune">
-              <option value="clean">Bani curați</option>
-              <option value="dirty">Bani murdari</option>
-              <option value="check">Verificare taxă</option>
-              <option value="materials">Materiale</option>
-            </select>
-          </label>
+    <h3>CNP-uri active</h3>
+    <ul id="cnpList">
+      <!-- Populat din backend -->
+    </ul>
+  </div>
 
-          <label>
-            <span>Procent taxă (%)</span>
-            <input type="number" step="0.01" name="procent" placeholder="10" />
-          </label>
+  <div class="card">
+    <h2>Burghiu</h2>
+    <form id="burghiuForm">
+      <label for="cnpBurghiu">CNP</label>
+      <input type="text" id="cnpBurghiu" maxlength="6" required />
 
-          <label class="full">
-            <span>Observații</span>
-            <input type="text" name="observatii" placeholder="optional" />
-          </label>
-        </div>
+      <label for="actiune">Ce vrea să facă?</label>
+      <select id="actiune" required>
+        <option value="cadru">Cadru</option>
+        <option value="teava">Țeavă</option>
+        <option value="mecanism">Mecanism</option>
+        <option value="fixare">Elemente de fixare</option>
+      </select>
 
-        <div class="actions">
-          <button type="submit" class="primary">Calculează & Loghează</button>
-          <button type="button" id="reset">Reset</button>
-        </div>
-      </form>
+      <label for="familie">Familie</label>
+      <select id="familie" required>
+        <option class="Medelin" value="Medelin Cartel">Medelin Cartel</option>
+        <option class="Stefanos" value="Stefanos Cartel">Stefanos Cartel</option>
+        <option class="Bogota" value="Bogota Thugs">Bogota Thugs</option>
+        <option class="LowLine" value="LowLine">LowLine</option>
+        <option class="CasaBlanca" value="Casa Blanca">Casa Blanca</option>
+        <option class="LaPuentes" value="LaPuentes">LaPuentes</option>
+        <option class="Mali" value="Mali Strip">Mali Strip</option>
+        <option class="Garda" value="Garda Veche">Garda Veche</option>
+        <option class="NDR" value="NDR">NDR</option>
+        <option class="Velvet" value="Velvet">Velvet</option>
+        <option class="Santos" value="Santos Gruppo">Santos Gruppo</option>
+        <option class="Mayans" value="Mayans MC">Mayans MC</option>
+        <option class="CosaNostra" value="La CosaNostra">La CosaNostra</option>
+        <option class="Hells" value="Hells Riders">Hells Riders</option>
+        <option class="BACM" value="BACM">BACM</option>
+      </select>
 
-      <section class="result" id="result" hidden>
-        <h2>Rezultat</h2>
-        <div id="result-body"></div>
-      </section>
+      <button type="submit">Trimite</button>
+    </form>
+  </div>
 
-      <section class="logs">
-        <h2>Ultimele acțiuni</h2>
-        <pre id="log">ready.</pre>
-      </section>
-    </div>
+  <script>
+    // Trimite taxe
+    document.getElementById("taxeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const cnp = document.getElementById("cnp").value;
+      const metoda = document.getElementById("metoda").value;
 
-    <script src="/app.js"></script>
-  </body>
+      await fetch("/taxe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cnp, metoda })
+      });
+
+      loadCnpList();
+    });
+
+    // Trimite burghiu
+    document.getElementById("burghiuForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const cnp = document.getElementById("cnpBurghiu").value;
+      const actiune = document.getElementById("actiune").value;
+      const familie = document.getElementById("familie").value;
+
+      await fetch("/burghiu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cnp, actiune, familie })
+      });
+    });
+
+    // Încarcă lista CNP-uri active
+    async function loadCnpList() {
+      const res = await fetch("/taxe");
+      const data = await res.json();
+      const ul = document.getElementById("cnpList");
+      ul.innerHTML = "";
+      data.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.cnp} – mai are valabil ${item.remaining}`;
+        ul.appendChild(li);
+      });
+    }
+
+    loadCnpList();
+  </script>
+</body>
 </html>
