@@ -1,146 +1,163 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Volkov Taxe</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-    h2 { margin-top: 30px; color: #333; }
-    .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    label { display: block; margin-bottom: 6px; }
-    input, select, button { margin-bottom: 12px; padding: 8px; width: 100%; }
-    button { cursor: pointer; border: none; border-radius: 5px; }
-    .green { color: green; font-weight: bold; }
-    .family-option { font-weight: bold; }
-    .Medelin { color: pink; }
-    .Stefanos { color: turquoise; }
-    .Bogota { color: gold; }
-    .LowLine { color: navy; }
-    .CasaBlanca { color: lightblue; }
-    .LaPuentes { color: purple; }
-    .Mali { color: saddlebrown; }
-    .Garda { color: gray; }
-    .NDR { color: darkred; }
-    .Velvet { color: green; }
-    .Santos { color: black; background: white; }
-    .Mayans { color: black; }
-    .CosaNostra { color: orange; }
-    .Hells { color: red; }
-    .BACM { color: goldenrod; }
-    ul { list-style: none; padding: 0; }
-    li { padding: 4px 0; }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>/taxe</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <main class="wrap">
+    <section class="card">
+      <h2>Taxe</h2>
+      <form id="taxeForm">
+        <label>CNP (max 6 cifre)
+          <input type="text" id="cnp" maxlength="6" inputmode="numeric" pattern="\d{1,6}" required />
+        </label>
 
-  <div class="card">
-    <h2>Taxe</h2>
-    <form id="taxeForm">
-      <label for="cnp">CNP (max 6 cifre)</label>
-      <input type="text" id="cnp" maxlength="6" required />
+        <label>Metodă de plată
+          <select id="metoda" required>
+            <option value="card">Card</option>
+            <option value="numerar">Numerar</option>
+            <option value="transfer">Transfer</option>
+            <option value="gratis">Gratis</option>
+          </select>
+        </label>
 
-      <label for="metoda">Metoda de plată</label>
-      <select id="metoda" required>
-        <option value="card">Card</option>
-        <option value="numerar">Numerar</option>
-        <option value="transfer">Transfer</option>
-      </select>
+        <div id="gratisBox" class="row" hidden>
+          <label style="width:100%">Selectează familia (pentru „Gratis”)
+            <select id="gratisFamilie">
+              <option value="Medelin Cartel">Medelin Cartel</option>
+              <option value="818">818</option>
+              <option value="Stefanos Cartel">Stefanos Cartel</option>
+            </select>
+          </label>
+        </div>
 
-      <button type="submit">Trimite</button>
-    </form>
+        <div class="grid">
+          <button data-opt="curat" class="opt">Bani curați – 40.000 $</button>
+          <button data-opt="murdar" class="opt">Bani murdari – 60.000 $</button>
+          <button data-opt="otel" class="opt">Oțel – 15 buc</button>
+          <button data-opt="praf" class="opt">Praf de pușcă – 25 buc</button>
+        </div>
 
-    <p class="green">Bani curați: 40,000 $</p>
-    <p class="green">Bani murdari: 60,000 $</p>
-    <p class="green">Oțel: 15 bucăți</p>
-    <p class="green">Praf de pușcă: 25 bucăți</p>
-    <p><b>Bonus:</b> Gratis la 3 familii Medelin, 818 și Stefanos Cartel.<br>Termen: 4 ore</p>
+        <p class="hint green">Termen: 4 ore de când începe</p>
+      </form>
 
-    <h3>CNP-uri active</h3>
-    <ul id="cnpList">
-      <!-- Populat din backend -->
-    </ul>
-  </div>
+      <h3>CNP-uri active</h3>
+      <ul id="cnpList"></ul>
+    </section>
 
-  <div class="card">
-    <h2>Burghiu</h2>
-    <form id="burghiuForm">
-      <label for="cnpBurghiu">CNP</label>
-      <input type="text" id="cnpBurghiu" maxlength="6" required />
+    <section class="card">
+      <h2>Burghiu</h2>
+      <form id="burghiuForm">
+        <label>CNP
+          <input type="text" id="cnpBurghiu" maxlength="6" inputmode="numeric" pattern="\d{1,6}" required />
+        </label>
 
-      <label for="actiune">Ce vrea să facă?</label>
-      <select id="actiune" required>
-        <option value="cadru">Cadru</option>
-        <option value="teava">Țeavă</option>
-        <option value="mecanism">Mecanism</option>
-        <option value="fixare">Elemente de fixare</option>
-      </select>
+        <label>Ce vrea să facă?
+          <select id="actiune" required>
+            <option value="cadru">Cadru</option>
+            <option value="teava">Țeavă</option>
+            <option value="mecanism">Mecanism</option>
+            <option value="fixare">Elemente de fixare</option>
+          </select>
+        </label>
 
-      <label for="familie">Familie</label>
-      <select id="familie" required>
-        <option class="Medelin" value="Medelin Cartel">Medelin Cartel</option>
-        <option class="Stefanos" value="Stefanos Cartel">Stefanos Cartel</option>
-        <option class="Bogota" value="Bogota Thugs">Bogota Thugs</option>
-        <option class="LowLine" value="LowLine">LowLine</option>
-        <option class="CasaBlanca" value="Casa Blanca">Casa Blanca</option>
-        <option class="LaPuentes" value="LaPuentes">LaPuentes</option>
-        <option class="Mali" value="Mali Strip">Mali Strip</option>
-        <option class="Garda" value="Garda Veche">Garda Veche</option>
-        <option class="NDR" value="NDR">NDR</option>
-        <option class="Velvet" value="Velvet">Velvet</option>
-        <option class="Santos" value="Santos Gruppo">Santos Gruppo</option>
-        <option class="Mayans" value="Mayans MC">Mayans MC</option>
-        <option class="CosaNostra" value="La CosaNostra">La CosaNostra</option>
-        <option class="Hells" value="Hells Riders">Hells Riders</option>
-        <option class="BACM" value="BACM">BACM</option>
-      </select>
+        <label>Familie
+          <select id="familie" required>
+            <option value="Medelin Cartel">Medelin Cartel</option>
+            <option value="818">818</option>
+            <option value="Stefanos Cartel">Stefanos Cartel</option>
+            <option value="Bogota Thugs">Bogota Thugs</option>
+            <option value="LowLine">LowLine</option>
+            <option value="Casa Blanca">Casa Blanca</option>
+            <option value="LaPuentes">LaPuentes</option>
+            <option value="Mali Strip">Mali Strip</option>
+            <option value="Garda Veche">Garda Veche</option>
+            <option value="NDR">NDR</option>
+            <option value="Velvet">Velvet</option>
+            <option value="Santos Gruppo">Santos Gruppo</option>
+            <option value="Mayans MC">Mayans MC</option>
+            <option value="La CosaNostra">La CosaNostra</option>
+            <option value="Hells Riders">Hells Riders</option>
+            <option value="BACM">BACM</option>
+          </select>
+        </label>
 
-      <button type="submit">Trimite</button>
-    </form>
-  </div>
+        <label>Cantitate
+          <input type="number" id="cantitate" min="1" step="1" value="1" required />
+        </label>
+
+        <div class="row">
+          <button id="sendBurghiu" class="primary" type="submit">Trimite</button>
+        </div>
+      </form>
+    </section>
+  </main>
 
   <script>
-    // Trimite taxe
-    document.getElementById("taxeForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const cnp = document.getElementById("cnp").value;
-      const metoda = document.getElementById("metoda").value;
+    const $metoda = document.getElementById('metoda');
+    const $gratisBox = document.getElementById('gratisBox');
+    const $gratisFamilie = document.getElementById('gratisFamilie');
+    const $cnp = document.getElementById('cnp');
+    const $cnpList = document.getElementById('cnpList');
 
-      await fetch("/taxe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cnp, metoda })
-      });
-
-      loadCnpList();
+    $metoda.addEventListener('change', () => {
+      $gratisBox.hidden = $metoda.value !== 'gratis';
     });
 
-    // Trimite burghiu
-    document.getElementById("burghiuForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const cnp = document.getElementById("cnpBurghiu").value;
-      const actiune = document.getElementById("actiune").value;
-      const familie = document.getElementById("familie").value;
+    document.querySelectorAll('.opt').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const optiune = btn.dataset.opt;
+        const cnp = $cnp.value.trim();
+        const metoda = $metoda.value;
+        if (!/^\d{1,6}$/.test(cnp)) { alert('CNP invalid (max 6 cifre)'); return; }
+        let body = { cnp, metoda, optiune };
+        if (metoda === 'gratis') body.gratisFamilie = $gratisFamilie.value;
 
-      await fetch("/burghiu", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cnp, actiune, familie })
+        const r = await fetch('/taxe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!r.ok) { const j = await r.json().catch(()=>({})); alert(j.error || 'Eroare'); return; }
+        loadCnpList();
       });
     });
 
-    // Încarcă lista CNP-uri active
     async function loadCnpList() {
-      const res = await fetch("/taxe");
-      const data = await res.json();
-      const ul = document.getElementById("cnpList");
-      ul.innerHTML = "";
-      data.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = `${item.cnp} – mai are valabil ${item.remaining}`;
-        ul.appendChild(li);
+      const r = await fetch('/taxe');
+      const data = await r.json().catch(()=>[]);
+      $cnpList.innerHTML = '';
+      data.forEach(x => {
+        const li = document.createElement('li');
+        li.textContent = `${x.cnp} — ${x.descriere} (${x.amount}) — ${x.remaining}`;
+        if (x.metoda === 'gratis' && x.gratisFamilie) {
+          li.textContent += ` — Gratis: ${x.gratisFamilie}`;
+        }
+        $cnpList.appendChild(li);
       });
     }
+
+    document.getElementById('burghiuForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const cnp = document.getElementById('cnpBurghiu').value.trim();
+      const actiune = document.getElementById('actiune').value;
+      const familie = document.getElementById('familie').value;
+      const cantitate = Number(document.getElementById('cantitate').value);
+      if (!/^\d{1,6}$/.test(cnp)) { alert('CNP invalid (max 6 cifre)'); return; }
+      if (!Number.isFinite(cantitate) || cantitate <= 0) { alert('Cantitate invalidă'); return; }
+
+      const r = await fetch('/burghiu', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ cnp, actiune, familie, cantitate, cashType:'CLEAN', unitPrice:0 })
+      });
+      if (!r.ok) { const j = await r.json().catch(()=>({})); alert(j.error || 'Eroare'); return; }
+      alert('Salvat.');
+    });
 
     loadCnpList();
   </script>
