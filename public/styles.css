@@ -12,15 +12,22 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 .form-compact label{max-width:280px}
-.hint{color:var(--muted);font-size:.9rem;align-self:center}
+.hint{color:var(--muted);font-size:.92rem}
+.spacing{margin:8px 0 12px}
 .mt{margin-top:10px}
 .ml-8{margin-left:8px}
+.stack{display:flex;flex-direction:column;gap:8px;margin:8px 0}
 
 label{display:flex;flex-direction:column;gap:6px;font-size:.95rem}
 input,select,button{border-radius:10px;border:1px solid var(--border);background:#0e141b;color:var(--text);padding:8px 10px}
 .select-dark{background:#000;color:#fff;border-color:#333}
 
-.xs{padding:6px 10px;font-size:.85rem}
+.xs{padding:8px 12px;font-size:.9rem}
+.align-end{align-self:flex-end}
+.w-140{width:140px}.w-160{width:160px}.w-180{width:180px}
+.w-200{width:200px}.w-220{width:220px}.w-240{width:240px}
+.w-260{width:260px}.w-280{width:280px}.w-300{width:300px}
+
 button{cursor:pointer}
 button.primary{background:var(--primary);border-color:var(--primary);color:white}
 button.danger{background:#1a0f11;border-color:#3b0d12;color:#fda4af}
@@ -42,10 +49,6 @@ button.danger{background:#1a0f11;border-color:#3b0d12;color:#fda4af}
 .table.compact td,.table.compact th{padding:8px}
 
 .stats{display:flex;gap:16px;flex-wrap:wrap}
-
-.w-140{width:140px}.w-160{width:160px}.w-180{width:180px}
-.w-200{width:200px}.w-220{width:220px}.w-240{width:240px}
-.w-260{width:260px}.w-280{width:280px}.w-300{width:300px}
 
 @media (max-width:1000px){
   .grid2{grid-template-columns:1fr}
