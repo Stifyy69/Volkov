@@ -1,44 +1,41 @@
 :root{
   --bg:#0b0f14; --card:#121821; --muted:#94a3b8;
   --text:#e5edf7; --primary:#3b82f6; --danger:#ef4444;
-  --accent:#22c55e; --border:#1f2937; --table:#0e141b;
+  --border:#1f2937;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-a{color:inherit}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
-.mt{margin-top:1rem}
-.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-
-.nav{display:flex;align-items:center;gap:1rem;justify-content:space-between;padding:10px 16px;background:#0a0f16;border-bottom:1px solid var(--border);position:sticky;top:0}
-.brand{font-weight:700;letter-spacing:.5px}
-.tabs{display:flex;gap:.5rem;flex-wrap:wrap}
-.tabbtn{background:#0e1620;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
-.tabbtn[data-active="true"]{background:var(--primary);border-color:var(--primary);color:white}
-.userbox{display:flex;align-items:center;gap:.75rem}
-
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px}
-.card-header{display:flex;align-items:center;justify-content:space-between}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.split{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:.5rem 0}
-.inline{display:flex;gap:.5rem;align-items:center}
+.sm{padding:6px 10px;font-size:.9rem}
 .right{justify-self:end}
-
+.full{grid-column:1/-1}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid3.slim, .grid2.slim label input{min-height:34px}
+.split{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:.5rem 0}
+.inline{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 label{display:flex;flex-direction:column;gap:6px;font-size:.95rem}
-input,select,button{border-radius:10px;border:1px solid var(--border);background:#0e141b;color:var(--text);padding:10px}
+input,select,button{border-radius:10px;border:1px solid var(--border);background:#0e141b;color:var(--text);padding:8px 10px}
+input.sm,select.sm{padding:6px 8px}
 .select-dark{background:#000;color:#fff;border-color:#333}
-input::placeholder{color:#6b7280}
 button{cursor:pointer}
 button.primary{background:var(--primary);border-color:var(--primary);color:white}
 button.danger{background:#1a0f11;border-color:#3b0d12;color:#fda4af}
-button.sm{padding:6px 10px;font-size:.9rem}
 
-.table{width:100%;border-collapse:collapse;background:#0a0f14;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.table thead th{background:#0e1620;color:#9fb3c8;text-align:left;padding:10px;font-weight:600;border-bottom:1px solid var(--border)}
-.table tbody td{padding:10px;border-bottom:1px solid #101822}
+.nav{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:8px 12px;background:#0a0f16;border-bottom:1px solid var(--border)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabbtn{background:#0e1620;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:10px;cursor:pointer}
+.tabbtn[data-active="true"]{background:var(--primary);border-color:var(--primary);color:white}
+
+.table{width:100%;border-collapse:collapse;background:#0a0f14;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table.compact thead th{padding:8px}
+.table.compact tbody td{padding:8px}
+.table thead th{background:#0e1620;color:#9fb3c8;text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
+.table tbody td{border-bottom:1px solid #101822}
 .table tr:hover{background:#0c131b}
 
-.tab{padding-top:6px}
-@media (max-width:900px){.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.inline{flex-wrap:wrap}}
+.stats{display:flex;gap:16px;flex-wrap:wrap}
+@media (max-width:900px){.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
