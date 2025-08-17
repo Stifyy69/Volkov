@@ -1,76 +1,44 @@
-/* ---- Layout spacing & readability ---- */
-:root {
-  --surface-ink: #0f1012;
-  --surface-card: #17181b;
-  --border-soft: rgba(255,255,255,.08);
-  --border-mid:  rgba(255,255,255,.12);
-  --text-dim:    #94a3b8;
+:root{
+  --bg:#0b0f14; --card:#121821; --muted:#94a3b8;
+  --text:#e5edf7; --primary:#3b82f6; --danger:#ef4444;
+  --accent:#22c55e; --border:#1f2937; --table:#0e141b;
 }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+a{color:inherit}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.mt{margin-top:1rem}
+.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 
-body {
-  letter-spacing: .2px;
-}
+.nav{display:flex;align-items:center;gap:1rem;justify-content:space-between;padding:10px 16px;background:#0a0f16;border-bottom:1px solid var(--border);position:sticky;top:0}
+.brand{font-weight:700;letter-spacing:.5px}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+.tabbtn{background:#0e1620;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
+.tabbtn[data-active="true"]{background:var(--primary);border-color:var(--primary);color:white}
+.userbox{display:flex;align-items:center;gap:.75rem}
 
-/* card containers */
-section > .bg-card {
-  box-shadow: 0 6px 20px rgba(0,0,0,.35);
-}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.split{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:.5rem 0}
+.inline{display:flex;gap:.5rem;align-items:center}
+.right{justify-self:end}
 
-/* tables */
-.tbl {
-  border-spacing: 0;
-  overflow: hidden;
-}
-.tbl thead th {
-  font-weight: 600;
-  letter-spacing: .2px;
-}
-.tbl tbody tr:hover td {
-  background: rgba(255,255,255,.03);
-}
+label{display:flex;flex-direction:column;gap:6px;font-size:.95rem}
+input,select,button{border-radius:10px;border:1px solid var(--border);background:#0e141b;color:var(--text);padding:10px}
+.select-dark{background:#000;color:#fff;border-color:#333}
+input::placeholder{color:#6b7280}
+button{cursor:pointer}
+button.primary{background:var(--primary);border-color:var(--primary);color:white}
+button.danger{background:#1a0f11;border-color:#3b0d12;color:#fda4af}
+button.sm{padding:6px 10px;font-size:.9rem}
 
-/* inputs & buttons (ușor mai mari pe desktop) */
-@media (min-width: 1024px) {
-  .input { height: 46px; }
-  .btn-primary { height: 46px; }
-}
+.table{width:100%;border-collapse:collapse;background:#0a0f14;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.table thead th{background:#0e1620;color:#9fb3c8;text-align:left;padding:10px;font-weight:600;border-bottom:1px solid var(--border)}
+.table tbody td{padding:10px;border-bottom:1px solid #101822}
+.table tr:hover{background:#0c131b}
 
-/* compact on mobile */
-@media (max-width: 640px) {
-  .tbl thead { display: none; }
-  .tbl tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px; }
-  .tbl td { border: none !important; padding: 4px 0 !important; }
-  .tbl td:nth-child(odd) { color: var(--text-dim); }
-  #taxeTable tbody tr { grid-template-columns: 1fr 1fr; }
-  #drillTable tbody tr { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* small badges if vei colora familiile ulterior */
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  border: 1px solid var(--border-mid);
-  background: rgba(255,255,255,.05);
-}
-
-/* color hints (dacă vrei să le aplici din JS pe familie) */
-.badge-medelin { background:#ff7bac1a; border-color:#ff7bac55; }
-.badge-818     { background:#cccccc1a; border-color:#cccccc55; }
-.badge-stef    { background:#40e0d01a; border-color:#40e0d055; }
-
-/* navbar buttons active state already handled, dar adăugăm focus vizibil */
-.tabbtn:focus-visible,
-.btn-primary:focus-visible,
-.input:focus-visible {
-  outline: 2px solid rgba(255,255,255,.25) !important;
-  outline-offset: 2px;
-}
-
-/* small utilities */
-.hr-soft {
-  height: 1px;
-  background: var(--border-soft);
-  margin: 10px 0;
-}
+.tab{padding-top:6px}
+@media (max-width:900px){.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.inline{flex-wrap:wrap}}
