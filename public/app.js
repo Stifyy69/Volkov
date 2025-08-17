@@ -51,19 +51,22 @@ async function hydrateMe() {
     $("#whoami").textContent = `${me.username} [${me.role}]`;
     const adminBtn = $$(".tabbtn").find(b => b.dataset.tab === "admin");
     if (adminBtn) adminBtn.classList.toggle("hidden", me.role !== "ADMIN");
+
+    // show app, hide auth
     $("#auth").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+
     setTabs("taxe");
-    fillWeekSelect($("#weekSelect"));
-    fillWeekSelect($("#dashWeekPicker"));
-    fillWeekSelect($("#bfWeekPicker"));
-    fillWeekSelect($("#profWeekPicker"));
-    fillWeekSelect($("#tblWeekPicker"));
+    [ "#weekSelect", "#dashWeekPicker", "#bfWeekPicker", "#profWeekPicker", "#tblWeekPicker" ]
+      .map(sel => $(sel)).forEach(el => el && fillWeekSelect(el));
+
     loadTaxe();
     loadDrill();
     connectSSE();
   } catch {
+    // hide app, show auth
+    $("#app").classList.add("hidden");
     $("#auth").classList.remove("hidden");
-    setTabs("taxe");
   }
 }
 
@@ -223,14 +226,14 @@ function renderDrill(list){
       <td>${j.teava}</td>
       <td>${j.mecanism}</td>
       <td>${j.fixare}</td>
-      <td>Bani murdari</td>
-      <td>${money(j.costTotal || 0)}</td>
+      <td>${j.costTotal ? "Bani murdari" : "GRATIS"}</td>
+      <td>${j.costTotal ? money(j.costTotal) : "GRATIS"}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// ===== Dashboard (strict pe săptămâna selectată) =====
+// ===== Dashboard (pe săptămâna selectată) =====
 function fillWeekSelect(sel){
   if (!sel || sel.options.length) return;
   const now = new Date();
@@ -259,8 +262,9 @@ async function loadDashboard() {
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
 
   const rT = await api("/taxe");
+  let taxe = [];
   if (rT.ok) {
-    const taxe = await rT.json();
+    taxe = await rT.json();
     taxe.forEach(t => {
       const created = t.createdAt ? new Date(t.createdAt) : new Date();
       if (selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
@@ -286,11 +290,22 @@ async function loadDashboard() {
     dBody.appendChild(tr);
   });
 
-  // Burghiu + topuri + familii (pe săptămână)
+  // Burghiu + topuri pe USER + familii
   const rD = await api("/drill");
   const famMap = new Map();
-  const cnpMapD = new Map();
+  const topTaxByUser = new Map();
+  const topDrillByUser = new Map();
   let totalPieces = 0;
+
+  // top taxe pe user (din taxe încărcate)
+  (taxe||[]).forEach(t=>{
+    const created = t.createdAt ? new Date(t.createdAt) : new Date();
+    if (selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
+    if (t.user) {
+      const prev = topTaxByUser.get(t.user) || 0;
+      topTaxByUser.set(t.user, prev + 1);
+    }
+  });
 
   if (rD.ok) {
     const jobs = await rD.json();
@@ -306,10 +321,10 @@ async function loadDashboard() {
       const fam = j.family || "(fără)";
       famMap.set(fam, (famMap.get(fam)||0) + pieces);
 
-      const key = `${j.cnp}::${j.user||""}`;
-      const prev = cnpMapD.get(key) || { cnp:j.cnp, user:j.user||"", drill$:0 };
-      prev.drill$ += (j.costTotal||0);
-      cnpMapD.set(key, prev);
+      if (j.user){
+        const prev$ = topDrillByUser.get(j.user) || 0;
+        topDrillByUser.set(j.user, prev$ + (j.costTotal||0));
+      }
     });
 
     $("#statDrillPieces").textContent = (totalPieces||0).toLocaleString("ro-RO");
@@ -323,40 +338,23 @@ async function loadDashboard() {
     });
   }
 
-  // Top CNP taxe – folosim cache-ul încărcat
+  // Top user taxe
   const topTaxBody = $("#topCnpTaxe tbody");
   topTaxBody.innerHTML = "";
-  const topTaxMap = new Map();
-  (taxeCache||[]).forEach(t=>{
-    const created = t.createdAt ? new Date(t.createdAt) : new Date();
-    if (selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
-    if (t.tip === "Bani curați" || t.tip === "Bani murdari") {
-      const key = `${t.cnp}::${t.user||""}`;
-      const prev = topTaxMap.get(key) || { cnp:t.cnp, user:t.user||"", taxe:0 };
-      prev.taxe += 1;
-      topTaxMap.set(key, prev);
-    }
+  [...topTaxByUser.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20).forEach(([user,count])=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${user}</td><td>${count}</td>`;
+    topTaxBody.appendChild(tr);
   });
-  [...topTaxMap.values()]
-    .sort((a,b)=>b.taxe-a.taxe)
-    .slice(0,20)
-    .forEach(row=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="font-mono">${row.cnp}</td><td>${row.user||"-"}</td><td>${row.taxe}</td>`;
-      topTaxBody.appendChild(tr);
-    });
 
-  // Top CNP drill
+  // Top user drill
   const topDrillBody = $("#topCnpDrill tbody");
   topDrillBody.innerHTML = "";
-  [...cnpMapD.values()]
-    .sort((a,b)=>b.drill$-a.drill$)
-    .slice(0,20)
-    .forEach(row=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="font-mono">${row.cnp}</td><td>${row.user||"-"}</td><td>${money(row.drill$||0)}</td>`;
-      topDrillBody.appendChild(tr);
-    });
+  [...topDrillByUser.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20).forEach(([user,val])=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${user}</td><td>${money(val||0)}</td>`;
+    topDrillBody.appendChild(tr);
+  });
 }
 
 // ===== Burghiu Familii (tab dedicat) =====
@@ -445,7 +443,7 @@ async function loadTablesAll(){
   rows.forEach(row=>{
     const tr = document.createElement("tr");
     if (type === "taxe") {
-      tr.innerHTML = `<td>${row.id}</td><td class="font-mono">${row.cnp}</td><td>${row.payment}</td><td>${money(row.amount||0)}</td><td>${row.user}</td><td>${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="taxe" class="danger sm">Șterge</button></td>`;
+      tr.innerHTML = `<td>${row.id}</td><td class="font-mono">${row.cnp}</td><td>${row.payment}</td><td>${row.amount ? money(row.amount) : "GRATIS"}</td><td>${row.user}</td><td>${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="taxe" class="danger sm">Șterge</button></td>`;
     } else {
       tr.innerHTML = `<td>${row.id}</td><td class="font-mono">${row.cnp}</td><td>${row.cadru}</td><td>${row.teava}</td><td>${row.mecanism}</td><td>${row.fixare}</td><td>${row.user}</td><td>${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="drill" class="danger sm">Șterge</button></td>`;
     }
@@ -466,7 +464,6 @@ async function loadTablesAll(){
 let adminRows = [];
 $("#weekSelect")?.addEventListener("change", loadAdmin);
 
-// Invite link
 $("#inviteBtn")?.addEventListener("click", async () => {
   try {
     const role = $("#inviteRole").value;
@@ -474,9 +471,7 @@ $("#inviteBtn")?.addEventListener("click", async () => {
     const j = await r.json();
     if (!r.ok) return alert(j.error || "Nu s-a putut genera invitația");
     $("#inviteResult").value = j.link || j.code || "(fără link)";
-  } catch (e) {
-    alert("Eroare la generarea invitației");
-  }
+  } catch { alert("Eroare la generarea invitației"); }
 });
 $("#inviteCopy")?.addEventListener("click", async () => {
   const v = $("#inviteResult").value || "";
