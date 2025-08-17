@@ -1,152 +1,247 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Volkov RP Panel</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Volkov RP • Taxe & Burghiu</title>
+
+  <!-- Tailwind (CDN) pentru UI rapid și frumos -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            card: '#17181b',
+            ink:  '#0f1012'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js pentru grafice -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="icon" href="data:," />
 </head>
-<body>
-  <header class="nav">
-    <div class="brand">Volkov RP</div>
-    <nav class="tabs">
-      <button id="tabTaxe" class="tab active">Taxe & Burghiu</button>
-      <button id="tabDash" class="tab">Dashboard</button>
-      <button id="tabAdmin" class="tab hidden">Admin</button>
-    </nav>
-    <div class="who">
-      <span id="whoami">...</span>
-      <button id="logout" class="ghost">Logout</button>
+<body class="dark bg-ink text-slate-200 min-h-screen">
+  <!-- NAV -->
+  <header class="sticky top-0 z-20 bg-ink/90 backdrop-blur border-b border-white/10">
+    <div class="mx-auto max-w-6xl px-4 py-3 flex items-center gap-2">
+      <div class="font-semibold tracking-wide">Volkov RP</div>
+      <nav class="flex gap-2">
+        <button class="tabbtn data-[active=true]:bg-white/10 px-3 py-1.5 rounded-md" data-tab="taxe">Taxe & Burghiu</button>
+        <button class="tabbtn data-[active=true]:bg-white/10 px-3 py-1.5 rounded-md" data-tab="dashboard">Dashboard</button>
+        <button class="tabbtn data-[active=true]:bg-white/10 px-3 py-1.5 rounded-md" data-tab="admin">Admin</button>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <span id="whoami" class="text-xs text-slate-400"></span>
+        <button id="logoutBtn" class="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-500">Logout</button>
+      </div>
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="mx-auto max-w-6xl px-4 py-6 space-y-8">
+
     <!-- AUTH -->
-    <section class="card" id="authCard">
-      <h2>Autentificare</h2>
-      <div class="seg">
-        <button class="chip active" data-tab="login">Login</button>
-        <button class="chip" data-tab="register">Register</button>
+    <section id="auth" class="grid md:grid-cols-2 gap-4">
+      <div class="bg-card rounded-xl border border-white/10 p-4">
+        <h2 class="font-semibold mb-3">Login</h2>
+        <form id="loginForm" class="grid gap-3">
+          <input class="input" name="username" placeholder="Username" autocomplete="username" />
+          <input class="input" type="password" name="password" placeholder="Parolă" autocomplete="current-password" />
+          <button class="btn-primary">Login</button>
+        </form>
       </div>
-
-      <div id="loginPane">
-        <div class="row">
-          <label>Username<input id="loginUser" /></label>
-          <label>Parola<input id="loginPass" type="password" /></label>
-        </div>
-        <button id="btnLogin" class="btn primary">Login</button>
-      </div>
-
-      <div id="registerPane" class="hidden">
-        <div class="row">
-          <label>Invite code<input id="regInvite" /></label>
-          <label>Username<input id="regUser" /></label>
-        </div>
-        <div class="row">
-          <label>Parola<input id="regPass" type="password" /></label>
-          <label>Nickname<input id="regNick" /></label>
-          <label>CNP (max 6)<input id="regCnp" maxlength="6" inputmode="numeric" pattern="\\d{1,6}" /></label>
-        </div>
-        <button id="btnRegister" class="btn primary">Register</button>
+      <div class="bg-card rounded-xl border border-white/10 p-4">
+        <h2 class="font-semibold mb-3">Register (cu invite)</h2>
+        <form id="registerForm" class="grid gap-3">
+          <input class="input" name="inviteCode" placeholder="Invite code" />
+          <div class="grid grid-cols-2 gap-3">
+            <input class="input" name="username" placeholder="Username" />
+            <input class="input" name="nickname" placeholder="Nickname (opțional)" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <input class="input" type="password" name="password" placeholder="Parolă" />
+            <input class="input" name="cnp" placeholder="CNP (max 6)" maxlength="6" inputmode="numeric" />
+          </div>
+          <button class="btn-primary">Register</button>
+        </form>
       </div>
     </section>
 
-    <!-- TAXE + DRILL -->
-    <section class="grid2 hidden" id="taxeGrid">
-      <div class="card" id="taxeCard">
-        <div class="card-head">
-          <h2>Taxe</h2>
-          <div class="dot live">live</div>
+    <!-- TAB: TAXE & BURGHIU -->
+    <section id="tab-taxe" class="tab space-y-6">
+      <!-- TAXE -->
+      <div class="bg-card rounded-xl border border-white/10 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold">Taxe</h2>
+          <span class="text-xs text-slate-500">live</span>
         </div>
-        <div class="row wrap gap16">
-          <label class="grow">CNP
-            <input id="cnp" maxlength="6" inputmode="numeric" pattern="\\d{1,6}" />
-          </label>
-          <label class="grow">Tip plată
-            <select id="metoda">
+
+        <form id="taxeForm" class="grid md:grid-cols-[140px,1fr,220px,160px] gap-3 items-end">
+          <div>
+            <label class="lbl">CNP</label>
+            <input class="input" name="cnp" maxlength="6" inputmode="numeric" placeholder="ex: 51122" required />
+          </div>
+
+          <div>
+            <label class="lbl">Tip plată</label>
+            <select class="input" name="metoda" id="metodaSelect" required>
+              <option value="">Alege...</option>
               <option value="curat">Bani curați (40.000 $)</option>
               <option value="murdar">Bani murdari (60.000 $)</option>
               <option value="otel">Oțel (15 buc)</option>
               <option value="praf">Praf de pușcă (25 buc)</option>
-              <option value="gratis">Gratis</option>
+              <option value="gratis">Gratis (familie)</option>
             </select>
-          </label>
-          <label id="gratisWrap" class="grow hidden">Familie (doar la Gratis)
-            <select id="gratisFamilie">
-              <option>Medelin Cartel</option>
-              <option>818</option>
-              <option>Stefanos Cartel</option>
+          </div>
+
+          <div id="gratisWrap" class="hidden">
+            <label class="lbl">Familie (doar la Gratis)</label>
+            <select class="input" name="gratisFamilie" id="gratisSelect">
+              <option value="Medelin Cartel">Medelin Cartel</option>
+              <option value="818">818</option>
+              <option value="Stefanos Cartel">Stefanos Cartel</option>
             </select>
-          </label>
-          <button id="btnTrimiteTaxa" class="btn primary">Trimite taxă</button>
+          </div>
+
+          <button class="btn-primary h-11">Trimite taxă</button>
+        </form>
+
+        <div class="mt-5">
+          <h3 class="font-medium mb-2">Taxe active</h3>
+          <table class="tbl" id="taxeTable">
+            <thead><tr><th>CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
-        <div class="subhead">Taxe active</div>
-        <ul id="taxeList" class="list"></ul>
       </div>
 
-      <div class="card" id="drillCard">
-        <div class="card-head">
-          <h2>Burghiu</h2>
-          <div class="pill">Metodă plată: Bani murdari</div>
-        </div>
+      <!-- BURGHIU -->
+      <div class="bg-card rounded-xl border border-white/10 p-4">
+        <h2 class="font-semibold mb-3">Burghiu</h2>
 
-        <!-- Notă: backend-ul curent primește UN singur "part" + "quantity".
-             Dacă vrei varianta cu 4 cantități simultan, o facem după ce actualizăm backend-ul. -->
-        <div class="row wrap gap16">
-          <label class="grow">CNP
-            <input id="drCnp" maxlength="6" inputmode="numeric" pattern="\\d{1,6}" />
-          </label>
-          <label class="grow">Familie
-            <select id="drFamilie"></select>
-          </label>
-        </div>
-        <div class="row wrap gap16">
-          <label>Componentă
-            <select id="drPart">
-              <option value="cadru">Cadru</option>
-              <option value="teava">Țeavă</option>
-              <option value="mecanism">Mecanism</option>
-              <option value="fixare">Elemente de fixare</option>
-            </select>
-          </label>
-          <label>Cantitate
-            <input type="number" id="drQty" min="1" value="1"/>
-          </label>
-          <button id="btnDrill" class="btn primary">Trimite</button>
-        </div>
+        <!-- rând 1: CNP + familie -->
+        <form id="drillForm" class="space-y-3">
+          <div class="grid md:grid-cols-2 gap-3">
+            <div>
+              <label class="lbl">CNP</label>
+              <input class="input" name="cnp" maxlength="6" inputmode="numeric" required />
+            </div>
+            <div>
+              <label class="lbl">Familie</label>
+              <select class="input" name="family" id="familySelect">
+                <option value="">(fără)</option>
+                <option>Medelin Cartel</option>
+                <option>818</option>
+                <option>Stefanos Cartel</option>
+              </select>
+            </div>
+          </div>
 
-        <div class="subhead">Ultimele joburi</div>
-        <ul id="drillList" class="list two-line"></ul>
+          <!-- rând 2: Componente & cantități -->
+          <div class="grid md:grid-cols-4 gap-3">
+            <div>
+              <label class="lbl">Cadru</label>
+              <input class="input" type="number" name="cadru" value="0" min="0" />
+            </div>
+            <div>
+              <label class="lbl">Țeavă</label>
+              <input class="input" type="number" name="teava" value="0" min="0" />
+            </div>
+            <div>
+              <label class="lbl">Mecanism</label>
+              <input class="input" type="number" name="mecanism" value="0" min="0" />
+            </div>
+            <div>
+              <label class="lbl">Elemente de fixare</label>
+              <input class="input" type="number" name="fixare" value="0" min="0" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm text-slate-400">Metodă plată: <b class="text-slate-200">Bani murdari</b> (1000 $ / buc)</div>
+            <button class="btn-primary">Trimite</button>
+          </div>
+        </form>
+
+        <div class="mt-5">
+          <h3 class="font-medium mb-2">Ultimele joburi</h3>
+          <table class="tbl" id="drillTable">
+            <thead>
+              <tr>
+                <th>CNP</th><th>Familie</th>
+                <th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th>
+                <th>Metodă plată</th><th>Cost total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
-    <!-- DASHBOARD (simplu – listă taxe active + joburi; pentru statistici extra, extindem backend-ul) -->
-    <section class="card hidden" id="dashCard">
-      <h2>Dashboard</h2>
-      <div class="subhead">Taxe active</div>
-      <ul id="dashTaxe" class="list"></ul>
-
-      <div class="subhead">Ultimele joburi burghiu</div>
-      <ul id="dashDrill" class="list two-line"></ul>
-    </section>
-
-    <!-- ADMIN -->
-    <section class="card hidden" id="adminCard">
-      <div class="card-head">
-        <h2>Admin</h2>
-        <div class="pill">Doar ADMIN</div>
+    <!-- TAB: DASHBOARD -->
+    <section id="tab-dashboard" class="tab hidden space-y-6">
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="card-stat"><div class="stat-title">Bani murdari (total)</div><div id="statDirty" class="stat-num">0 $</div></div>
+        <div class="card-stat"><div class="stat-title">Tu păstrezi (50%)</div><div id="statKeep"  class="stat-num">0 $</div></div>
+        <div class="card-stat"><div class="stat-title">Către familie (50%)</div><div id="statFam"   class="stat-num">0 $</div></div>
       </div>
-      <div class="subhead">Sumar utilizatori (taxe + burghiu)</div>
-      <table class="table" id="admTable">
-        <thead>
-          <tr><th>User</th><th>Taxe ($)</th><th>Burghiu ($)</th><th>Total ($)</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-card rounded-xl border border-white/10 p-4">
+          <h3 class="font-medium mb-2">Producție pe familii (burghiu)</h3>
+          <canvas id="chartFamilies" height="200"></canvas>
+        </div>
+        <div class="bg-card rounded-xl border border-white/10 p-4">
+          <h3 class="font-medium mb-2">Bani murdari / săptămână</h3>
+          <canvas id="chartWeekly" height="200"></canvas>
+        </div>
+      </div>
     </section>
+
+    <!-- TAB: ADMIN -->
+    <section id="tab-admin" class="tab hidden space-y-4">
+      <div class="bg-card rounded-xl border border-white/10 p-4">
+        <div class="flex items-center gap-3">
+          <h2 class="font-semibold">Admin</h2>
+          <span class="text-xs text-slate-400">Doar ADMIN</span>
+        </div>
+
+        <div class="mt-3 grid md:grid-cols-[260px,1fr] gap-3">
+          <input id="searchInput" class="input" placeholder="Caută după username sau CNP" />
+          <div class="text-sm text-slate-400">Sumar utilizatori (taxe + burghiu)</div>
+        </div>
+
+        <div class="mt-3 overflow-auto">
+          <table class="tbl" id="admTable">
+            <thead><tr><th>User</th><th>Taxe ($)</th><th>Burghiu ($)</th><th>Total ($)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 
-  <div id="toast" class="toast hidden"></div>
-  <script src="/app.js"></script>
+  <!-- mici utilitare de stil -->
+  <style>
+    .input{ @apply w-full h-11 px-3 rounded-lg bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-white/20;}
+    .lbl{ @apply block text-xs mb-1 text-slate-400;}
+    .btn-primary{ @apply h-11 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium;}
+    .tabbtn[data-active="true"]{ @apply bg-white/10;}
+    .tbl{ @apply w-full text-sm border border-white/10 rounded-lg overflow-hidden;}
+    .tbl thead th{ @apply bg-white/10 px-3 py-2 text-left;}
+    .tbl tbody td{ @apply px-3 py-2 border-t border-white/5;}
+    .card-stat{ @apply bg-card rounded-xl border border-white/10 p-4;}
+    .stat-title{ @apply text-xs text-slate-400;}
+    .stat-num{ @apply text-2xl mt-1 font-semibold;}
+  </style>
+
+  <script src="app.js"></script>
 </body>
 </html>
