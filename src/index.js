@@ -12,11 +12,6 @@ import {
   CashType,
 } from "@prisma/client";
 
-// ---------- Prisma expected (verifică schema.prisma) ----------
-// model TaxEntry { payment String?  createdAt DateTime @default(now()) ... }
-// model DrillJob { cnp String @db.VarChar(6) createdAt DateTime @default(now()) ... }
-// --------------------------------------------------------------
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -43,7 +38,38 @@ app.get("/", (_req, res) =>
   res.sendFile(path.join(__dirname, "../public/index.html"))
 );
 
-// ---------- Util ----------
+// ------------------- SSE (live updates) -------------------
+const sseClients = new Set();
+/** trimite către toți clienții SSE */
+function sseBroadcast(event, payload = {}) {
+  const msg = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
+  sseClients.forEach((res) => {
+    try { res.write(msg); } catch { /* ignore */ }
+  });
+}
+app.get("/events", (req, res) => {
+  // antete SSE
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  // înregistrăm clientul
+  sseClients.add(res);
+
+  // heartbeat (pt. load balancers)
+  const hb = setInterval(() => {
+    try { res.write(`event: ping\ndata: {}\n\n`); } catch {}
+  }, 25000);
+
+  // cleanup la disconnect
+  req.on("close", () => {
+    clearInterval(hb);
+    sseClients.delete(res);
+  });
+});
+// ----------------------------------------------------------
+
 const FAMILIES = [
   { name: "Medelin Cartel", colorHex: "#ff7bac" },
   { name: "818", colorHex: "#cccccc" },
@@ -251,10 +277,17 @@ app.get(
 // ---------- TAXE ----------
 app.post("/taxe", auth(), async (req, res) => {
   try {
+    // AUDIT nu are voie să introducă
+    if ([Role.AUDIT].includes(req.user.role)) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+
     const { cnp, metoda, gratisFamilie } = req.body || {};
     if (!/^\d{1,6}$/.test(cnp || ""))
       return res.status(400).json({ error: "CNP invalid (max 6 cifre)" });
-    if (!["curat", "murdar", "otel", "praf", "gratis"].includes(metoda))
+
+    // Doar curat/murdar/gratis (otel/praf eliminate)
+    if (!["curat", "murdar", "gratis"].includes(metoda))
       return res.status(400).json({ error: "metodă invalidă" });
 
     // blocare dubluri 4h
@@ -273,22 +306,19 @@ app.post("/taxe", auth(), async (req, res) => {
     let material = null;
     let amount = 0;
     let familyId = null;
+    let payment = "Bani curați";
 
     if (metoda === "curat") {
-      currency = Currency.CLEAN; amount = 40000;
+      currency = Currency.CLEAN; amount = 40000; payment = "Bani curați";
     } else if (metoda === "murdar") {
-      currency = Currency.DIRTY; amount = 60000;
-    } else if (metoda === "otel") {
-      currency = Currency.MATERIAL; material = Material.OTEL; amount = 15;
-    } else if (metoda === "praf") {
-      currency = Currency.MATERIAL; material = Material.PRAF; amount = 25;
+      currency = Currency.DIRTY; amount = 60000; payment = "Bani murdari";
     } else if (metoda === "gratis") {
       if (!["Medelin Cartel", "818", "Stefanos Cartel"].includes(gratisFamilie))
         return res.status(400).json({ error: "familie invalidă pt. gratis" });
       const fam = await prisma.family.findUnique({ where: { name: gratisFamilie } });
       if (!fam) return res.status(400).json({ error: "familia nu există" });
       familyId = fam.id;
-      currency = Currency.CLEAN; material = null; amount = 0;
+      currency = Currency.CLEAN; material = null; amount = 0; payment = "GRATIS";
     }
 
     const entry = await prisma.taxEntry.create({
@@ -300,10 +330,13 @@ app.post("/taxe", auth(), async (req, res) => {
         validUntil: plusHours(4),
         cnp,
         userId: req.user.id,
-        payment: metoda,
+        payment,
         familyId,
       },
     });
+
+    // LIVE: notificăm clienții
+    sseBroadcast("taxe:new", { id: entry.id, cnp: entry.cnp });
 
     res.json({ ok: true, id: entry.id });
   } catch (e) {
@@ -324,13 +357,11 @@ app.get("/taxe", auth(), async (_req, res) => {
       id: r.id,
       cnp: r.cnp,
       tip:
-        r.currency === "CLEAN"
+        r.payment === "GRATIS"
+          ? "GRATIS"
+          : r.currency === "CLEAN"
           ? "Bani curați"
-          : r.currency === "DIRTY"
-          ? "Bani murdari"
-          : r.material === "OTEL"
-          ? "Oțel"
-          : "Praf de pușcă",
+          : "Bani murdari",
       amount: r.amount,
       metoda: r.payment,
       gratisFamilie: r.family?.name || null,
@@ -348,7 +379,12 @@ app.get("/taxe", auth(), async (_req, res) => {
 // ---------- BURGHIU ----------
 app.post("/drill", auth(), async (req, res) => {
   try {
-    const { cnp, part, family, quantity, cashType } = req.body || {};
+    // AUDIT nu are voie să introducă
+    if ([Role.AUDIT].includes(req.user.role)) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+
+    const { cnp, part, family, quantity } = req.body || {};
     if (!/^\d{1,6}$/.test(cnp || ""))
       return res.status(400).json({ error: "CNP invalid" });
     if (!["cadru", "teava", "mecanism", "fixare"].includes(part))
@@ -360,15 +396,14 @@ app.post("/drill", auth(), async (req, res) => {
     const fam = family ? await prisma.family.findUnique({ where: { name: family } }) : null;
     const famId = fam ? fam.id : null;
 
-    // Metodă plată: doar Bani murdari în UI; backend permite ambele pentru viitor
-    const isDirty = String(cashType || "DIRTY").toUpperCase() === "DIRTY";
-    const unitPrice = isDirty ? 1000 : 650;
+    // Doar bani murdari (1000$ / buc)
+    const unitPrice = 1000;
 
     const data = {
       cnp,
       processed: qty,
       cadru: 0, mecanism: 0, teava: 0, fixare: 0,
-      cashType: isDirty ? CashType.DIRTY : CashType.CLEAN,
+      cashType: CashType.DIRTY,
       unitPrice,
       userId: req.user.id,
       familyId: famId,
@@ -384,14 +419,17 @@ app.post("/drill", auth(), async (req, res) => {
     await prisma.taxEntry.create({
       data: {
         type: TaxType.BURGHIU,
-        currency: isDirty ? Currency.DIRTY : Currency.CLEAN,
+        currency: Currency.DIRTY,
         amount: qty * unitPrice,
         cnp,
         userId: req.user.id,
         familyId: famId,
-        payment: isDirty ? "Bani murdari" : "Bani curați",
+        payment: "Bani murdari",
       },
     });
+
+    // LIVE
+    sseBroadcast("drill:new", { id: job.id, cnp });
 
     res.json({ ok: true, id: job.id, cost: qty * unitPrice });
   } catch (e) {
@@ -416,7 +454,7 @@ app.get("/drill", auth(), async (_req, res) => {
         teava: j.teava,
         fixare: j.fixare,
         qty: j.processed,
-        metodaPlata: j.cashType === "DIRTY" ? "Bani murdari" : "Bani curați",
+        metodaPlata: "Bani murdari",
         costTotal: j.processed * j.unitPrice,
         family: j.family?.name || null,
         createdAt: j.createdAt,
@@ -435,9 +473,7 @@ app.get("/families", auth(false), async (_req, res) => {
   res.json(list);
 });
 
-// ---------- ADMIN & STATS ----------
-
-// /admin/stats?year=YYYY&week=WW -> sume per user (taxe + burghiu), split 50/50
+// ---------- ADMIN STATS (pe săptămână sau all-time) ----------
 app.get(
   "/admin/stats",
   auth(),
@@ -445,54 +481,30 @@ app.get(
   async (req, res) => {
     try {
       let whereTax = {};
-      let whereDrill = {};
       const y = Number(req.query.year);
       const w = Number(req.query.week);
       if (!Number.isNaN(y) && !Number.isNaN(w)) {
         const { start, end } = weekBounds(y, w);
         whereTax = { createdAt: { gte: start, lt: end } };
-        whereDrill = { createdAt: { gte: start, lt: end } };
       }
 
-      // Grupăm pe user
-      const users = await prisma.user.findMany({
-        select: { id: true, username: true },
-      });
+      const users = await prisma.user.findMany({ select: { id: true, username: true } });
 
-      // Sume taxe (TAXA & BURGHIU) din TaxEntry
       const taxAgg = await prisma.taxEntry.groupBy({
         by: ["userId"],
         _sum: { amount: true },
-        where: {
-          userId: { not: null },
-          ...whereTax,
-        },
-      });
-
-      // Dacă vrei doar BURGHIU separat, poți filtra type: TaxType.BURGHIU
-      const drillEntriesAgg = await prisma.taxEntry.groupBy({
-        by: ["userId"],
-        _sum: { amount: true },
-        where: {
-          userId: { not: null },
-          type: TaxType.BURGHIU,
-          ...whereTax,
-        },
+        where: { userId: { not: null }, payment: { not: "GRATIS" }, ...whereTax },
       });
 
       const byUserTotal = new Map(taxAgg.map(r => [r.userId, r._sum.amount || 0]));
-      const byUserDrill = new Map(drillEntriesAgg.map(r => [r.userId, r._sum.amount || 0]));
 
       const out = users.map(u => {
         const total = byUserTotal.get(u.id) || 0;
-        const drillOnly = byUserDrill.get(u.id) || 0;
         const userShare = Math.floor(total * 0.5);
         const familyShare = total - userShare;
         return {
           userId: u.id,
           username: u.username,
-          taxeAmount: (total - drillOnly), // din taxe pure (aproximativ)
-          drillAmount: drillOnly,
           total,
           userShare,
           familyShare,
@@ -506,58 +518,6 @@ app.get(
     }
   }
 );
-
-// /stats/operator -> totalurile utilizatorului curent + weekly (ultimele 12 săptămâni)
-app.get("/stats/operator", auth(), async (req, res) => {
-  try {
-    const uid = req.user.id;
-
-    // totaluri curente
-    const totals = await prisma.taxEntry.groupBy({
-      by: ["currency"],
-      _sum: { amount: true },
-      where: { userId: uid },
-    });
-    const sumClean = totals.find(x => x.currency === Currency.CLEAN)?._sum.amount || 0;
-    const sumDirty = totals.find(x => x.currency === Currency.DIRTY)?._sum.amount || 0;
-
-    // weekly ultimele 12 săptămâni (din TaxEntry)
-    const now = new Date();
-    const weeks = [];
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i * 7);
-      const { year, week } = isoYearWeek(d);
-      weeks.push({ year, week });
-    }
-    // elimină duplicate
-    const seen = new Set();
-    const uniqWeeks = weeks.filter(w => {
-      const k = `${w.year}-${w.week}`;
-      if (seen.has(k)) return false;
-      seen.add(k); return true;
-    }).reverse();
-
-    const weekly = [];
-    for (const { year, week } of uniqWeeks) {
-      const { start, end } = weekBounds(year, week);
-      const g = await prisma.taxEntry.aggregate({
-        _sum: { amount: true },
-        where: { userId: uid, createdAt: { gte: start, lt: end } },
-      });
-      weekly.push({ year, week, total: g._sum.amount || 0 });
-    }
-
-    res.json({
-      clean: sumClean,
-      dirty: sumDirty,
-      weekly,
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "eroare server" });
-  }
-});
 
 // ---------- Start ----------
 (async () => {
