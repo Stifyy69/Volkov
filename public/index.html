@@ -7,22 +7,8 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <nav class="nav">
-    <div class="brand">Volkov RP</div>
-    <div class="tabs">
-      <button class="tabbtn" data-tab="taxe">Taxe & Burghiu</button>
-      <button class="tabbtn" data-tab="dashboard">Dashboard</button>
-      <button class="tabbtn" data-tab="drillfamilies">Burghiu Familii</button>
-      <button class="tabbtn" data-tab="profile">My Profile</button>
-      <button class="tabbtn" data-tab="tables">Tabele All</button>
-      <button class="tabbtn" data-tab="admin">Admin</button>
-    </div>
-    <div class="userbox">
-      <span id="whoami"></span>
-      <button id="logoutBtn" class="danger">Logout</button>
-    </div>
-  </nav>
 
+  <!-- LOGIN / REGISTER -->
   <section id="auth" class="card">
     <h2>Autentificare</h2>
     <div class="grid2">
@@ -30,7 +16,7 @@
         <h3>Login</h3>
         <label>Username <input name="username" required></label>
         <label>Parolă <input name="password" type="password" required></label>
-        <button>Login</button>
+        <button class="primary sm">Login</button>
       </form>
       <form id="registerForm">
         <h3>Register</h3>
@@ -38,231 +24,258 @@
         <label>Username <input name="username" required></label>
         <label>Nickname <input name="nickname"></label>
         <label>Parolă <input name="password" type="password" required></label>
-        <label>CNP (max 6) <input name="cnp" maxlength="6" pattern="\\d{1,6}"></label>
-        <button>Register</button>
+        <!-- IMPORTANT: un singur backslash în HTML -->
+        <label>CNP (max 6) <input name="cnp" maxlength="6" pattern="\d{1,6}"></label>
+        <button class="primary sm">Register</button>
       </form>
     </div>
   </section>
 
-  <!-- TAB: Taxe & Burghiu -->
-  <section id="tab-taxe" class="tab">
-    <div class="card">
-      <div class="card-header">
-        <h3>Taxe</h3>
-        <span class="muted">live</span>
-      </div>
+  <!-- TOT APP-UL este ascuns până la login -->
+  <div id="app" class="hidden">
 
-      <form id="taxeForm" class="grid3">
-        <label>CNP
-          <input name="cnp" id="taxCnp" placeholder="ex: 51122" maxlength="6" pattern="\\d{1,6}" required>
-        </label>
-        <label>Tip plată
-          <select id="metodaSelect" name="metoda" class="select-dark" required>
-            <option value="" disabled selected>Alege...</option>
-            <option value="curat">Bani curați (40.000 $)</option>
-            <option value="murdar">Bani murdari (60.000 $)</option>
-            <option value="gratis">GRATIS</option>
-          </select>
-        </label>
-        <div id="gratisWrap" class="hidden">
-          <label>Familie (doar la Gratis)
-            <select name="gratisFamilie">
-              <option>Medelin Cartel</option>
-              <option>818</option>
-              <option>Stefanos Cartel</option>
+    <nav class="nav">
+      <div class="brand">Volkov RP</div>
+      <div class="tabs">
+        <button class="tabbtn" data-tab="taxe">Taxe & Burghiu</button>
+        <button class="tabbtn" data-tab="dashboard">Dashboard</button>
+        <button class="tabbtn" data-tab="drillfamilies">Burghiu Familii</button>
+        <button class="tabbtn" data-tab="profile">My Profile</button>
+        <button class="tabbtn" data-tab="tables">Tabele All</button>
+        <button class="tabbtn" data-tab="admin">Admin</button>
+      </div>
+      <div class="userbox">
+        <span id="whoami"></span>
+        <button id="logoutBtn" class="danger sm">Logout</button>
+      </div>
+    </nav>
+
+    <!-- TAB: Taxe & Burghiu -->
+    <section id="tab-taxe" class="tab">
+      <div class="card">
+        <div class="card-header">
+          <h3>Taxe</h3>
+          <span class="muted">live</span>
+        </div>
+
+        <form id="taxeForm" class="grid3 slim">
+          <label>CNP
+            <input name="cnp" id="taxCnp" placeholder="ex: 51122" maxlength="6" pattern="\d{1,6}" required>
+          </label>
+          <label>Tip plată
+            <!-- dropdown negru cu text alb -->
+            <select id="metodaSelect" name="metoda" class="select-dark" required>
+              <option value="" disabled selected>Alege...</option>
+              <option value="curat">Bani curați (40.000 $)</option>
+              <option value="murdar">Bani murdari (60.000 $)</option>
+              <option value="gratis">GRATIS</option>
             </select>
           </label>
-        </div>
-        <div></div><div></div>
-        <button class="primary right">Trimite taxă</button>
-      </form>
-
-      <div class="split">
-        <h4>Taxe active</h4>
-        <input id="taxSearch" placeholder="Caută CNP..." />
-      </div>
-      <table id="taxeTable" class="table">
-        <thead><tr><th>CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h3>Burghiu</h3>
-      <form id="drillForm" class="grid2">
-        <label>CNP <input name="cnp" maxlength="6" pattern="\\d{1,6}" required></label>
-        <label>Familie
-          <select name="family">
-            <option value="">(fără)</option>
-            <option>Medelin Cartel</option>
-            <option>Stefanos Cartel</option>
-            <option>Bogota Thugs</option>
-            <option>LowLine</option>
-            <option>Casa Blanca</option>
-            <option>LaPuentes</option>
-            <option>Mali Strip</option>
-            <option>Garda Veche</option>
-            <option>NDR</option>
-            <option>Velvet</option>
-            <option>Santos Gruppo</option>
-            <option>Mayans MC</option>
-            <option>La CosaNostra</option>
-            <option>Hells Riders</option>
-            <option>BACM</option>
-          </select>
-        </label>
-        <label>Cadru <input name="cadru" type="number" min="0" value="0"></label>
-        <label>Țeavă <input name="teava" type="number" min="0" value="0"></label>
-        <label>Mecanism <input name="mecanism" type="number" min="0" value="0"></label>
-        <label>Elemente de fixare <input name="fixare" type="number" min="0" value="0"></label>
-        <div class="full muted">Metodă plată: <b>Bani murdari</b> (1000 $ / buc)</div>
-        <button class="primary right">Trimite</button>
-      </form>
-
-      <h4>Ultimele joburi</h4>
-      <table id="drillTable" class="table">
-        <thead>
-          <tr><th>CNP</th><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Metodă plată</th><th>Cost total</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- TAB: Dashboard -->
-  <section id="tab-dashboard" class="tab hidden">
-    <div class="card">
-      <div class="split">
-        <h3>Dashboard (pe săptămână)</h3>
-        <select id="dashWeekPicker"></select>
-      </div>
-      <div class="stats">
-        <div>Taxe – Curat: <b id="statTaxClean">0 $</b></div>
-        <div>Taxe – Murdar: <b id="statTaxDirty">0 $</b></div>
-        <div>Total piese burghiu: <b id="statDrillPieces">0</b></div>
-      </div>
-
-      <h4>Taxe pe zile (săptămâna selectată)</h4>
-      <table id="dashDailyTable" class="table">
-        <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <div class="grid2">
-        <div>
-          <h4>Top CNP-uri – Taxe</h4>
-          <table id="topCnpTaxe" class="table">
-            <thead><tr><th>CNP</th><th>User</th><th>Nr. taxe</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div>
-          <h4>Top CNP-uri – Burghiu</h4>
-          <table id="topCnpDrill" class="table">
-            <thead><tr><th>CNP</th><th>User</th><th>Valoare</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-
-      <h4>Familii – Burghiu (săptămână)</h4>
-      <table id="drillFamiliesTable" class="table">
-        <thead><tr><th>Familie</th><th>Total piese</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- TAB: Burghiu Familii -->
-  <section id="tab-drillfamilies" class="tab hidden">
-    <div class="card">
-      <div class="split">
-        <h3>Burghiu – Familii</h3>
-        <div class="inline">
-          <label><input type="radio" name="bfPeriod" value="week" checked> Săptămână</label>
-          <label><input type="radio" name="bfPeriod" value="all"> All time</label>
-          <select id="bfWeekPicker"></select>
-        </div>
-      </div>
-      <table id="bfTable" class="table">
-        <thead><tr><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- TAB: My Profile -->
-  <section id="tab-profile" class="tab hidden">
-    <div class="card">
-      <div class="split">
-        <h3>My Profile</h3>
-        <select id="profWeekPicker"></select>
-      </div>
-      <div id="myProfileStats" class="stats"></div>
-
-      <details class="mt">
-        <summary>Reset password</summary>
-        <form id="resetForm" class="grid3">
-          <label>Parola veche <input name="oldPassword" type="password" required></label>
-          <label>Parola nouă <input name="newPassword" type="password" required></label>
-          <button class="primary">Schimbă</button>
+          <div id="gratisWrap" class="hidden">
+            <label>Familie (doar la Gratis)
+              <select name="gratisFamilie">
+                <option>Medelin Cartel</option>
+                <option>818</option>
+                <option>Stefanos Cartel</option>
+              </select>
+            </label>
+          </div>
+          <div></div><div></div>
+          <button class="primary sm right">Trimite taxă</button>
         </form>
-      </details>
-    </div>
-  </section>
 
-  <!-- TAB: Tabele All -->
-  <section id="tab-tables" class="tab hidden">
-    <div class="card">
-      <div class="split">
-        <h3>Tabele (Admin/Head)</h3>
+        <div class="split">
+          <h4>Taxe active</h4>
+          <input id="taxSearch" class="sm" placeholder="Caută CNP..." />
+        </div>
+        <table id="taxeTable" class="table compact">
+          <thead><tr><th>CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Burghiu</h3>
+        <!-- un rând: CNP + Familie; rândul 2: cele 4 cantități -->
+        <form id="drillForm" class="grid2 slim">
+          <label>CNP <input name="cnp" maxlength="6" pattern="\d{1,6}" required></label>
+          <label>Familie
+            <select name="family">
+              <option value="">(fără)</option>
+              <option>Medelin Cartel</option>
+              <option>Stefanos Cartel</option>
+              <option>818</option>
+              <option>Bogota Thugs</option>
+              <option>LowLine</option>
+              <option>Casa Blanca</option>
+              <option>LaPuentes</option>
+              <option>Mali Strip</option>
+              <option>Garda Veche</option>
+              <option>NDR</option>
+              <option>Velvet</option>
+              <option>Santos Gruppo</option>
+              <option>Mayans MC</option>
+              <option>La CosaNostra</option>
+              <option>Hells Riders</option>
+              <option>BACM</option>
+            </select>
+          </label>
+
+          <label>Cadru <input name="cadru" type="number" min="0" value="0"></label>
+          <label>Țeavă <input name="teava" type="number" min="0" value="0"></label>
+          <label>Mecanism <input name="mecanism" type="number" min="0" value="0"></label>
+          <label>Elemente de fixare <input name="fixare" type="number" min="0" value="0"></label>
+
+          <div class="full muted">Metodă plată: <b>Bani murdari</b> (1000 $ / buc). <b>Gratis</b> dacă familia este 818 / Medelin / Stefanos.</div>
+          <button class="primary sm right">Trimite</button>
+        </form>
+
+        <h4>Ultimele joburi</h4>
+        <table id="drillTable" class="table compact">
+          <thead>
+            <tr><th>CNP</th><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Metodă plată</th><th>Cost total</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB: Dashboard -->
+    <section id="tab-dashboard" class="tab hidden">
+      <div class="card">
+        <div class="split">
+          <h3>Dashboard (pe săptămână)</h3>
+          <select id="dashWeekPicker" class="sm"></select>
+        </div>
+        <div class="stats">
+          <div>Taxe – Curat: <b id="statTaxClean">0 $</b></div>
+          <div>Taxe – Murdar: <b id="statTaxDirty">0 $</b></div>
+          <div>Total piese burghiu: <b id="statDrillPieces">0</b></div>
+        </div>
+
+        <h4>Taxe pe zile (săptămâna selectată)</h4>
+        <table id="dashDailyTable" class="table compact">
+          <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="grid2">
+          <div>
+            <h4>Top Useri – Taxe</h4>
+            <table id="topCnpTaxe" class="table compact">
+              <thead><tr><th>User</th><th>Nr. taxe</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Top Useri – Burghiu</h4>
+            <table id="topCnpDrill" class="table compact">
+              <thead><tr><th>User</th><th>Valoare</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h4>Familii – Burghiu (săptămână)</h4>
+        <table id="drillFamiliesTable" class="table compact">
+          <thead><tr><th>Familie</th><th>Total piese</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB: Burghiu Familii -->
+    <section id="tab-drillfamilies" class="tab hidden">
+      <div class="card">
+        <div class="split">
+          <h3>Burghiu – Familii</h3>
+          <div class="inline">
+            <label><input type="radio" name="bfPeriod" value="week" checked> Săptămână</label>
+            <label><input type="radio" name="bfPeriod" value="all"> All time</label>
+            <select id="bfWeekPicker" class="sm"></select>
+          </div>
+        </div>
+        <table id="bfTable" class="table compact">
+          <thead><tr><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB: My Profile -->
+    <section id="tab-profile" class="tab hidden">
+      <div class="card">
+        <div class="split">
+          <h3>My Profile</h3>
+          <select id="profWeekPicker" class="sm"></select>
+        </div>
+        <div id="myProfileStats" class="stats"></div>
+
+        <details class="mt">
+          <summary>Reset password</summary>
+          <form id="resetForm" class="grid3 slim">
+            <label>Parola veche <input name="oldPassword" type="password" required></label>
+            <label>Parola nouă <input name="newPassword" type="password" required></label>
+            <button class="primary sm">Schimbă</button>
+          </form>
+        </details>
+      </div>
+    </section>
+
+    <!-- TAB: Tabele All -->
+    <section id="tab-tables" class="tab hidden">
+      <div class="card">
+        <div class="split">
+          <h3>Tabele (Admin/Head)</h3>
+          <div class="inline">
+            <select id="tblType" class="sm">
+              <option value="taxe">Taxe</option>
+              <option value="drill">Burghiu</option>
+            </select>
+            <select id="tblWeekPicker" class="sm"></select>
+            <input id="tblFilterUser" class="sm" placeholder="user..." />
+            <input id="tblFilterCnp" class="sm" placeholder="CNP..." />
+            <input id="tblFilterFamily" class="sm" placeholder="Familie..." />
+            <button id="tblRefresh" class="sm">Caută</button>
+          </div>
+        </div>
+        <table id="tblAll" class="table compact">
+          <thead id="tblHead"></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB: Admin -->
+    <section id="tab-admin" class="tab hidden">
+      <div class="card">
+        <div class="split">
+          <h3>Admin – Split & Invites</h3>
+          <select id="weekSelect" class="sm"></select>
+        </div>
+
+        <h4>Sumar utilizatori (50% user / 50% familie)</h4>
+        <table id="admTable" class="table compact">
+          <thead><tr><th>User</th><th>User 50%</th><th>Familie 50%</th><th>Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <h4 class="mt">Invite link</h4>
         <div class="inline">
-          <select id="tblType">
-            <option value="taxe">Taxe</option>
-            <option value="drill">Burghiu</option>
+          <select id="inviteRole" class="sm">
+            <option>OPERATOR</option>
+            <option>HEAD_OPERATOR</option>
+            <option>ADMIN</option>
+            <option>AUDIT</option>
           </select>
-          <select id="tblWeekPicker"></select>
-          <input id="tblFilterUser" placeholder="user..." />
-          <input id="tblFilterCnp" placeholder="CNP..." />
-          <input id="tblFilterFamily" placeholder="Familie..." />
-          <button id="tblRefresh">Caută</button>
+          <button id="inviteBtn" class="sm">Generează</button>
+          <input id="inviteResult" readonly placeholder="link/code" class="sm" />
+          <button id="inviteCopy" class="sm">Copiază</button>
         </div>
       </div>
-      <table id="tblAll" class="table">
-        <thead id="tblHead"></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
+    </section>
 
-  <!-- TAB: Admin -->
-  <section id="tab-admin" class="tab hidden">
-    <div class="card">
-      <div class="split">
-        <h3>Admin – Split & Invites</h3>
-        <select id="weekSelect"></select>
-      </div>
-
-      <h4>Sumar utilizatori (50% user / 50% familie)</h4>
-      <table id="admTable" class="table">
-        <thead><tr><th>User</th><th>User 50%</th><th>Familie 50%</th><th>Total</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <h4 class="mt">Invite link</h4>
-      <div class="inline">
-        <select id="inviteRole">
-          <option>OPERATOR</option>
-          <option>HEAD_OPERATOR</option>
-          <option>ADMIN</option>
-          <option>AUDIT</option>
-        </select>
-        <button id="inviteBtn">Generează</button>
-        <input id="inviteResult" readonly placeholder="link/code" />
-        <button id="inviteCopy">Copiază</button>
-      </div>
-    </div>
-  </section>
+  </div>
 
   <script src="app.js"></script>
 </body>
