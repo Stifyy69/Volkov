@@ -8,7 +8,6 @@
 </head>
 <body>
 
-  <!-- LOGIN / REGISTER -->
   <section id="auth" class="card">
     <h2>Autentificare</h2>
     <div class="grid2">
@@ -24,14 +23,12 @@
         <label>Username <input name="username" required></label>
         <label>Nickname <input name="nickname"></label>
         <label>Parolă <input name="password" type="password" required></label>
-        <!-- IMPORTANT: un singur backslash în HTML -->
         <label>CNP (max 6) <input name="cnp" maxlength="6" pattern="\d{1,6}"></label>
         <button class="primary sm">Register</button>
       </form>
     </div>
   </section>
 
-  <!-- TOT APP-UL este ascuns până la login -->
   <div id="app" class="hidden">
 
     <nav class="nav">
@@ -50,7 +47,6 @@
       </div>
     </nav>
 
-    <!-- TAB: Taxe & Burghiu -->
     <section id="tab-taxe" class="tab">
       <div class="card">
         <div class="card-header">
@@ -63,7 +59,6 @@
             <input name="cnp" id="taxCnp" placeholder="ex: 51122" maxlength="6" pattern="\d{1,6}" required>
           </label>
           <label>Tip plată
-            <!-- dropdown negru cu text alb -->
             <select id="metodaSelect" name="metoda" class="select-dark" required>
               <option value="" disabled selected>Alege...</option>
               <option value="curat">Bani curați (40.000 $)</option>
@@ -96,7 +91,6 @@
 
       <div class="card">
         <h3>Burghiu</h3>
-        <!-- un rând: CNP + Familie; rândul 2: cele 4 cantități -->
         <form id="drillForm" class="grid2 slim">
           <label>CNP <input name="cnp" maxlength="6" pattern="\d{1,6}" required></label>
           <label>Familie
@@ -140,7 +134,6 @@
       </div>
     </section>
 
-    <!-- TAB: Dashboard -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
         <div class="split">
@@ -184,7 +177,6 @@
       </div>
     </section>
 
-    <!-- TAB: Burghiu Familii -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
         <div class="split">
@@ -202,7 +194,6 @@
       </div>
     </section>
 
-    <!-- TAB: My Profile -->
     <section id="tab-profile" class="tab hidden">
       <div class="card">
         <div class="split">
@@ -222,7 +213,6 @@
       </div>
     </section>
 
-    <!-- TAB: Tabele All -->
     <section id="tab-tables" class="tab hidden">
       <div class="card">
         <div class="split">
@@ -246,7 +236,6 @@
       </div>
     </section>
 
-    <!-- TAB: Admin -->
     <section id="tab-admin" class="tab hidden">
       <div class="card">
         <div class="split">
