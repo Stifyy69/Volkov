@@ -52,10 +52,12 @@
     <section id="tab-taxe" class="tab">
       <div class="card">
         <h3>Taxe</h3>
+
         <form id="taxeForm" class="row">
           <label class="w-260">CNP
             <input name="cnp" id="taxCnp" placeholder="ex: 51122" maxlength="6" pattern="\d{1,6}" required>
           </label>
+
           <label class="w-280">Tip plată
             <select id="metodaSelect" name="metoda" class="select-dark" required>
               <option value="" disabled selected>Alege...</option>
@@ -64,6 +66,7 @@
               <option value="gratis">GRATIS</option>
             </select>
           </label>
+
           <div id="gratisWrap" class="hidden w-280">
             <label>Familie (doar la Gratis)
               <select name="gratisFamilie">
@@ -73,23 +76,29 @@
               </select>
             </label>
           </div>
-          <button class="primary xs">Trimite taxă</button>
+
+          <button class="primary xs w-180 align-end">Trimite taxă</button>
         </form>
 
-        <div class="controls-row">
+        <div class="stack">
           <h4>Taxe active</h4>
           <input id="taxSearch" class="xs w-220" placeholder="Caută CNP..." />
         </div>
+
         <table id="taxeTable" class="table compact">
-          <thead><tr><th class="left">CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
+          <thead>
+            <tr><th class="left">CNP</th><th>Sumă</th><th>Timp (hh/mm)</th><th class="left">User</th></tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>
 
       <div class="card">
         <h3>Burghiu</h3>
+
         <form id="drillForm" class="row">
           <label class="w-260">CNP <input name="cnp" maxlength="6" pattern="\d{1,6}" required></label>
+
           <label class="w-260">Familie
             <select name="family">
               <option value="">(fără)</option>
@@ -100,17 +109,29 @@
               <option>Mayans MC</option><option>La CosaNostra</option><option>Hells Riders</option><option>BACM</option>
             </select>
           </label>
+
           <label class="w-160">Cadru <input name="cadru" type="number" min="0" value="0"></label>
           <label class="w-160">Țeavă <input name="teava" type="number" min="0" value="0"></label>
           <label class="w-160">Mecanism <input name="mecanism" type="number" min="0" value="0"></label>
-          <label class="w-160">Fixare <input name="fixare" type="number" min="0" value="0"></label>
-          <div class="hint">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru 818 / Medelin / Stefanos.</div>
-          <button class="primary xs">Trimite</button>
+          <label class="w-160">Elemente de fixare <input name="fixare" type="number" min="0" value="0"></label>
+
+          <button class="primary xs w-180 align-end">Trimite</button>
         </form>
+
+        <!-- hint sub formular, înainte de tabel -->
+        <div class="hint spacing">
+          Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru 818 / Medelin / Stefanos.
+        </div>
 
         <h4>Ultimele joburi</h4>
         <table id="drillTable" class="table compact">
-          <thead><tr><th class="left">CNP</th><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Plată</th><th>Cost</th></tr></thead>
+          <thead>
+            <tr>
+              <th class="left">CNP</th><th class="left">Familie</th>
+              <th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Elemente de fixare</th>
+              <th>Plată</th><th>Cost</th><th class="left">User</th>
+            </tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>
@@ -162,7 +183,7 @@
           <input id="famSearch" class="xs w-220" placeholder="Caută familie..." />
         </div>
         <table id="drillFamiliesTable" class="table compact">
-          <thead><tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
+          <thead><tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Elemente de fixare</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -181,7 +202,7 @@
           </div>
         </div>
         <table id="bfTable" class="table compact">
-          <thead><tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
+          <thead><tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Elemente de fixare</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
