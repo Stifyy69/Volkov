@@ -14,6 +14,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:
 .form-compact label{max-width:280px}
 .hint{color:var(--muted);font-size:.9rem;align-self:center}
 .mt{margin-top:10px}
+.ml-8{margin-left:8px}
 
 label{display:flex;flex-direction:column;gap:6px;font-size:.95rem}
 input,select,button{border-radius:10px;border:1px solid var(--border);background:#0e141b;color:var(--text);padding:8px 10px}
@@ -30,9 +31,13 @@ button.danger{background:#1a0f11;border-color:#3b0d12;color:#fda4af}
 .tabbtn[data-active="true"]{background:var(--primary);border-color:var(--primary);color:white}
 .userbox{display:flex;align-items:center;gap:8px}
 
+.controls-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.radio-box{display:flex;align-items:center;gap:8px}
+
 .table{width:100%;border-collapse:collapse;background:#0a0f14;border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.table thead th{background:#0e1620;color:#9fb3c8;text-align:left;font-weight:600;border-bottom:1px solid var(--border);padding:8px}
-.table tbody td{border-bottom:1px solid #101822;padding:8px}
+.table thead th{background:#0e1620;color:#9fb3c8;text-align:center;font-weight:600;border-bottom:1px solid var(--border);padding:8px}
+.table tbody td{border-bottom:1px solid #101822;padding:8px;text-align:center}
+.table th.left,.table td.left{text-align:left}
 .table tr:hover{background:#0c131b}
 .table.compact td,.table.compact th{padding:8px}
 
@@ -45,4 +50,5 @@ button.danger{background:#1a0f11;border-color:#3b0d12;color:#fda4af}
 @media (max-width:1000px){
   .grid2{grid-template-columns:1fr}
   .row{gap:8px}
+  .controls-row{flex-direction:column;align-items:flex-start}
 }
