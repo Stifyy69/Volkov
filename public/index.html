@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- AUTH ONLY -->
+  <!-- AUTH -->
   <section id="auth" class="card">
     <h2>Autentificare</h2>
     <div class="grid2">
@@ -76,12 +76,12 @@
           <button class="primary xs">Trimite taxă</button>
         </form>
 
-        <div class="split">
+        <div class="controls-row">
           <h4>Taxe active</h4>
           <input id="taxSearch" class="xs w-220" placeholder="Caută CNP..." />
         </div>
         <table id="taxeTable" class="table compact">
-          <thead><tr><th>CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
+          <thead><tr><th class="left">CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -100,17 +100,17 @@
               <option>Mayans MC</option><option>La CosaNostra</option><option>Hells Riders</option><option>BACM</option>
             </select>
           </label>
-          <label class="w-180">Cadru <input name="cadru" type="number" min="0" value="0"></label>
-          <label class="w-180">Țeavă <input name="teava" type="number" min="0" value="0"></label>
-          <label class="w-180">Mecanism <input name="mecanism" type="number" min="0" value="0"></label>
-          <label class="w-180">Fixare <input name="fixare" type="number" min="0" value="0"></label>
-          <div class="hint">Metodă plată: <b>Bani murdari</b> (1000 $ / buc). <b>Gratis</b> pentru 818 / Medelin / Stefanos.</div>
+          <label class="w-160">Cadru <input name="cadru" type="number" min="0" value="0"></label>
+          <label class="w-160">Țeavă <input name="teava" type="number" min="0" value="0"></label>
+          <label class="w-160">Mecanism <input name="mecanism" type="number" min="0" value="0"></label>
+          <label class="w-160">Fixare <input name="fixare" type="number" min="0" value="0"></label>
+          <div class="hint">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru 818 / Medelin / Stefanos.</div>
           <button class="primary xs">Trimite</button>
         </form>
 
         <h4>Ultimele joburi</h4>
         <table id="drillTable" class="table compact">
-          <thead><tr><th>CNP</th><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Plată</th><th>Cost</th></tr></thead>
+          <thead><tr><th class="left">CNP</th><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Plată</th><th>Cost</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -119,26 +119,24 @@
     <!-- DASHBOARD -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
-        <div class="split">
+        <div class="controls-row">
           <h3>Dashboard</h3>
-          <div class="inline">
-            <div id="dashPeriodBox" class="hidden">
-              <label><input type="radio" name="dashPeriod" value="week" checked> Săptămână</label>
-              <label><input type="radio" name="dashPeriod" value="all"> All time</label>
-            </div>
+          <div class="radio-box">
+            <label><input type="radio" name="dashPeriod" value="week" checked> Săptămână</label>
             <select id="dashWeekPicker" class="xs"></select>
+            <label class="ml-8"><input type="radio" name="dashPeriod" value="all"> All time</label>
           </div>
         </div>
 
         <div class="stats">
-          <div>Taxe curat: <b id="statTaxClean">0 $</b></div>
-          <div>Taxe murdar: <b id="statTaxDirty">0 $</b></div>
+          <div>Taxe – Bani curați: <b id="statTaxClean">0 $</b></div>
+          <div>Taxe+Burghiu – Bani murdari: <b id="statTaxDirty">0 $</b></div>
           <div>Total piese burghiu: <b id="statDrillPieces">0</b></div>
         </div>
 
         <h4>Taxe pe zile (săptămâna selectată)</h4>
         <table id="dashDailyTable" class="table compact">
-          <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
+          <thead><tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
           <tbody></tbody>
         </table>
 
@@ -146,25 +144,25 @@
           <div>
             <h4>Top Useri – Taxe</h4>
             <table id="topCnpTaxe" class="table compact">
-              <thead><tr><th>User</th><th>Nr. taxe</th></tr></thead>
+              <thead><tr><th class="left">User</th><th>Nr. taxe</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
           <div>
-            <h4>Top Useri – Burghiu</h4>
+            <h4>Top Useri – Burghiu (valoare)</h4>
             <table id="topCnpDrill" class="table compact">
-              <thead><tr><th>User</th><th>Valoare</th></tr></thead>
+              <thead><tr><th class="left">User</th><th>Valoare</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
         </div>
 
-        <div class="split">
+        <div class="controls-row">
           <h4>Familii – Burghiu (pe componente)</h4>
           <input id="famSearch" class="xs w-220" placeholder="Caută familie..." />
         </div>
         <table id="drillFamiliesTable" class="table compact">
-          <thead><tr><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
+          <thead><tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -173,17 +171,17 @@
     <!-- BURGHIU FAMILII (ADMIN) -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
-        <div class="split">
+        <div class="controls-row">
           <h3>Burghiu – Familii (Admin)</h3>
-          <div class="inline">
+          <div class="radio-box">
             <label><input type="radio" name="bfPeriod" value="week" checked> Săptămână</label>
-            <label><input type="radio" name="bfPeriod" value="all"> All time</label>
             <select id="bfWeekPicker" class="xs"></select>
-            <input id="bfSearch" class="xs w-220" placeholder="Caută familie..." />
+            <label class="ml-8"><input type="radio" name="bfPeriod" value="all"> All time</label>
+            <input id="bfSearch" class="xs w-220 ml-8" placeholder="Caută familie..." />
           </div>
         </div>
         <table id="bfTable" class="table compact">
-          <thead><tr><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
+          <thead><tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -192,31 +190,35 @@
     <!-- MY PROFILE -->
     <section id="tab-profile" class="tab hidden">
       <div class="card">
-        <div class="split">
+        <div class="controls-row">
           <h3>My Profile</h3>
-          <select id="profWeekPicker" class="xs"></select>
+          <div class="radio-box">
+            <label><input type="radio" name="profPeriod" value="week" checked> Săptămână</label>
+            <select id="profWeekPicker" class="xs"></select>
+            <label class="ml-8"><input type="radio" name="profPeriod" value="all"> All time</label>
+          </div>
         </div>
 
         <h4>Taxe pe zile</h4>
         <table id="profDailyTable" class="table compact">
-          <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Curat</th><th>Murdar</th></tr></thead>
+          <thead><tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
           <tbody></tbody>
         </table>
 
         <div class="stats">
-          <div>Total curat: <b id="profClean">0 $</b></div>
-          <div>Total murdar: <b id="profDirty">0 $</b></div>
+          <div>Total Bani curați: <b id="profClean">0 $</b></div>
+          <div>Total Bani murdari (taxe + burghiu): <b id="profDirty">0 $</b></div>
           <div>Piese burghiu: <b id="profPieces">0</b></div>
           <div>Bani burghiu: <b id="profDrillMoney">0 $</b></div>
         </div>
 
         <h4>Split 50/50</h4>
         <table class="table compact">
-          <thead><tr><th></th><th>User 50%</th><th>Familie 50%</th><th>Total</th></tr></thead>
+          <thead><tr><th class="left"></th><th>User 50%</th><th>Familie 50%</th><th>Total</th></tr></thead>
           <tbody>
-            <tr><td>Curat</td><td id="splitCleanUser">0 $</td><td id="splitCleanFam">0 $</td><td id="splitCleanTot">0 $</td></tr>
-            <tr><td>Murdar</td><td id="splitDirtyUser">0 $</td><td id="splitDirtyFam">0 $</td><td id="splitDirtyTot">0 $</td></tr>
-            <tr><td>Tot</td><td id="splitAllUser">0 $</td><td id="splitAllFam">0 $</td><td id="splitAllTot">0 $</td></tr>
+            <tr><td>Bani curați</td><td id="splitCleanUser">0 $</td><td id="splitCleanFam">0 $</td><td id="splitCleanTot">0 $</td></tr>
+            <tr><td>Bani murdari</td><td id="splitDirtyUser">0 $</td><td id="splitDirtyFam">0 $</td><td id="splitDirtyTot">0 $</td></tr>
+            <tr><td>Total</td><td id="splitAllUser">0 $</td><td id="splitAllFam">0 $</td><td id="splitAllTot">0 $</td></tr>
           </tbody>
         </table>
 
@@ -234,14 +236,18 @@
     <!-- Tabele All -->
     <section id="tab-tables" class="tab hidden">
       <div class="card">
-        <div class="split">
+        <div class="controls-row">
           <h3>Tabele (Admin/Head)</h3>
           <div class="inline">
             <select id="tblType" class="xs">
               <option value="taxe">Taxe</option>
               <option value="drill">Burghiu</option>
             </select>
-            <select id="tblWeekPicker" class="xs"></select>
+            <div class="radio-box">
+              <label><input type="radio" name="tblPeriod" value="week" checked> Săptămână</label>
+              <select id="tblWeekPicker" class="xs"></select>
+              <label class="ml-8"><input type="radio" name="tblPeriod" value="all"> All time</label>
+            </div>
             <input id="tblFilterUser" class="xs w-160" placeholder="user..." />
             <input id="tblFilterCnp" class="xs w-140" placeholder="CNP..." />
             <input id="tblFilterFamily" class="xs w-160" placeholder="Familie..." />
@@ -258,21 +264,25 @@
     <!-- ADMIN -->
     <section id="tab-admin" class="tab hidden">
       <div class="card">
-        <div class="split">
+        <div class="controls-row">
           <h3>Admin – Split</h3>
-          <select id="weekSelect" class="xs"></select>
+          <div class="radio-box">
+            <label><input type="radio" name="admPeriod" value="week" checked> Săptămână</label>
+            <select id="weekSelect" class="xs"></select>
+            <label class="ml-8"><input type="radio" name="admPeriod" value="all"> All time</label>
+          </div>
         </div>
 
         <table id="admTable" class="table compact">
           <thead>
             <tr>
-              <th>User</th>
-              <th>User 50% (curat)</th>
-              <th>User 50% (murdar)</th>
-              <th>Fam 50% (curat)</th>
-              <th>Fam 50% (murdar)</th>
-              <th>Total curat</th>
-              <th>Total murdar</th>
+              <th class="left">User</th>
+              <th>User 50% (curați)</th>
+              <th>User 50% (murdari)</th>
+              <th>Familie 50% (curați)</th>
+              <th>Familie 50% (murdari)</th>
+              <th>Total curați</th>
+              <th>Total murdari</th>
               <th>Total</th>
             </tr>
           </thead>
