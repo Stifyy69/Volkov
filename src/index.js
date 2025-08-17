@@ -22,7 +22,6 @@ const HOST = "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET || "change-me";
 const FRONT_ORIGIN = process.env.FRONT_ORIGIN || "*";
 
-// -------- middleware
 app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", FRONT_ORIGIN);
@@ -90,7 +89,7 @@ function requireRole(...roles) {
   };
 }
 
-// ----- SSE
+// ===== SSE
 const clients = new Set();
 function broadcast(event, data = {}) {
   const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -177,14 +176,14 @@ app.get("/invites", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), async (
   res.json(list);
 });
 
-// ===== TAXE (NUMAI curat/murdar/gratis). AUDIT NU poate crea.
+// ===== TAXE (doar curat/murdar/gratis) – AUDIT nu poate crea
 app.post("/taxe", auth(), requireRole(Role.OPERATOR, Role.HEAD_OPERATOR, Role.ADMIN), async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
     if (!/^\d{1,6}$/.test(cnp || "")) return res.status(400).json({ error: "CNP invalid" });
     if (!["curat", "murdar", "gratis"].includes(metoda)) return res.status(400).json({ error: "metodă invalidă" });
 
-    // nu permitem dublură activă pe CNP (4h)
+    // nu dublăm taxa pe 4 ore
     const now = new Date();
     const existing = await prisma.taxEntry.findFirst({
       where: { type: TaxType.TAXA, cnp, validUntil: { gt: now } },
@@ -238,7 +237,8 @@ app.get("/taxe", auth(), async (_, res) => {
   } catch { res.status(500).json({ error: "eroare server" }); }
 });
 
-// ===== BURGHIU (o singură înregistrare cu toate componentele; 818/Medelin/Stefanos = GRATIS). AUDIT NU poate crea.
+// ===== BURGHIU (o singură înregistrare cu toate componentele) – AUDIT nu poate crea
+// Banii de la burghiu sunt „Bani murdari” (1000$/buc), dar GRATIS pentru 818/Medelin/Stefanos.
 app.post("/drill", auth(), requireRole(Role.OPERATOR, Role.HEAD_OPERATOR, Role.ADMIN), async (req, res) => {
   try {
     const { cnp, family, cadru = 0, teava = 0, mecanism = 0, fixare = 0 } = req.body || {};
@@ -251,8 +251,7 @@ app.post("/drill", auth(), requireRole(Role.OPERATOR, Role.HEAD_OPERATOR, Role.A
     if (!qty) return res.status(400).json({ error: "cantități invalide" });
 
     const isGratis = fam && FREE_FAMILIES.has(fam.name);
-    const unitPrice = isGratis ? 0 : 1000;
-
+    const unitPrice = isGratis ? 0 : 1000; // bani murdari
     const job = await prisma.drillJob.create({
       data: {
         cnp,
@@ -261,18 +260,19 @@ app.post("/drill", auth(), requireRole(Role.OPERATOR, Role.HEAD_OPERATOR, Role.A
         mecanism: Number(mecanism) || 0,
         fixare: Number(fixare) || 0,
         processed: qty,
-        cashType: isGratis ? CashType.CLEAN : CashType.DIRTY, // doar informativ
+        cashType: isGratis ? CashType.CLEAN : CashType.DIRTY,
         unitPrice,
         userId: req.user.id,
         familyId: famId,
       }
     });
 
+    // logăm și în taxEntries ca BURGHIU (pentru rapoarte)
     await prisma.taxEntry.create({
       data: {
         type: TaxType.BURGHIU,
         currency: isGratis ? Currency.CLEAN : Currency.DIRTY,
-        amount: qty * unitPrice, // 0 dacă e gratis
+        amount: qty * unitPrice, // 0 dacă gratis
         cnp,
         userId: req.user.id,
         familyId: famId,
@@ -294,7 +294,7 @@ app.get("/drill", auth(), async (_, res) => {
     id: j.id, cnp: j.cnp,
     cadru: j.cadru, teava: j.teava, mecanism: j.mecanism, fixare: j.fixare,
     qty: j.processed,
-    costTotal: j.unitPrice * j.processed,
+    costTotal: j.unitPrice * j.processed, // bani murdari (0 dacă gratis)
     family: j.family?.name || null,
     user: j.user?.username || null,
     createdAt: j.createdAt,
@@ -325,13 +325,10 @@ function inWeek(dt, year, week){
   return dt >= start && dt < end;
 }
 
-// ===== Admin: sumar per user cu split curat/murdar
+// ===== Admin split (include și BURGHIU în „Bani murdari”)
 app.get("/admin/stats", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), async (req, res) => {
   const { year, week } = req.query;
-
-  const users = await prisma.user.findMany({
-    include: { taxEntries: true } // TAXA + BURGHIU (ambele)
-  });
+  const users = await prisma.user.findMany({ include: { taxEntries: true } });
 
   const rows = users.map(u => {
     const entries = u.taxEntries.filter(e => {
@@ -359,7 +356,7 @@ app.get("/admin/stats", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), asy
   res.json(rows);
 });
 
-// ===== Admin: burghiu familii (pe componente) + search
+// ===== Admin: Burghiu familii (pe componente, cu filtru/perioadă)
 app.get("/admin/drill-families", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), async (req, res) => {
   const { period = "week", year, week, q = "" } = req.query;
   const jobs = await prisma.drillJob.findMany({ include: { family: true } });
@@ -381,7 +378,7 @@ app.get("/admin/drill-families", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERA
   res.json([...out.values()].sort((a,b)=>b.total-a.total));
 });
 
-// ===== My profile (detaliu pe zile + splituri)
+// ===== My Profile (săptămână/all-time) – include burghiu în „Bani murdari”
 app.get("/me/profile", auth(), async (req, res) => {
   const { year, week } = req.query;
 
@@ -395,25 +392,29 @@ app.get("/me/profile", auth(), async (req, res) => {
 
   const daily = Array.from({length:7}, ()=>({taxe:0, clean:0, dirty:0}));
   taxes.forEach(t=>{
-    const d = t.createdAt.getDay(); // 0..6 (Dum..Sâm)
-    const idx = (d+6)%7; // Lun..Dum
+    const d = t.createdAt.getDay(); const idx = (d+6)%7;
     daily[idx].taxe += 1;
     if (t.currency === "CLEAN") daily[idx].clean += 40000;
     if (t.currency === "DIRTY") daily[idx].dirty += 60000;
   });
 
-  const cleanSum = taxes.filter(t=>t.currency==="CLEAN").length * 40000;
-  const dirtySum = taxes.filter(t=>t.currency==="DIRTY").length * 60000;
+  const cleanSumTaxes = taxes.filter(t=>t.currency==="CLEAN").length * 40000;
+  const dirtySumTaxes = taxes.filter(t=>t.currency==="DIRTY").length * 60000;
 
-  const drillPieces = drill.reduce((s,j)=>s + j.cadru + j.teava + j.mecanism + j.fixare, 0);
-  const drillMoney  = drill.reduce((s,j)=>s + j.unitPrice * j.processed, 0); // (0 la gratis)
+  const drillMoney = drill.reduce((s,j)=>s + j.unitPrice * j.processed, 0); // 0 dacă gratis
+  const cleanSum = cleanSumTaxes;                   // burghiu nu adaugă „Bani curați”
+  const dirtySum = dirtySumTaxes + drillMoney;      // burghiu = „Bani murdari”
 
-  const total = cleanSum + dirtySum + drillMoney;
+  const total = cleanSum + dirtySum;
   const userShare = Math.floor(total * 0.5), familyShare = total - userShare;
 
   res.json({
-    daily, cleanSum, dirtySum,
-    drill: { pieces: drillPieces, money: drillMoney },
+    daily,
+    cleanSum, dirtySum,
+    drill: {
+      pieces: drill.reduce((s,j)=>s + j.cadru + j.teava + j.mecanism + j.fixare, 0),
+      money: drillMoney
+    },
     split: {
       total, userShare, familyShare,
       cleanUser: Math.floor(cleanSum*0.5), cleanFamily: cleanSum - Math.floor(cleanSum*0.5),
@@ -422,12 +423,13 @@ app.get("/me/profile", auth(), async (req, res) => {
   });
 });
 
-// ===== Admin: listări + delete (AUDIT NU are voie)
+// ===== Admin: Tabele All (separate)
 app.get("/admin/all", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), async (req, res) => {
   const { type = "taxe", year, week, user, cnp, family } = req.query;
   if (type === "taxe") {
+    // DOAR Taxe (nu și burghiu)
     const rows = await prisma.taxEntry.findMany({
-      where: { OR: [{ type: TaxType.TAXA }, { type: TaxType.BURGHIU }] },
+      where: { type: TaxType.TAXA },
       include: { user: { select: { username: true } }, family: true },
       orderBy: { createdAt: "desc" }, take: 500
     });
@@ -469,7 +471,6 @@ app.delete("/admin/drill/:id", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATO
   res.json({ ok: true });
 });
 
-// ---- start
 (async () => {
   await ensureFamilies();
   await bootstrapAdminInvite();
