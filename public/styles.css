@@ -10,11 +10,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:
 .sm{padding:6px 10px;font-size:.9rem}
 .right{justify-self:end}
 .full{grid-column:1/-1}
+.mt{margin-top:10px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin:14px}
 .card-header{display:flex;align-items:center;justify-content:space-between}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.grid3.slim, .grid2.slim label input{min-height:34px}
+.grid3.slim label input{min-height:34px}
 .split{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:.5rem 0}
 .inline{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 label{display:flex;flex-direction:column;gap:6px;font-size:.95rem}
