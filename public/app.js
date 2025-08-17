@@ -52,12 +52,8 @@ async function hydrateMe() {
     ME = await r.json();
     $("#whoami").textContent = `${ME.username} [${ME.role}]`;
 
-    // admin-only tab
     const adminBtn = $$(".tabbtn").find(b => b.dataset.tab === "admin");
     if (adminBtn) adminBtn.classList.toggle("hidden", ME.role !== "ADMIN");
-
-    // Dashboard: admin poate comuta Week/All
-    if (ME.role === "ADMIN") $("#dashPeriodBox").classList.remove("hidden");
 
     $("#auth").classList.add("hidden");
     $("#app").classList.remove("hidden");
@@ -65,6 +61,9 @@ async function hydrateMe() {
     // populate week pickers
     ["#weekSelect","#dashWeekPicker","#bfWeekPicker","#profWeekPicker","#tblWeekPicker"]
       .map(s => $(s)).forEach(el => el && fillWeekSelect(el));
+
+    // radios default visibility
+    onPeriodToggle("dash"); onPeriodToggle("bf"); onPeriodToggle("prof"); onPeriodToggle("tbl"); onPeriodToggle("adm");
 
     setTabs("taxe");
     loadTaxe();
@@ -123,6 +122,31 @@ function connectSSE() {
   es.addEventListener("ping", () => {});
 }
 
+// ===== utilities
+function fillWeekSelect(sel){
+  if (!sel || sel.options.length) return;
+  const now = new Date(); const set = new Set();
+  for (let i=0;i<30;i++){
+    const d = new Date(now); d.setDate(d.getDate() - i*7);
+    const {year, week} = isoYearWeek(d);
+    const key = `${year}-W${String(week).padStart(2,"0")}`;
+    if (set.has(key)) continue; set.add(key);
+    const opt = document.createElement("option");
+    opt.value = JSON.stringify({year, week});
+    opt.textContent = key; sel.appendChild(opt);
+  }
+}
+function onPeriodToggle(prefix){
+  const radios = $$(`input[name='${prefix}Period']`);
+  const weekSel = $(`#${prefix}WeekPicker`) || (prefix==="adm" ? $("#weekSelect") : null);
+  function update(){
+    const val = radios.find(r=>r.checked)?.value || "week";
+    if (weekSel) weekSel.parentElement.style.display = (val==="week") ? "inline-flex" : "none";
+  }
+  radios.forEach(r=>r.addEventListener("change", update));
+  update();
+}
+
 // ===== Taxe
 const metodaSelect = $("#metodaSelect");
 const gratisWrap = $("#gratisWrap");
@@ -164,14 +188,14 @@ function renderTaxe(list) {
     .filter(row => !q || String(row.cnp).toLowerCase().includes(q))
     .forEach(row => {
       let suma = row.tip === "GRATIS" ? "GRATIS" :
-                 row.tip === "Bani curați" ? "40.000$ curat" : "60.000$ murdar";
+                 row.tip === "Bani curați" ? "40.000$ Bani curați" : "60.000$ Bani murdari";
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="font-mono">${row.cnp}</td><td>${suma}</td><td>${row.remaining||""}</td>`;
+      tr.innerHTML = `<td class="left font-mono">${row.cnp}</td><td>${suma}</td><td>${row.remaining||""}</td>`;
       tbody.appendChild(tr);
     });
 }
 
-// ===== Burghiu (one-shot cu toate componentele)
+// ===== Burghiu
 $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -210,8 +234,8 @@ function renderDrill(list){
     const isGratis = !j.costTotal;
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="font-mono">${j.cnp}</td>
-      <td>${j.family||"-"}</td>
+      <td class="left font-mono">${j.cnp}</td>
+      <td class="left">${j.family||"-"}</td>
       <td>${j.cadru}</td>
       <td>${j.teava}</td>
       <td>${j.mecanism}</td>
@@ -223,33 +247,22 @@ function renderDrill(list){
 }
 
 // ===== Dashboard
-function fillWeekSelect(sel){
-  if (!sel || sel.options.length) return;
-  const now = new Date(); const set = new Set();
-  for (let i=0;i<30;i++){
-    const d = new Date(now); d.setDate(d.getDate() - i*7);
-    const {year, week} = isoYearWeek(d);
-    const key = `${year}-W${String(week).padStart(2,"0")}`;
-    if (set.has(key)) continue; set.add(key);
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify({year, week});
-    opt.textContent = key; sel.appendChild(opt);
-  }
-}
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 $$("input[name='dashPeriod']").forEach(r => r.addEventListener("change", loadDashboard));
 $("#famSearch")?.addEventListener("input", loadDashboard);
 
 async function loadDashboard() {
-  // period
   const period = document.querySelector("input[name='dashPeriod']:checked")?.value || "week";
+  if (period === "week") $("#dashWeekPicker").parentElement.style.display = "inline-flex";
+  else $("#dashWeekPicker").parentElement.style.display = "none";
+
   let year, week;
   if (period === "week" && $("#dashWeekPicker")?.value) {
     ({year, week} = JSON.parse($("#dashWeekPicker").value));
   }
 
-  // taxe
-  let clean = 0, dirty = 0;
+  // taxe (curat) + taxe (murdar)
+  let clean = 0, dirtyFromTaxes = 0;
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
   const rT = await api("/taxe"); let taxe = [];
   if (rT.ok) {
@@ -257,29 +270,21 @@ async function loadDashboard() {
     taxe.forEach(t => {
       const created = t.createdAt ? new Date(t.createdAt) : new Date();
       if (period === "week" && year && week && !inISOWeek(created, year, week)) return;
-      if (t.tip === "Bani curați") { clean += 40000; }
-      if (t.tip === "Bani murdari") { dirty += 60000; }
+      if (t.tip === "Bani curați")  clean += 40000;
+      if (t.tip === "Bani murdari") dirtyFromTaxes += 60000;
       const wd = (created.getDay() + 6) % 7;
       daily[wd].count += 1;
       if (t.tip === "Bani curați")  daily[wd].clean += 40000;
       if (t.tip === "Bani murdari") daily[wd].dirty += 60000;
     });
   }
-  $("#statTaxClean").textContent = money(clean);
-  $("#statTaxDirty").textContent = money(dirty);
-  const dBody = $("#dashDailyTable tbody"); dBody.innerHTML = "";
-  daily.forEach(d => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${d.day}</td><td>${d.count}</td><td>${money(d.clean)}</td><td>${money(d.dirty)}</td>`;
-    dBody.appendChild(tr);
-  });
 
-  // burghiu + top useri + familii pe componente
+  // burghiu (murdar)
   const rD = await api("/drill");
   const famAgg = new Map();
   const topTaxByUser = new Map();
   const topDrillByUser = new Map();
-  let totalPieces = 0;
+  let totalPieces = 0, dirtyFromDrill = 0;
 
   (taxe||[]).forEach(t=>{
     const created = t.createdAt ? new Date(t.createdAt) : new Date();
@@ -301,9 +306,20 @@ async function loadDashboard() {
 
       totalPieces += (j.cadru + j.teava + j.mecanism + j.fixare);
       if (j.user) topDrillByUser.set(j.user, (topDrillByUser.get(j.user)||0) + (j.costTotal||0));
+      dirtyFromDrill += (j.costTotal||0);
     });
   }
+
+  $("#statTaxClean").textContent = money(clean);
+  $("#statTaxDirty").textContent = money(dirtyFromTaxes + dirtyFromDrill);
   $("#statDrillPieces").textContent = (totalPieces||0).toLocaleString("ro-RO");
+
+  const dBody = $("#dashDailyTable tbody"); dBody.innerHTML = "";
+  daily.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${money(d.clean)}</td><td>${money(d.dirty)}</td>`;
+    dBody.appendChild(tr);
+  });
 
   // familii cu search
   const qFam = ($("#famSearch")?.value||"").toLowerCase();
@@ -313,25 +329,25 @@ async function loadDashboard() {
     .sort((a,b)=>b[1].total - a[1].total)
     .forEach(([name,ag])=>{
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${name}</td><td>${ag.cadru}</td><td>${ag.teava}</td><td>${ag.mecanism}</td><td>${ag.fixare}</td><td>${ag.total}</td>`;
+      tr.innerHTML = `<td class="left">${name}</td><td>${ag.cadru}</td><td>${ag.teava}</td><td>${ag.mecanism}</td><td>${ag.fixare}</td><td>${ag.total}</td>`;
       famBody.appendChild(tr);
     });
 
   // top useri taxe
   const topTaxBody = $("#topCnpTaxe tbody"); topTaxBody.innerHTML = "";
   [...topTaxByUser.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20).forEach(([user,count])=>{
-    const tr = document.createElement("tr"); tr.innerHTML = `<td>${user}</td><td>${count}</td>`; topTaxBody.appendChild(tr);
+    const tr = document.createElement("tr"); tr.innerHTML = `<td class="left">${user}</td><td>${count}</td>`; topTaxBody.appendChild(tr);
   });
   // top useri drill (valoare)
   const topDrillBody = $("#topCnpDrill tbody"); topDrillBody.innerHTML = "";
   [...topDrillByUser.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20).forEach(([user,val])=>{
-    const tr = document.createElement("tr"); tr.innerHTML = `<td>${user}</td><td>${money(val||0)}</td>`; topDrillBody.appendChild(tr);
+    const tr = document.createElement("tr"); tr.innerHTML = `<td class="left">${user}</td><td>${money(val||0)}</td>`; topDrillBody.appendChild(tr);
   });
 }
 
 // ===== Burghiu Familii (ADMIN)
 function periodBF(){ return $$("input[name='bfPeriod']").find(i=>i.checked)?.value || "week"; }
-$$("input[name='bfPeriod']").forEach(r => r.addEventListener("change", loadBF));
+$$("input[name='bfPeriod']").forEach(r => r.addEventListener("change", ()=>{ onPeriodToggle("bf"); loadBF(); }));
 $("#bfWeekPicker")?.addEventListener("change", loadBF);
 $("#bfSearch")?.addEventListener("input", loadBF);
 
@@ -351,32 +367,35 @@ async function loadBF(){
   const rows = await r.json();
   rows.forEach(row=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${row.family}</td><td>${row.cadru}</td><td>${row.teava}</td><td>${row.mecanism}</td><td>${row.fixare}</td><td>${row.total}</td>`;
+    tr.innerHTML = `<td class="left">${row.family}</td><td>${row.cadru}</td><td>${row.teava}</td><td>${row.mecanism}</td><td>${row.fixare}</td><td>${row.total}</td>`;
     tbody.appendChild(tr);
   });
 }
 
 // ===== My Profile
-const profWeekPicker = $("#profWeekPicker");
-profWeekPicker?.addEventListener("change", loadProfile);
+function profPeriod(){ return $$("input[name='profPeriod']").find(r=>r.checked)?.value || "week"; }
+$$("input[name='profPeriod']").forEach(r => r.addEventListener("change", ()=>{ onPeriodToggle("prof"); loadProfile(); }));
+$("#profWeekPicker")?.addEventListener("change", loadProfile);
 
 async function loadProfile(){
-  if (!profWeekPicker?.value) return;
-  const {year, week} = JSON.parse(profWeekPicker.value);
-  const r = await api(`/me/profile?year=${year}&week=${week}`);
+  const period = profPeriod();
+  let url = "/me/profile";
+  if (period === "week" && $("#profWeekPicker")?.value) {
+    const {year, week} = JSON.parse($("#profWeekPicker").value);
+    url += `?year=${year}&week=${week}`;
+  }
+  const r = await api(url);
   if (!r.ok) return;
   const p = await r.json();
 
-  // daily table
   const body = $("#profDailyTable tbody"); body.innerHTML = "";
   dayNames.forEach((name, i) => {
     const d = p.daily[i];
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${name}</td><td>${d.taxe}</td><td>${money(d.clean)}</td><td>${money(d.dirty)}</td>`;
+    tr.innerHTML = `<td class="left">${name}</td><td>${d.taxe}</td><td>${money(d.clean)}</td><td>${money(d.dirty)}</td>`;
     body.appendChild(tr);
   });
 
-  // totals & split
   $("#profClean").textContent = money(p.cleanSum);
   $("#profDirty").textContent = money(p.dirtySum);
   $("#profPieces").textContent = (p.drill.pieces||0).toLocaleString("ro-RO");
@@ -403,23 +422,26 @@ $("#resetForm")?.addEventListener("submit", async (e)=>{
 });
 
 // ===== Tabele All
-const tblWeekPicker = $("#tblWeekPicker");
+function tblPeriod(){ return $$("input[name='tblPeriod']").find(r=>r.checked)?.value || "week"; }
+$$("input[name='tblPeriod']").forEach(r => r.addEventListener("change", ()=>{ onPeriodToggle("tbl"); loadTablesAll(); }));
+$("#tblWeekPicker")?.addEventListener("change", loadTablesAll);
 $("#tblRefresh")?.addEventListener("click", loadTablesAll);
 $("#tblType")?.addEventListener("change", ()=>{ renderTblHead(); loadTablesAll(); });
 
 function renderTblHead(){
   const type = $("#tblType").value;
   const h = $("#tblHead"); h.innerHTML = "";
-  if (type === "taxe") h.innerHTML = "<tr><th>ID</th><th>CNP</th><th>Plată</th><th>Suma</th><th>User</th><th>Familie</th><th>Creat</th><th></th></tr>";
-  else h.innerHTML = "<tr><th>ID</th><th>CNP</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>User</th><th>Familie</th><th>Creat</th><th></th></tr>";
+  if (type === "taxe") h.innerHTML = "<tr><th class='left'>ID</th><th class='left'>CNP</th><th>Plată</th><th>Suma</th><th class='left'>User</th><th class='left'>Familie</th><th>Creat</th><th></th></tr>";
+  else h.innerHTML = "<tr><th class='left'>ID</th><th class='left'>CNP</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th class='left'>User</th><th class='left'>Familie</th><th>Creat</th><th></th></tr>";
 }
 
 async function loadTablesAll(){
   renderTblHead();
   const type = $("#tblType").value;
   let url = `/admin/all?type=${type}`;
-  if (tblWeekPicker?.value) {
-    const {year, week} = JSON.parse(tblWeekPicker.value);
+  const period = tblPeriod();
+  if (period === "week" && $("#tblWeekPicker")?.value) {
+    const {year, week} = JSON.parse($("#tblWeekPicker").value);
     url += `&year=${year}&week=${week}`;
   }
   const qU = ($("#tblFilterUser").value||"").trim();
@@ -436,9 +458,9 @@ async function loadTablesAll(){
   rows.forEach(row=>{
     const tr = document.createElement("tr");
     if (type === "taxe") {
-      tr.innerHTML = `<td>${row.id}</td><td class="font-mono">${row.cnp}</td><td>${row.payment}</td><td>${row.amount ? money(row.amount) : "GRATIS"}</td><td>${row.user}</td><td>${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="taxe" class="danger xs">Șterge</button></td>`;
+      tr.innerHTML = `<td class="left">${row.id}</td><td class="left font-mono">${row.cnp}</td><td>${row.payment}</td><td>${row.amount ? money(row.amount) : "GRATIS"}</td><td class="left">${row.user}</td><td class="left">${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="taxe" class="danger xs">Șterge</button></td>`;
     } else {
-      tr.innerHTML = `<td>${row.id}</td><td class="font-mono">${row.cnp}</td><td>${row.cadru}</td><td>${row.teava}</td><td>${row.mecanism}</td><td>${row.fixare}</td><td>${row.user}</td><td>${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="drill" class="danger xs">Șterge</button></td>`;
+      tr.innerHTML = `<td class="left">${row.id}</td><td class="left font-mono">${row.cnp}</td><td>${row.cadru}</td><td>${row.teava}</td><td>${row.mecanism}</td><td>${row.fixare}</td><td class="left">${row.user}</td><td class="left">${row.family||"-"}</td><td>${new Date(row.createdAt).toLocaleString()}</td><td><button data-del="${row.id}" data-t="drill" class="danger xs">Șterge</button></td>`;
     }
     tbody.appendChild(tr);
   });
@@ -453,8 +475,11 @@ async function loadTablesAll(){
   });
 }
 
-// ===== Admin (split curat/murdar)
+// ===== Admin (split)
+function admPeriod(){ return $$("input[name='admPeriod']").find(r=>r.checked)?.value || "week"; }
+$$("input[name='admPeriod']").forEach(r => r.addEventListener("change", ()=>{ onPeriodToggle("adm"); loadAdmin(); }));
 $("#weekSelect")?.addEventListener("change", loadAdmin);
+
 $("#inviteBtn")?.addEventListener("click", async () => {
   try {
     const role = $("#inviteRole").value;
@@ -472,10 +497,11 @@ $("#inviteCopy")?.addEventListener("click", async () => {
 });
 
 async function loadAdmin() {
-  const sel = $("#weekSelect");
   let url = "/admin/stats";
-  try { if (sel && sel.value) { const {year, week} = JSON.parse(sel.value); url = `/admin/stats?year=${year}&week=${week}`; } } catch {}
-
+  if (admPeriod()==="week" && $("#weekSelect")?.value) {
+    const {year, week} = JSON.parse($("#weekSelect").value);
+    url = `/admin/stats?year=${year}&week=${week}`;
+  }
   const r = await api(url);
   const tbody = $("#admTable tbody"); tbody.innerHTML = "";
   if (r.status === 403) { tbody.innerHTML = `<tr><td colspan="8" class="muted">Doar ADMIN/HEAD.</td></tr>`; return; }
@@ -484,7 +510,7 @@ async function loadAdmin() {
   rows.sort((a,b)=> (b.total - a.total)).forEach(u=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${u.username}</td>
+      <td class="left">${u.username}</td>
       <td>${money(u.userCleanShare)}</td>
       <td>${money(u.userDirtyShare)}</td>
       <td>${money(u.familyCleanShare)}</td>
