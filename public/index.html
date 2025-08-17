@@ -18,6 +18,24 @@
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- CSS custom -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- mic override pt select dark -->
+  <style>
+    .select-dark {
+      appearance:none;
+      background:#0b0c0e url("data:image/svg+xml;utf8,<svg fill='white' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M5.5 7l4.5 6 4.5-6z'/></svg>") no-repeat right .7rem center/14px;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:0 2.2rem 0 .75rem;
+      height:44px;
+    }
+    .select-dark:focus{ outline:2px solid rgba(255,255,255,.25); outline-offset:2px; }
+  </style>
+
   <link rel="icon" href="data:," />
 </head>
 <body class="dark bg-ink text-slate-200 min-h-screen">
@@ -38,6 +56,7 @@
   </header>
 
   <main class="mx-auto max-w-7xl px-6 py-10 space-y-10">
+
     <!-- AUTH -->
     <section id="auth" class="grid lg:grid-cols-2 gap-6">
       <div class="bg-card rounded-2xl border border-white/10 p-6">
@@ -82,7 +101,8 @@
 
           <div>
             <label class="lbl">Tip plată</label>
-            <select class="input" name="metoda" id="metodaSelect" required>
+            <!-- select dark -->
+            <select class="select-dark w-full" name="metoda" id="metodaSelect" required>
               <option value="">Alege...</option>
               <option value="curat">Bani curați (40.000 $)</option>
               <option value="murdar">Bani murdari (60.000 $)</option>
@@ -94,7 +114,7 @@
 
           <div id="gratisWrap" class="hidden">
             <label class="lbl">Familie (doar la Gratis)</label>
-            <select class="input" name="gratisFamilie" id="gratisSelect">
+            <select class="select-dark w-full" name="gratisFamilie" id="gratisSelect">
               <option value="Medelin Cartel">Medelin Cartel</option>
               <option value="818">818</option>
               <option value="Stefanos Cartel">Stefanos Cartel</option>
@@ -104,8 +124,11 @@
           <button class="btn-primary h-11">Trimite taxă</button>
         </form>
 
-        <div class="mt-6">
-          <h3 class="font-medium mb-2">Taxe active</h3>
+        <div class="mt-6 space-y-3">
+          <div class="flex items-center gap-3">
+            <input id="taxSearch" class="input w-80" placeholder="Caută CNP..." />
+            <span class="text-xs text-slate-400">Filtrează lista de mai jos</span>
+          </div>
           <table class="tbl" id="taxeTable">
             <thead><tr><th>CNP</th><th>Sumă</th><th>Timp (hh/mm)</th></tr></thead>
             <tbody></tbody>
@@ -126,11 +149,24 @@
             </div>
             <div>
               <label class="lbl">Familie</label>
-              <select class="input" name="family" id="familySelect">
+              <select class="select-dark w-full" name="family" id="familySelect">
                 <option value="">(fără)</option>
                 <option>Medelin Cartel</option>
-                <option>818</option>
                 <option>Stefanos Cartel</option>
+                <option>Bogota Thugs</option>
+                <option>LowLine</option>
+                <option>Casa Blanca</option>
+                <option>LaPuentes</option>
+                <option>Mali Strip</option>
+                <option>Garda Veche</option>
+                <option>NDR</option>
+                <option>Velvet</option>
+                <option>Santos Gruppo</option>
+                <option>Mayans MC</option>
+                <option>La CosaNostra</option>
+                <option>Hells Riders</option>
+                <option>BACM</option>
+                <option>818</option>
               </select>
             </div>
           </div>
@@ -179,19 +215,58 @@
 
     <!-- TAB: DASHBOARD -->
     <section id="tab-dashboard" class="tab hidden space-y-8">
+      <div class="flex items-center gap-4">
+        <label class="lbl m-0">Săptămâna</label>
+        <select id="dashWeekPicker" class="select-dark w-44"></select>
+      </div>
+
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="card-stat"><div class="stat-title">Taxe — Bani curați</div><div id="statTaxClean" class="stat-num">0 $</div></div>
-        <div class="card-stat"><div class="stat-title">Taxe — Bani murdari</div><div id="statTaxDirty" class="stat-num">0 $</div></div>
-        <div class="card-stat"><div class="stat-title">Burghiu — Bani murdari</div><div id="statDrillDirty" class="stat-num">0 $</div></div>
+        <div class="card-stat">
+          <div class="stat-title">Taxe — Bani curați</div>
+          <div id="statTaxClean" class="stat-num">0 $</div>
+        </div>
+        <div class="card-stat">
+          <div class="stat-title">Taxe — Bani murdari</div>
+          <div id="statTaxDirty" class="stat-num">0 $</div>
+        </div>
+        <div class="card-stat">
+          <div class="stat-title">Burghiu — total piese</div>
+          <div id="statDrillPieces" class="stat-num">0</div>
+        </div>
+      </div>
+
+      <div class="bg-card rounded-2xl border border-white/10 p-6">
+        <h3 class="font-medium mb-2">Taxe pe zile (săptămâna selectată)</h3>
+        <table class="tbl" id="dashDailyTable">
+          <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
 
       <div class="grid md:grid-cols-2 gap-6">
         <div class="bg-card rounded-2xl border border-white/10 p-6">
-          <h3 class="font-medium mb-2">Producție pe familii (burghiu)</h3>
+          <h3 class="font-medium mb-2">Burghiu pe familii</h3>
+          <table class="tbl" id="drillFamiliesTable">
+            <thead><tr><th>Familie</th><th>Bucăți</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="bg-card rounded-2xl border border-white/10 p-6">
+          <h3 class="font-medium mb-2">Top CNP-uri (cu user)</h3>
+          <table class="tbl" id="topCnpTable">
+            <thead><tr><th>CNP</th><th>User</th><th>Taxe</th><th>Burghiu ($)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-card rounded-2xl border border-white/10 p-6">
+          <h3 class="font-medium mb-2">Producție pe familii (chart)</h3>
           <canvas id="chartFamilies" height="200"></canvas>
         </div>
         <div class="bg-card rounded-2xl border border-white/10 p-6">
-          <h3 class="font-medium mb-2">Bani murdari pe săptămâni</h3>
+          <h3 class="font-medium mb-2">Bani murdari / săptămâni</h3>
           <canvas id="chartWeekly" height="200"></canvas>
         </div>
       </div>
@@ -199,7 +274,7 @@
 
     <!-- TAB: ADMIN -->
     <section id="tab-admin" class="tab hidden space-y-6">
-      <div class="bg-card rounded-2xl border border-white/10 p-6">
+      <div class="bg-card rounded-2xl border border-white/10 p-6 space-y-5">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <h2 class="font-semibold text-lg">Admin</h2>
@@ -207,18 +282,43 @@
           </div>
           <div class="flex items-center gap-3">
             <label class="lbl m-0">Săptămâna</label>
-            <select id="weekSelect" class="input w-44"></select>
+            <select id="weekSelect" class="select-dark w-44"></select>
           </div>
         </div>
 
-        <div class="mt-4 grid md:grid-cols-[280px,1fr] gap-3">
-          <input id="searchInput" class="input" placeholder="Caută după username / CNP" />
-          <div class="text-sm text-slate-400">Sumar pe utilizatori (filtrat pe săptămână)</div>
+        <!-- Invite link -->
+        <div class="bg-black/20 rounded-xl border border-white/10 p-4 grid md:grid-cols-[200px,200px,1fr,140px] gap-3 items-end">
+          <div>
+            <label class="lbl">Rol</label>
+            <select id="inviteRole" class="select-dark w-full">
+              <option>OPERATOR</option>
+              <option>HEAD_OPERATOR</option>
+              <option>ADMIN</option>
+              <option>AUDIT</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Generează Invite</label>
+            <button id="inviteBtn" class="btn-primary w-full">Generează</button>
+          </div>
+          <div>
+            <label class="lbl">Link/Code</label>
+            <input id="inviteResult" class="input" readonly placeholder="—" />
+          </div>
+          <div>
+            <label class="lbl"> </label>
+            <button id="inviteCopy" class="btn-primary w-full">Copiază</button>
+          </div>
         </div>
 
-        <div class="mt-4 overflow-auto">
+        <div class="grid md:grid-cols-[280px,1fr] gap-3">
+          <input id="searchInput" class="input" placeholder="Caută după username / CNP" />
+          <div class="text-sm text-slate-400">Sume pe utilizatori (50% user / 50% familie) — filtrat pe săptămână</div>
+        </div>
+
+        <div class="overflow-auto">
           <table class="tbl" id="admTable">
-            <thead><tr><th>User</th><th>Taxe ($)</th><th>Burghiu ($)</th><th>Total ($)</th></tr></thead>
+            <thead><tr><th>User</th><th>User (50%)</th><th>Familie (50%)</th><th>Total ($)</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -226,17 +326,17 @@
     </section>
   </main>
 
-  <!-- utilitare stil -->
+  <!-- utilitare stil (complementar cu styles.css) -->
   <style>
-    .input{ all:unset; box-sizing:border-box; width:100%; height:44px; padding:0 12px; border-radius:10px; background:rgb(255 255 255 / 0.05); border:1px solid rgb(255 255 255 / 0.1);}
-    .input:focus{ outline:2px solid rgb(255 255 255 / 0.15);}
+    .input{ all:unset; box-sizing:border-box; width:100%; height:44px; padding:0 12px; border-radius:10px; background:rgb(255 255 255 / 0.05); border:1px solid rgb(255 255 255 / 0.12);}
+    .input:focus{ outline:2px solid rgb(255 255 255 / 0.15); outline-offset:2px; }
     .lbl{ display:block; font-size:12px; color:#94a3b8; margin-bottom:6px;}
-    .btn-primary{ all:unset; cursor:pointer; height:44px; padding:0 16px; border-radius:10px; background:#059669; color:white; font-weight:600;}
+    .btn-primary{ all:unset; cursor:pointer; height:44px; padding:0 16px; border-radius:10px; background:#059669; color:white; font-weight:600; text-align:center; display:inline-flex; align-items:center; justify-content:center;}
     .btn-primary:hover{ background:#10b981;}
-    .tbl{ width:100%; font-size:14px; border:1px solid rgb(255 255 255 / 0.1); border-radius:10px; overflow:hidden;}
+    .tbl{ width:100%; font-size:14px; border:1px solid rgb(255 255 255 / 0.12); border-radius:10px; overflow:hidden;}
     .tbl thead th{ background:rgb(255 255 255 / 0.06); text-align:left; padding:8px 10px;}
     .tbl tbody td{ border-top:1px solid rgb(255 255 255 / 0.06); padding:8px 10px;}
-    .card-stat{ background:#17181b; border:1px solid rgb(255 255 255 / 0.1); border-radius:16px; padding:16px;}
+    .card-stat{ background:#17181b; border:1px solid rgb(255 255 255 / 0.12); border-radius:16px; padding:16px;}
     .stat-title{ font-size:12px; color:#94a3b8;}
     .stat-num{ font-size:28px; font-weight:700; margin-top:4px;}
   </style>
