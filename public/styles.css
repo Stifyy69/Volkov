@@ -1,93 +1,76 @@
-:root{
-  --bg:#070a10; --bg-grad: radial-gradient(1200px 600px at 20% -10%, #0c1530 0%, transparent 60%),
-                     radial-gradient(800px 500px at 120% 10%, #0c3022 0%, transparent 60%),
-                     linear-gradient(180deg, #070a10 0%, #0a0f1a 100%);
-  --card:#0c1220cc;
-  --muted:#9aa6b2; --text:#eef3ff;
-  --border:#182235; --brand:#87b9ff; --brand-2:#00d2a4; --danger:#ff7171;
-  --shadow: 0 12px 40px rgba(0,0,0,.35);
-  --blur: blur(10px);
+/* ---- Layout spacing & readability ---- */
+:root {
+  --surface-ink: #0f1012;
+  --surface-card: #17181b;
+  --border-soft: rgba(255,255,255,.08);
+  --border-mid:  rgba(255,255,255,.12);
+  --text-dim:    #94a3b8;
 }
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0; color:var(--text);
-  font:15px/1.5 Inter,ui-sans-serif,system-ui,Segoe UI,Roboto;
-  background: var(--bg-grad);
-  background-color:#070a10;
+
+body {
+  letter-spacing: .2px;
 }
-.hidden{display:none}
-.wrap{max-width:1160px;margin:86px auto 28px;padding:0 18px}
-h1,h2,h3,h4{margin:0 0 10px}
-.subhead{margin:14px 0 8px;color:var(--muted);font-weight:600;letter-spacing:.2px}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-.small{font-size:13px;color:var(--muted)}
 
-.nav{
-  position:fixed; inset:0 0 auto 0; height:64px; display:flex; align-items:center;
-  justify-content:space-between; padding:0 18px;
-  backdrop-filter: var(--blur);
-  background: linear-gradient(180deg, rgba(10,14,24,.75), rgba(10,14,24,.35));
-  border-bottom:1px solid rgba(255,255,255,.06);
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-  z-index:50;
+/* card containers */
+section > .bg-card {
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
 }
-.brand{font-weight:800; letter-spacing:.3px; display:flex; gap:10px; align-items:center}
-.brand::before{content:"◆"; color:var(--brand-2); filter:drop-shadow(0 0 6px rgba(0,210,164,.5))}
-.tabs{display:flex; gap:10px}
-.tab{
-  padding:8px 12px; border-radius:12px; border:1px solid var(--border);
-  background: #0f1727; color:var(--text); cursor:pointer; transition:.2s transform,.2s background;
+
+/* tables */
+.tbl {
+  border-spacing: 0;
+  overflow: hidden;
 }
-.tab:hover{transform:translateY(-1px)}
-.tab.active{
-  background: linear-gradient(180deg, #8ac0ff, #6aa6ff);
-  color:#03132e; border-color:transparent;
-  box-shadow:0 6px 18px rgba(106,166,255,.35);
+.tbl thead th {
+  font-weight: 600;
+  letter-spacing: .2px;
 }
-.who{display:flex; gap:10px; align-items:center}
-.ghost{background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text);padding:8px 10px;cursor:pointer}
-
-.card{
-  background: var(--card);
-  border:1px solid var(--border);
-  border-radius:16px; padding:18px; margin-bottom:16px;
-  box-shadow: var(--shadow); backdrop-filter: var(--blur);
+.tbl tbody tr:hover td {
+  background: rgba(255,255,255,.03);
 }
-.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.pill{background:#102235;border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:13px}
-.dot{padding:2px 8px;border-radius:999px;background:#12273f;color:#8cc3ff;border:1px solid #223d61;font-size:11px;text-transform:uppercase;letter-spacing:.6px}
-.dot.live::before{content:"●";margin-right:6px;color:#30d394}
 
-.row{display:flex;gap:12px;margin:10px 0}
-.wrap{flex-wrap:wrap}
-.gap16{gap:16px}
-.grow{flex:1 1 220px}
-
-label{display:flex;flex-direction:column;gap:6px;min-width:180px}
-input,select{
-  padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#0c1220;color:var(--text);outline:none
+/* inputs & buttons (ușor mai mari pe desktop) */
+@media (min-width: 1024px) {
+  .input { height: 46px; }
+  .btn-primary { height: 46px; }
 }
-input:focus,select:focus{border-color:#2a3b58;box-shadow:0 0 0 3px rgba(42,59,88,.25)}
-input[type="number"]{width:120px}
 
-.btn{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#121a2c;color:var(--text);cursor:pointer}
-.btn.primary{background:var(--brand);border:none;color:#00122b;font-weight:700}
-.btn:active{transform:translateY(1px)}
+/* compact on mobile */
+@media (max-width: 640px) {
+  .tbl thead { display: none; }
+  .tbl tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px; }
+  .tbl td { border: none !important; padding: 4px 0 !important; }
+  .tbl td:nth-child(odd) { color: var(--text-dim); }
+  #taxeTable tbody tr { grid-template-columns: 1fr 1fr; }
+  #drillTable tbody tr { grid-template-columns: repeat(2, 1fr); }
+}
 
-.seg{display:flex;gap:8px;margin-bottom:10px}
-.chip{padding:8px 12px;border-radius:999px;background:#131b2b;border:1px solid var(--border);color:var(--text);cursor:pointer}
-.chip.active{background:#203252;border-color:#2a3b58}
+/* small badges if vei colora familiile ulterior */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--border-mid);
+  background: rgba(255,255,255,.05);
+}
 
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:980px){.grid2{grid-template-columns:1fr}}
+/* color hints (dacă vrei să le aplici din JS pe familie) */
+.badge-medelin { background:#ff7bac1a; border-color:#ff7bac55; }
+.badge-818     { background:#cccccc1a; border-color:#cccccc55; }
+.badge-stef    { background:#40e0d01a; border-color:#40e0d055; }
 
-.table{width:100%;border-collapse:collapse;margin-top:8px}
-.table th,.table td{border-bottom:1px solid var(--border);padding:10px 6px;text-align:left}
-.table th{color:var(--muted);font-weight:600}
+/* navbar buttons active state already handled, dar adăugăm focus vizibil */
+.tabbtn:focus-visible,
+.btn-primary:focus-visible,
+.input:focus-visible {
+  outline: 2px solid rgba(255,255,255,.25) !important;
+  outline-offset: 2px;
+}
 
-.list{list-style:none;padding:0;margin:8px 0 0 0;display:flex;flex-direction:column;gap:8px}
-.list li{padding:10px 12px;border:1px solid var(--border);background:#0b111f;border-radius:10px}
-.list.two-line li div:last-child{margin-top:4px;color:var(--muted)}
-
-.toast{position:fixed;right:16px;bottom:16px;background:#0d1a30;border:1px solid #234;color:#dff;border-radius:12px;padding:10px 14px;box-shadow:0 12px 30px rgba(0,0,0,.35);z-index:250}
+/* small utilities */
+.hr-soft {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 10px 0;
+}
