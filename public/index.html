@@ -57,7 +57,8 @@
       <div class="card">
         <h3>Taxe</h3>
 
-        <form id="taxeForm" class="grid grid-3 gap align-center">
+        <!-- rând 1: CNP | Tip | Trimite -->
+        <form id="taxeForm" class="form-row-3">
           <label>CNP
             <input name="cnp" placeholder="ex: 51122" pattern="\d{1,6}" required />
           </label>
@@ -71,10 +72,11 @@
             </select>
           </label>
 
-          <div class="col-span-1 right">
-            <button class="button-trimite">Trimite taxă</button>
+          <div class="right align-end">
+            <button class="button-trimite">Trimite</button>
           </div>
 
+          <!-- rând 2: familii GRATIS (apare doar când e cazul) -->
           <div id="gratisWrap" class="hidden col-span-3">
             <label>Familie (doar la GRATIS)
               <select name="gratisFamilie">
@@ -103,13 +105,14 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <form id="drillForm" class="grid grid-2 gap">
+        <!-- rând 1: CNP | Familie -->
+        <div class="form-row-2">
           <label>CNP
-            <input name="cnp" pattern="\d{1,6}" required />
+            <input form="drillForm" name="cnp" pattern="\d{1,6}" required />
           </label>
 
           <label>Familie
-            <select name="family" id="drillFamily">
+            <select form="drillForm" name="family" id="drillFamily" required>
               <option value="" disabled selected>Alege…</option>
               <option>Medelin Cartel</option>
               <option>Stefanos Cartel</option>
@@ -128,16 +131,28 @@
               <option>BACM</option>
             </select>
           </label>
+        </div>
 
-          <label>Cadru <input name="cadru" type="number" min="0" step="1" value="0" /></label>
-          <label>Țeavă <input name="teava" type="number" min="0" step="1" value="0" /></label>
-          <label>Mecanism <input name="mecanism" type="number" min="0" step="1" value="0" /></label>
-          <label>Elemente de fixare <input name="fixare" type="number" min="0" step="1" value="0" /></label>
+        <!-- rând 2: Cadru | Țeavă | Mecanism -->
+        <div class="form-row-3-eq">
+          <label>Cadru <input form="drillForm" name="cadru" type="number" min="0" step="1" value="0" /></label>
+          <label>Țeavă <input form="drillForm" name="teava" type="number" min="0" step="1" value="0" /></label>
+          <label>Mecanism <input form="drillForm" name="mecanism" type="number" min="0" step="1" value="0" /></label>
+        </div>
 
-          <div class="hint col-span-2">
-            Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
+        <!-- hint sub mecanism -->
+        <div class="hint mt">
+          Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
+        </div>
+
+        <!-- rând 3: Fixare | Trimite -->
+        <form id="drillForm" class="form-row-2 mt">
+          <label>Elemente de fixare
+            <input name="fixare" type="number" min="0" step="1" value="0" />
+          </label>
+          <div class="right align-end">
+            <button class="primary">Trimite</button>
           </div>
-          <div class="right col-span-2"><button class="primary">Trimite</button></div>
         </form>
 
         <h4 class="mt">Ultimele joburi</h4>
@@ -157,14 +172,16 @@
     <!-- Dashboard -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
-        <div class="bar">
-          <label>Alege perioada:
-            <select id="dashPeriod">
-              <option value="week" selected>Săptămână</option>
-              <option value="all">All time</option>
-            </select>
-          </label>
-          <select id="dashWeekPicker" class="weekSel"></select>
+        <div class="bar period">
+          <div class="period-ctrl">
+            <label>Alege perioada:
+              <select id="dashPeriod">
+                <option value="week" selected>Săptămână</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+            <select id="dashWeekPicker" class="weekSel"></select>
+          </div>
         </div>
 
         <div class="stats">
@@ -210,14 +227,16 @@
     <!-- Statistici Familii -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
-        <div class="bar">
-          <label>Alege perioada:
-            <select id="bfPeriod">
-              <option value="week" selected>Săptămână</option>
-              <option value="all">All time</option>
-            </select>
-          </label>
-          <select id="bfWeekPicker" class="weekSel"></select>
+        <div class="bar period">
+          <div class="period-ctrl">
+            <label>Alege perioada:
+              <select id="bfPeriod">
+                <option value="week" selected>Săptămână</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+            <select id="bfWeekPicker" class="weekSel"></select>
+          </div>
 
           <div class="grow"></div>
           <input id="bfSearch" placeholder="Caută familie…" />
@@ -235,14 +254,16 @@
     <!-- Admin -->
     <section id="tab-admin" class="tab hidden">
       <div class="card">
-        <div class="bar">
-          <label>Alege perioada:
-            <select id="admPeriod">
-              <option value="week" selected>Săptămână</option>
-              <option value="all">All time</option>
-            </select>
-          </label>
-          <select id="weekSelect" class="weekSel"></select>
+        <div class="bar period">
+          <div class="period-ctrl">
+            <label>Alege perioada:
+              <select id="admPeriod">
+                <option value="week" selected>Săptămână</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+            <select id="weekSelect" class="weekSel"></select>
+          </div>
         </div>
 
         <h4>Split pe utilizator</h4>
@@ -280,14 +301,16 @@
     <!-- Tabele All -->
     <section id="tab-tables" class="tab hidden">
       <div class="card">
-        <div class="bar">
-          <label>Alege perioada:
-            <select id="tblPeriod">
-              <option value="week" selected>Săptămână</option>
-              <option value="all">All time</option>
-            </select>
-          </label>
-          <select id="tblWeekPicker" class="weekSel"></select>
+        <div class="bar period">
+          <div class="period-ctrl">
+            <label>Alege perioada:
+              <select id="tblPeriod">
+                <option value="week" selected>Săptămână</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+            <select id="tblWeekPicker" class="weekSel"></select>
+          </div>
 
           <div class="grow"></div>
           <label>Tip:
@@ -312,14 +335,16 @@
     <!-- My profile -->
     <section id="tab-profile" class="tab hidden">
       <div class="card">
-        <div class="bar">
-          <label>Alege perioada:
-            <select id="profPeriod">
-              <option value="week" selected>Săptămână</option>
-              <option value="all">All time</option>
-            </select>
-          </label>
-          <select id="profWeekPicker" class="weekSel"></select>
+        <div class="bar period">
+          <div class="period-ctrl">
+            <label>Alege perioada:
+              <select id="profPeriod">
+                <option value="week" selected>Săptămână</option>
+                <option value="all">All time</option>
+              </select>
+            </label>
+            <select id="profWeekPicker" class="weekSel"></select>
+          </div>
         </div>
 
         <div class="stats">
