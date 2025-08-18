@@ -1,89 +1,77 @@
+/* Layout & base */
 :root{
-  --bg:#0f1620; --card:#141c27; --muted:#2a3443; --text:#e8eef7; --sub:#9fb3c8;
-  --primary:#3b6ef5; --danger:#a33a3a; --line:#223045;
-  --field-h:44px;
+  --bg:#1a1a1a; --card:#2a2a2a; --muted:#9aa0a6;
+  --b:#FFD700; --accent1:#8B0000; --accent2:#B22222; --accent3:#FF0000;
+  --bd:#424242; --bd-2:#3a3a3a;
+  --ok:#2ecc71; --danger:#e74c3c;
 }
-
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,Segoe UI,Arial,sans-serif}
-
-.hidden{display:none!important}
-.left{text-align:left}
-.right{text-align:right}
-.align-end{display:flex;align-items:end;justify-content:flex-end;height:100%}
-.grow{flex:1}
-.mt{margin-top:16px}
+html,body{margin:0;padding:0;background:var(--bg);color:#eee;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+.hidden{display:none !important}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.mt{margin-top:20px} .mt-sm{margin-top:10px}
+.w-280{width:280px}
 
 /* Topbar */
-.topbar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:16px;padding:10px 16px;background:#0c121a;border-bottom:1px solid var(--line)}
-.brand{font-weight:700}
+.topbar{display:flex;align-items:center;gap:12px;background:#111;border-bottom:1px solid var(--bd);padding:10px 16px;position:sticky;top:0;z-index:10}
+.brand{font-weight:800;letter-spacing:.6px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tabbtn{background:#101827;border:1px solid #1f2a3a;color:var(--text);padding:6px 10px;border-radius:8px;cursor:pointer}
-.tabbtn[data-active="true"],.tabbtn:hover{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset}
-.who{margin-left:auto;display:flex;align-items:center;gap:10px}
-.sm{padding:6px 10px;font-size:12px}
-.danger{background:#2a1111;border:1px solid #572727;color:#ffd0d0;border-radius:8px;cursor:pointer}
-.primary{background:#20365f;border:1px solid #3b6ef5;color:#d8e6ff;border-radius:8px;padding:10px 14px;cursor:pointer}
-.primary:hover{filter:brightness(1.1)}
+.tabbtn{background:#1f1f1f;border:1px solid var(--bd);color:#eee;padding:8px 12px;border-radius:8px;cursor:pointer}
+.tabbtn[data-active="true"],.tabbtn:hover{border-color:var(--b);color:var(--b)}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px}
 
-/* Layout */
-.container{max-width:1100px;margin:18px auto;padding:0 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-.card.inner{background:#101822;border-color:#1a2738}
-h2,h3,h4,h5{margin:0 0 10px}
-h3{font-size:18px}
+/* Cards & grids */
+.card{background:var(--card);border:1px solid var(--bd-2);border-radius:10px;padding:16px}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.col-span-2{grid-column:span 2}
+.right{text-align:right}
 
 /* Forms */
-label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--sub)}
-input,select{
-  width:100%;background:#0e1520;border:1px solid #1d2a3d;color:var(--text);
-  padding:10px;border-radius:8px;outline:none;height:var(--field-h)
+.inline-form{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.inline-form input,
+.inline-form select{
+  height:42px;padding:8px 10px;border-radius:8px;border:1px solid var(--bd);
+  background:#121212;color:#eee;min-width:160px
 }
-input::placeholder{color:#6b7d91}
-.select-strong{background:#0a0f16;color:#fff;border:1px solid #2a3955}
+.inline-form .grow{flex:1 1 auto}
+.hint{color:var(--muted);font-size:.9rem}
+label.lbl{color:#ddd;font-size:.95rem}
 
-/* Lines */
-.row-line{display:grid;grid-template-columns:1.2fr 1.2fr 1.2fr auto;gap:12px;align-items:end}
-.row-line-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end}
+/* Buttons */
+button{height:42px;padding:0 14px;border-radius:8px;border:1px solid var(--bd);background:#222;color:#eee;cursor:pointer}
+button.primary{border-color:var(--b);color:var(--b)}
+button.danger{border-color:var(--danger);color:#fff;background:#3b1111}
+button.sm{height:34px}
+button.xl{height:48px}
 
-/* Period controls (uniform) */
-.period-stack{margin-bottom:16px}
-.period-line{display:flex;align-items:center;gap:10px}
-.period-line select{min-width:150px}
+/* GOLD-RED action button */
+.button-trimite{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:42px;padding:0 22px;font-weight:800;letter-spacing:.6px;
+  color:var(--b);background:linear-gradient(180deg,var(--accent1),var(--accent2));
+  border:2px solid var(--b);border-radius:8px;text-transform:uppercase;
+  font-family:Arial,sans-serif;transition:.2s box-shadow,.2s transform;
+  box-shadow:0 0 10px rgba(0,0,0,.6)
+}
+.button-trimite:hover{background:linear-gradient(180deg,var(--accent2),var(--accent3));color:#fff;box-shadow:0 0 14px rgba(255,215,0,.7)}
+.button-trimite.small{height:42px;padding:0 16px;font-size:.9rem}
 
-/* Filters line in Tabele All */
-.filters-line{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end}
-
-/* Simple grids */
-.grid{display:grid;gap:12px}
-.grid-2{grid-template-columns:1fr 1fr}
-.grid-3{grid-template-columns:repeat(3,1fr)}
-.col-span-2{grid-column:span 2}
+/* Period controls */
+.period{margin-top:6px;margin-bottom:14px}
+.period .label{color:#ddd;margin-bottom:6px}
+.period .inline-form select{min-width:180px}
 
 /* Tables */
-.table{width:100%;border-collapse:separate;border-spacing:0 8px}
-.table thead th{font-weight:600;color:#cfe0f7;background:#102033;border:1px solid #24354e;padding:10px 12px}
-.table tbody td{background:#0f1b2b;border:1px solid #1f2f47;padding:10px 12px;text-align:center}
-.table th:first-child,.table td:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
-.table th:last-child,.table td:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border:1px solid var(--bd);padding:8px 10px;text-align:center}
+.table th:first-child,.table td:first-child{text-align:left}
+.table thead th{background:#1f1f1f}
+.row-total td{font-weight:800;background:#1d1d1d;border-top:2px solid var(--b)}
+.stat{background:#1e1e1e;border:1px solid var(--bd);padding:8px 12px;border-radius:8px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 
-/* Strong total row for Admin */
-.table-total-strong tbody tr.total-row td{
-  background:#172841;border-color:#2b4061;font-weight:700
-}
-
-/* Hint */
-.hint{color:#bcd0e6;font-size:12px;opacity:.9}
-
-/* Custom “Trimite” – aceeași înălțime ca inputurile */
-.btn-trimite{
-  display:inline-flex;align-items:center;justify-content:center;
-  padding:0 16px;font-size:14px;font-weight:bold;
-  color:#FFD700;background:linear-gradient(180deg,#8B0000,#B22222);
-  border:2px solid #FFD700;border-radius:6px;text-transform:uppercase;
-  font-family:Arial, sans-serif;transition:all .3s ease;box-shadow:0 0 8px rgba(0,0,0,.6);
-  height:var(--field-h); cursor:pointer; white-space:nowrap;
-}
-.btn-trimite:hover{background:linear-gradient(180deg,#B22222,#FF0000);color:#fff;box-shadow:0 0 12px rgba(255,215,0,.9)}
-/* variantă ușor mai îngustă la Burghiu */
-.btn-sm{padding:0 12px}
+/* Misc layout helpers */
+.split{display:flex;align-items:center;gap:10px}
+.wrap{flex-wrap:wrap}
