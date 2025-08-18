@@ -9,7 +9,6 @@
 <body>
   <header class="topbar">
     <div class="brand">Volkov</div>
-
     <nav class="tabs">
       <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
       <button class="tabbtn" data-tab="dashboard">Dashboard</button>
@@ -18,7 +17,6 @@
       <button class="tabbtn" data-tab="tables">Tabele All</button>
       <button class="tabbtn" data-tab="profile">My profile</button>
     </nav>
-
     <div class="who">
       <span id="whoami"></span>
       <button id="logoutBtn" class="danger sm">Logout</button>
@@ -35,7 +33,6 @@
         <div class="col-span-2 right"><button class="primary">Login</button></div>
       </form>
     </section>
-
     <section class="card">
       <h2>Register</h2>
       <form id="registerForm" class="grid grid-2">
@@ -43,7 +40,7 @@
         <label>Username <input name="username" required /></label>
         <label>Nickname <input name="nickname" /></label>
         <label>Parolă <input name="password" type="password" required /></label>
-        <label>CNP (max 6) <input name="cnp" pattern="\d{0,6}" /></label>
+        <label>CNP (max 6) <input name="cnp" pattern="\\d{0,6}" /></label>
         <div class="col-span-2 right"><button class="primary">Register</button></div>
       </form>
     </section>
@@ -51,48 +48,36 @@
 
   <!-- App -->
   <main id="app" class="container hidden">
-
     <!-- Taxe & Burghiu -->
     <section id="tab-taxe" class="tab">
       <div class="card">
         <h3>Taxe</h3>
 
-        <!-- Linia unică: CNP - Tip plată - (Familie la GRATIS) - Trimite -->
-        <form id="taxeForm" class="row-line">
-          <label>CNP
-            <input name="cnp" placeholder="ex: 51122" pattern="\d{1,6}" required />
-          </label>
-
-          <label>Tip plată
-            <select id="metodaSelect" name="metoda" class="select-strong" required>
-              <option value="" disabled selected>Alege…</option>
-              <option value="curat">Bani curați (40.000 $)</option>
-              <option value="murdar">Bani murdari (60.000 $)</option>
-              <option value="gratis">GRATIS</option>
-            </select>
-          </label>
-
-          <label id="gratisWrap" class="hidden">Familie (GRATIS)
-            <select name="gratisFamilie">
-              <option value="" disabled selected>Alege…</option>
-              <option value="Medelin Cartel">Medelin Cartel</option>
-              <option value="818">818</option>
-              <option value="Stefanos Cartel">Stefanos Cartel</option>
-            </select>
-          </label>
-
-          <div class="right align-end">
-            <button class="btn-trimite">Trimite</button>
-          </div>
+        <!-- Linia 1: CNP – Tip plată – (Familie GRATIS) – Trimite -->
+        <form id="taxeForm" class="inline-form">
+          <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
+          <select id="metodaSelect" name="metoda" required>
+            <option value="" disabled selected>Tip plată</option>
+            <option value="curat">Bani curați (40.000 $)</option>
+            <option value="murdar">Bani murdari (60.000 $)</option>
+            <option value="gratis">GRATIS</option>
+          </select>
+          <select id="gratisFamilie" name="gratisFamilie" class="hidden">
+            <option value="" disabled selected>Familie GRATIS</option>
+            <option value="Medelin Cartel">Medelin Cartel</option>
+            <option value="818">818</option>
+            <option value="Stefanos Cartel">Stefanos Cartel</option>
+          </select>
+          <button class="button-trimite" id="taxeSubmit">Trimite</button>
         </form>
 
-        <h4 class="mt">Taxe active</h4>
-        <input id="taxSearch" placeholder="Caută CNP…" />
+        <h4 class="mt-sm">Taxe active</h4>
+        <input id="taxSearch" class="w-280" placeholder="Caută CNP…" />
 
         <table id="taxeTable" class="table mt">
           <thead>
             <tr>
-              <th class="left">CNP</th><th>Sumă</th><th>Timp (hh/mm)</th><th class="left">User</th>
+              <th>CNP</th><th>Sumă</th><th>Timp</th><th>User</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -102,15 +87,12 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <!-- Linia 1: CNP - Familie - Trimite -->
-        <form id="drillForm" class="row-line">
-          <label>CNP
-            <input name="cnp" pattern="\d{1,6}" required />
-          </label>
-
-          <label>Familie
+        <!-- Linia 1: CNP – Familie – Trimite -->
+        <form id="drillForm">
+          <div class="inline-form">
+            <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
             <select name="family" id="drillFamily" required>
-              <option value="" disabled selected>Alege…</option>
+              <option value="" disabled selected>Alege familie…</option>
               <option>Medelin Cartel</option>
               <option>Stefanos Cartel</option>
               <option>Bogota Thugs</option>
@@ -127,33 +109,30 @@
               <option>Hells Riders</option>
               <option>BACM</option>
             </select>
-          </label>
+            <button class="button-trimite small" id="drillSubmit">Trimite</button>
+          </div>
 
-          <div class="right align-end">
-            <button class="btn-trimite btn-sm">Trimite</button>
+        <!-- Linia 2: Cadru – Țeavă – Mecanism – Elemente de fixare -->
+          <div class="inline-form mt">
+            <input name="cadru"    type="number" min="0" step="1" value="0" placeholder="Cadru" />
+            <input name="teava"    type="number" min="0" step="1" value="0" placeholder="Țeavă" />
+            <input name="mecanism" type="number" min="0" step="1" value="0" placeholder="Mecanism" />
+            <input name="fixare"   type="number" min="0" step="1" value="0" placeholder="Elemente de fixare" />
+          </div>
+
+          <!-- Linia 3: Text plată -->
+          <div class="hint mt-sm">
+            Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b>, <b>Medelin</b>, <b>Stefanos</b>.
           </div>
         </form>
 
-        <!-- Linia 2: Cadru - Țeavă - Mecanism - Elemente de fixare -->
-        <div class="row-line-4 mt">
-          <label>Cadru <input form="drillForm" name="cadru" type="number" min="0" step="1" value="0" /></label>
-          <label>Țeavă <input form="drillForm" name="teava" type="number" min="0" step="1" value="0" /></label>
-          <label>Mecanism <input form="drillForm" name="mecanism" type="number" min="0" step="1" value="0" /></label>
-          <label>Elemente de fixare <input form="drillForm" name="fixare" type="number" min="0" step="1" value="0" /></label>
-        </div>
-
-        <!-- Linia 3: hint plată -->
-        <div class="hint mt">
-          Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
-        </div>
-
-        <h4 class="mt">Ultimele joburi</h4>
+        <h4 class="mt">Ultimele 5 joburi</h4>
         <table id="drillTable" class="table">
           <thead>
             <tr>
-              <th class="left">CNP</th><th class="left">Familie</th>
+              <th>CNP</th><th>Familie</th>
               <th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th>
-              <th>Metodă plată</th><th>Cost total</th><th class="left">User</th>
+              <th>Plată</th><th>Cost</th><th>User</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -164,9 +143,10 @@
     <!-- Dashboard -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
-        <div class="period-stack">
-          <div class="period-line">
-            <label>Alege perioada:</label>
+        <h3>Dashboard</h3>
+        <div class="period">
+          <div class="label">Alege perioada</div>
+          <div class="inline-form">
             <select id="dashPeriod">
               <option value="week" selected>Săptămână</option>
               <option value="all">All time</option>
@@ -176,25 +156,23 @@
         </div>
 
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0 $</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0 $</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0$</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0$</b></div>
           <div class="stat">Total piese burghiu: <b id="statDrillPieces">0</b></div>
         </div>
 
-        <h4>Taxe pe zile (săptămâna selectată)</h4>
+        <h4 class="mt">Taxe pe zile (săptămâna selectată)</h4>
         <table id="dashDailyTable" class="table">
-          <thead><tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
+          <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
           <tbody></tbody>
         </table>
 
         <div class="split mt">
           <h4>Familii – Burghiu</h4>
-          <input id="famSearch" placeholder="Caută familie…" />
+          <input id="famSearch" class="w-280" placeholder="Caută familie…" />
         </div>
         <table id="drillFamiliesTable" class="table">
-          <thead>
-            <tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr>
-          </thead>
+          <thead><tr><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
 
@@ -202,13 +180,15 @@
           <div>
             <h4>Top Useri – Taxe (săptămâna selectată)</h4>
             <table id="topCnpTaxe" class="table">
-              <thead><tr><th class="left">User</th><th>Nr. taxe</th></tr></thead><tbody></tbody>
+              <thead><tr><th>User</th><th>Nr. taxe</th></tr></thead>
+              <tbody></tbody>
             </table>
           </div>
           <div>
             <h4>Top Useri – Burghiu (săptămâna selectată)</h4>
             <table id="topCnpDrill" class="table">
-              <thead><tr><th class="left">User</th><th>Valoare (Bani murdari)</th></tr></thead><tbody></tbody>
+              <thead><tr><th>User</th><th>Valoare (Bani murdari)</th></tr></thead>
+              <tbody></tbody>
             </table>
           </div>
         </div>
@@ -218,23 +198,22 @@
     <!-- Statistici Familii -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
-        <div class="period-stack">
-          <div class="period-line">
-            <label>Alege perioada:</label>
+        <h3>Statistici Familii</h3>
+        <div class="period">
+          <div class="label">Alege perioada</div>
+          <div class="inline-form">
             <select id="bfPeriod">
               <option value="week" selected>Săptămână</option>
               <option value="all">All time</option>
             </select>
             <select id="bfWeekPicker" class="weekSel"></select>
             <div class="grow"></div>
-            <input id="bfSearch" placeholder="Caută familie…" />
+            <input id="bfSearch" class="w-280" placeholder="Caută familie…" />
           </div>
         </div>
 
-        <table id="bfTable" class="table">
-          <thead>
-            <tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr>
-          </thead>
+        <table id="bfTable" class="table mt">
+          <thead><tr><th>Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -243,9 +222,10 @@
     <!-- Admin -->
     <section id="tab-admin" class="tab hidden">
       <div class="card">
-        <div class="period-stack">
-          <div class="period-line">
-            <label>Alege perioada:</label>
+        <h3>Admin</h3>
+        <div class="period">
+          <div class="label">Alege perioada</div>
+          <div class="inline-form">
             <select id="admPeriod">
               <option value="week" selected>Săptămână</option>
               <option value="all">All time</option>
@@ -255,24 +235,25 @@
         </div>
 
         <h4>Split pe utilizator</h4>
-        <table id="admTable" class="table table-total-strong">
+        <table id="admTable" class="table">
           <thead>
             <tr>
-              <th class="left">User</th>
-              <th>Bani curați (User)</th>
-              <th>Bani murdari (User)</th>
-              <th>Bani curați (Familie)</th>
-              <th>Bani murdari (Familie)</th>
+              <th>User</th>
+              <th>Bani curați</th>
+              <th>Bani murdari</th>
+              <th>Familie – Bani curați</th>
+              <th>Familie – Bani murdari</th>
               <th>Total Bani curați</th>
               <th>Total Bani murdari</th>
-              <th>TOTAL</th>
+              <th>Total</th>
             </tr>
           </thead>
           <tbody></tbody>
+          <tfoot><tr class="row-total"><td colspan="8" id="admTotalCell">Total</td></tr></tfoot>
         </table>
 
         <h4 class="mt">Invite link</h4>
-        <div class="bar">
+        <div class="inline-form wrap">
           <select id="inviteRole">
             <option value="OPERATOR">OPERATOR</option>
             <option value="HEAD_OPERATOR">HEAD_OPERATOR</option>
@@ -289,31 +270,28 @@
     <!-- Tabele All -->
     <section id="tab-tables" class="tab hidden">
       <div class="card">
-        <div class="period-stack">
-          <div class="period-line">
-            <label>Alege perioada:</label>
+        <h3>Tabele All</h3>
+        <div class="period">
+          <div class="label">Alege perioada</div>
+          <div class="inline-form">
             <select id="tblPeriod">
               <option value="week" selected>Săptămână</option>
               <option value="all">All time</option>
             </select>
             <select id="tblWeekPicker" class="weekSel"></select>
           </div>
-
-          <div class="filters-line mt">
-            <label>Tip
-              <select id="tblType">
-                <option value="taxe" selected>Taxe</option>
-                <option value="drill">Burghiu</option>
-              </select>
-            </label>
-            <input id="tblFilterUser" placeholder="User…" />
-            <input id="tblFilterCnp" placeholder="CNP…" />
-            <input id="tblFilterFamily" placeholder="Familie…" />
-            <button id="tblRefresh" class="sm">Reîncarcă</button>
-          </div>
         </div>
 
-        <table id="tblAll" class="table">
+        <div class="inline-form mt">
+          <label class="lbl">Tip</label>
+          <select id="tblType"><option value="taxe">Taxe</option><option value="drill">Burghiu</option></select>
+          <input id="tblFilterUser" placeholder="User…" />
+          <input id="tblFilterCnp" placeholder="CNP…" />
+          <input id="tblFilterFamily" placeholder="Familie…" />
+          <button id="tblRefresh" class="sm">Reîncarcă</button>
+        </div>
+
+        <table id="tblAll" class="table mt">
           <thead id="tblHead"></thead>
           <tbody></tbody>
         </table>
@@ -323,9 +301,10 @@
     <!-- My profile -->
     <section id="tab-profile" class="tab hidden">
       <div class="card">
-        <div class="period-stack">
-          <div class="period-line">
-            <label>Alege perioada:</label>
+        <h3>My profile</h3>
+        <div class="period">
+          <div class="label">Alege perioada</div>
+          <div class="inline-form">
             <select id="profPeriod">
               <option value="week" selected>Săptămână</option>
               <option value="all">All time</option>
@@ -335,39 +314,27 @@
         </div>
 
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="profClean">0 $</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0 $</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
           <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
-          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0 $</b></div>
+          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0$</b></div>
         </div>
 
-        <h4>Activitate (zile)</h4>
+        <h4 class="mt">Activitate (zile)</h4>
         <table id="profDailyTable" class="table">
-          <thead><tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
+          <thead><tr><th>Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr></thead>
           <tbody></tbody>
         </table>
 
         <h4 class="mt">Split 50/50</h4>
-        <div class="grid grid-3">
-          <div class="card inner">
-            <h5>Bani curați</h5>
-            <div>User: <b id="splitCleanUser">0 $</b></div>
-            <div>Familie: <b id="splitCleanFam">0 $</b></div>
-            <div>Total: <b id="splitCleanTot">0 $</b></div>
-          </div>
-          <div class="card inner">
-            <h5>Bani murdari</h5>
-            <div>User: <b id="splitDirtyUser">0 $</b></div>
-            <div>Familie: <b id="splitDirtyFam">0 $</b></div>
-            <div>Total: <b id="splitDirtyTot">0 $</b></div>
-          </div>
-          <div class="card inner">
-            <h5>Total</h5>
-            <div>User: <b id="splitAllUser">0 $</b></div>
-            <div>Familie: <b id="splitAllFam">0 $</b></div>
-            <div>Total: <b id="splitAllTot">0 $</b></div>
-          </div>
-        </div>
+        <table class="table">
+          <thead><tr><th></th><th>User</th><th>Familie</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>Bani curați</td><td id="splitCleanUser">0$</td><td id="splitCleanFam">0$</td><td id="splitCleanTot">0$</td></tr>
+            <tr><td>Bani murdari</td><td id="splitDirtyUser">0$</td><td id="splitDirtyFam">0$</td><td id="splitDirtyTot">0$</td></tr>
+            <tr class="row-total"><td>Total</td><td id="splitAllUser">0$</td><td id="splitAllFam">0$</td><td id="splitAllTot">0$</td></tr>
+          </tbody>
+        </table>
 
         <h4 class="mt">Schimbă parola</h4>
         <form id="resetForm" class="grid grid-2">
@@ -377,7 +344,6 @@
         </form>
       </div>
     </section>
-
   </main>
 
   <script src="app.js"></script>
