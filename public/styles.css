@@ -1,236 +1,98 @@
-/* ---------- RESET & THEME ---------- */
-* { box-sizing: border-box; }
 :root{
-  --bg: #0f1220;            /* fundal general (închis) */
-  --card: #161a2a;          /* panouri/carduri */
-  --muted: #8a93ad;         /* text secundar */
-  --text: #e8ecf8;          /* text principal */
-  --accent: #5b8cff;        /* accent controlluri */
-  --accent-2: #29c6b7;      /* accent secundar (verzui) */
-  --danger: #ef4444;
-  --ok: #22c55e;
-
-  --border: #222744;
-  --row: #121629;
-  --row-alt: #131a32;
-
-  --radius: 14px;
-  --gap: 14px;
-  --pad: 16px;
-  --shadow: 0 8px 24px rgba(0,0,0,.35);
+  --bg:#0f141b; --card:#151b23; --muted:#9aa5b1; --fg:#e8edf3;
+  --primary:#2d6cdf; --danger:#a23b3b; --line:#223042; --accent:#111924;
 }
-html,body{ height:100%; }
+
+*{box-sizing:border-box}
+html,body{height:100%}
 body{
-  margin:0;
-  background: var(--bg);
-  color: var(--text);
-  font: 14px/1.5 system-ui, Segoe UI, Roboto, sans-serif;
+  margin:0; font:14px/1.4 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
+  color:var(--fg); background:var(--bg);
 }
 
-/* ---------- LAYOUT ---------- */
-.container{
-  max-width: 1200px;
-  margin: 24px auto 80px;
-  padding: 0 16px;
-}
-.hidden{ display:none !important; }
-
+/* layout */
 .topbar{
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  display:flex;
-  align-items:center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: rgba(15,18,32,.9);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(8px);
+  display:flex; align-items:center; gap:16px;
+  padding:10px 14px; border-bottom:1px solid var(--line);
+  position:sticky; top:0; background:rgba(15,20,27,.95); backdrop-filter:saturate(120%) blur(6px);
 }
-.brand{
-  font-weight: 700;
-  letter-spacing: .5px;
-  font-size: 18px;
-}
-.tabs{
-  display:flex;
-  gap:8px;
-  flex-wrap: wrap;
-}
-.tabbtn{
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid transparent;
-  padding: 8px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: .15s ease;
-  white-space: nowrap;
-}
-.tabbtn:hover{ color:#fff; border-color: #374069; background:#0f1430; }
-.tabbtn[data-active="true"]{
-  color: #fff;
-  border-color: var(--accent);
-  background: #0f173a;
-  box-shadow: inset 0 0 0 1px rgba(91,140,255,.25);
-}
+.brand{font-weight:800; letter-spacing:.5px}
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.who{margin-left:auto; display:flex; align-items:center; gap:10px; color:var(--muted)}
+.container{max-width:1100px; margin:22px auto; padding:0 14px}
+.hidden{display:none !important}
+.mt{margin-top:22px}
+.mt-12{margin-top:12px}
 
-.who{
-  margin-left:auto;
-  display:flex; align-items:center; gap:8px;
-}
-
-/* ---------- CARDS & GRIDS ---------- */
 .card{
-  background: var(--card);
-  border:1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--pad);
-  box-shadow: var(--shadow);
+  background:linear-gradient(180deg,var(--card),#111820);
+  border:1px solid var(--line); border-radius:12px; padding:16px 16px;
+  box-shadow:0 10px 18px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.03);
 }
-.card.inner{
-  background: #141827;
-  box-shadow: none;
-}
-.mt{ margin-top: 16px; }
+.card.inner{background:#121923}
 
-.grid{ display:grid; gap: var(--gap); }
-.grid-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-.grid-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-.grid-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-.col-span-2{ grid-column: span 2; }
-.col-span-3{ grid-column: span 3; }
-.right{ display:flex; justify-content:flex-end; gap:10px; }
-.gap{ gap: var(--gap); }
+h2,h3,h4,h5{margin:0 0 10px}
+.right{text-align:right}
+.grow{flex:1}
 
-.split{
-  display:flex; align-items:center; gap:12px; margin: 10px 0 8px;
-}
-.bar{
-  display:flex; align-items:center; gap:12px; flex-wrap: wrap;
-}
-.grow{ flex:1; }
-
-/* ---------- FORMS ---------- */
-label{ color: var(--muted); display:flex; flex-direction:column; gap:6px; }
-
-input, select, button{
-  font: inherit;
-}
-input, select{
-  background: #0e1326;
-  color: var(--text);
-  border:1px solid #2a3154;
-  border-radius: 10px;
-  padding: 9px 12px;
-  outline:none;
-  min-height: 36px;
-}
-input::placeholder{ color: #7480a8; }
-
-select{ appearance:none; background-image: linear-gradient(#0e1326,#0e1326); }
-.select-strong{
-  background:#0a0f22;
-  color:#fff;
-  border-color:#3c4a82;
-}
-
-/* hint sub formulare */
-.hint{
-  font-size: 12.5px;
-  color: var(--muted);
-  background: #0e152d;
-  border:1px dashed #2b3560;
-  padding:10px 12px;
-  border-radius: 10px;
-}
-
-/* ---------- BUTTONS ---------- */
+/* buttons */
 button{
-  border:1px solid #3a4472;
-  background: #11183a;
-  color:#e9edff;
-  padding: 8px 14px;          /* scurt și echilibrat */
-  border-radius: 10px;
-  cursor:pointer;
-  transition: .15s ease;
+  border:1px solid var(--line); background:#1b2635; color:var(--fg);
+  padding:8px 12px; border-radius:8px; cursor:pointer;
 }
-button:hover{ filter: brightness(1.1); }
-button:disabled{ opacity:.5; cursor:not-allowed; }
+button:hover{background:#203048}
+button.primary{background:var(--primary); border-color:#214fa7}
+button.primary:hover{background:#2a60c6}
+button.danger{background:#812b2b; border-color:#6a2323}
+button.danger:hover{background:#8d2f2f}
+button.sm{padding:6px 10px; font-size:12px}
+button.xl{padding:10px 14px}
 
-button.primary{
-  border-color: var(--accent);
-  background: linear-gradient(180deg, #1b2b6b, #15235a);
-  box-shadow: 0 6px 18px rgba(91,140,255,.25);
-}
-button.danger{
-  border-color: #a13333;
-  background: linear-gradient(180deg, #4a0f15, #3a0c11);
-  color: #ffd6d6;
-}
-button.sm{ padding:6px 10px; font-size: 12.5px; }
-button.xl{ padding: 10px 16px; font-size: 15px; } /* „Trimite taxă” să fie egal ca înălțime cu selectul */
+/* tabs */
+.tabbtn{background:#132032}
+.tabbtn[data-active="true"]{background:var(--primary); border-color:#214fa7}
 
-/* ---------- TABLES ---------- */
-.table{
-  width:100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  overflow:hidden;
-  border:1px solid var(--border);
-  border-radius: 12px;
+/* forms */
+.grid{display:grid; gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.col-span-2{grid-column:span 2}
+
+label{display:flex; flex-direction:column; gap:6px; color:var(--muted)}
+input, select{
+  width:100%; background:#0f1622; color:var(--fg);
+  border:1px solid #1d2a3a; border-radius:8px; padding:10px 12px;
 }
+input::placeholder{color:#6f7b87}
+select.select-strong{background:#0b0f16; color:#fff; border-color:#3b4d63}
+
+.inline-submit{display:flex; align-items:end; justify-content:flex-end}
+
+/* bars */
+.split{display:flex; align-items:center; gap:12px}
+.bar{display:flex; align-items:center; gap:10px}
+.period-bar{display:flex; align-items:center; gap:10px; margin:10px 0}
+
+/* tables */
+.table{width:100%; border-collapse:collapse; margin-top:10px}
 .table thead th{
-  background:#121834;
-  color:#cfd6ff;
-  text-align:center;
-  padding:10px 12px;
-  font-weight:600;
-  border-bottom:1px solid var(--border);
+  text-align:center; color:#cbd5e1; background:#121a25; border-bottom:1px solid var(--line);
+  padding:10px
 }
-.table tbody td{
-  padding:10px 12px;
-  border-bottom:1px solid #1c2346;
-  background: var(--row);
+.table td{
+  border-bottom:1px solid #1b2a3a; padding:10px; text-align:center
 }
-.table tbody tr:nth-child(2n) td{
-  background: var(--row-alt);
-}
-.table .left{ text-align:left; }
-.table .num, .table td.num, .table th.num{ text-align:center; }
-.table .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.table th.left, .table td.left{text-align:left}
+.table .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
+.with-spacing{margin-top:14px}
 
-/* ---------- HEADINGS ---------- */
-h2,h3,h4,h5{ margin:0 0 10px 0; }
-h2{ font-size: 22px; }
-h3{ font-size: 18px; }
-h4{ font-size: 16px; color:#dbe3ff; }
-h5{ font-size: 14px; color:#dbe3ff; }
+/* hints */
+.hint{color:#b2c0cf; font-size:13px}
 
-/* ---------- TAXE SPECIFICS ---------- */
-#metodaSelect{
-  background:#0a0f22;
-  color:#fff;
-  border-color:#3c4a82;
-}
-#gratisWrap{ display:none; } /* controlat din JS: apare doar pe „GRATIS” */
-
-/*  search deasupra tabelelor  */
-#taxSearch, #famSearch, #bfSearch, #adminSearchUser, #adminSearchCnp, #adminSearchFamily, #tblFilterUser, #tblFilterCnp, #tblFilterFamily{
-  min-width: 180px;
-}
-
-/* ---------- RESPONSIVE ---------- */
-@media (max-width: 980px){
-  .grid-3{ grid-template-columns: 1fr; }
-  .grid-2{ grid-template-columns: 1fr; }
-  .col-span-2, .col-span-3{ grid-column: auto; }
-  .tabs{ flex-wrap: nowrap; overflow:auto; }
-  .table thead{ position:sticky; top:48px; z-index: 5; }
-}
-
-/* ---------- SMALL POLISH ---------- */
-input:focus, select:focus{
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(91,140,255,.15);
+/* nav active handling on small screens */
+@media (max-width:760px){
+  .grid-3{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:1fr}
+  .period-bar{flex-wrap:wrap}
+  .tabs{gap:6px}
 }
