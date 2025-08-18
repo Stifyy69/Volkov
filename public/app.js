@@ -44,21 +44,36 @@ function inISOWeek(dateLike, year, week){
 }
 const dayNames = ["Lun","Mar","Mie","Joi","Vin","Sâm","Dum"];
 
-// Weeks 33..53, set current if in range
+// Weeks 33..53, set current if in range + placeholder (fix iOS “No Options”)
 function fillWeeks33toEnd(sel){
   if (!sel) return;
   sel.innerHTML = "";
+
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "— Selectează —";
+  ph.disabled = false;
+  sel.appendChild(ph);
+
   const now = new Date();
   const { year: nowYear, week: nowWeek } = isoYearWeek(now);
-  let def = null;
+  let defValue = "";
+
   for (let w=33; w<=53; w++){
     const opt = document.createElement("option");
     opt.value = JSON.stringify({year: nowYear, week: w});
     opt.textContent = `${nowYear}-W${String(w).padStart(2,"0")}`;
     sel.appendChild(opt);
-    if (nowWeek === w) def = opt.value;
+    if (nowWeek === w) defValue = opt.value;
   }
-  sel.value = def || sel.querySelector("option")?.value || "";
+
+  sel.value = defValue || ph.value;
+}
+// dacă un select e gol, îl populăm pe loc
+function ensureWeeksFilled(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!el.options || el.options.length <= 1) fillWeeks33toEnd(el);
 }
 
 // ===== Auth =====
@@ -69,6 +84,7 @@ async function hydrateMe() {
     const me = await r.json();
     $("#whoami").textContent = `${me.username} [${me.role}]`;
 
+    // vizibilitate tab-uri pe rol
     const show = (tab, cond) => {
       const btn = $$(".tabbtn").find(b => b.dataset.tab === tab);
       if (btn) btn.classList.toggle("hidden", !cond);
@@ -83,10 +99,11 @@ async function hydrateMe() {
     $("#app").classList.remove("hidden");
     setTabs("taxe");
 
-    // populare weeks pentru toate controalele
+    // populare weeks pentru toate controalele (și fallback dacă sunt goale)
     ["dashWeekPicker","bfWeekPicker","weekSelect","tblWeekPicker","profWeekPicker"]
-      .forEach(id => fillWeeks33toEnd($(id)));
+      .forEach(id => ensureWeeksFilled(id));
 
+    // încărcări inițiale
     loadTaxe();
     loadDrill();
     loadDashboard();
@@ -94,6 +111,14 @@ async function hydrateMe() {
     loadAdmin();
     loadTableAll();
     loadProfile();
+
+    // declanșăm prima schimbare ca să nu rămână pe placeholder
+    $("#dashWeekPicker") && $("#dashWeekPicker").dispatchEvent(new Event("change"));
+    $("#bfWeekPicker")   && $("#bfWeekPicker").dispatchEvent(new Event("change"));
+    $("#weekSelect")     && $("#weekSelect").dispatchEvent(new Event("change"));
+    $("#tblWeekPicker")  && $("#tblWeekPicker").dispatchEvent(new Event("change"));
+    $("#profWeekPicker") && $("#profWeekPicker").dispatchEvent(new Event("change"));
+
     connectSSE();
   } catch {
     $("#auth").classList.remove("hidden");
@@ -141,6 +166,14 @@ $("#registerForm")?.addEventListener("submit", async (e) => {
 $$(".tabbtn").forEach(b => {
   b.addEventListener("click", async () => {
     setTabs(b.dataset.tab);
+
+    // asigurăm săptămânile populate pe fiecare tab relevant
+    if (b.dataset.tab === "dashboard")     ensureWeeksFilled("dashWeekPicker");
+    if (b.dataset.tab === "drillfamilies") ensureWeeksFilled("bfWeekPicker");
+    if (b.dataset.tab === "admin")         ensureWeeksFilled("weekSelect");
+    if (b.dataset.tab === "tables")        ensureWeeksFilled("tblWeekPicker");
+    if (b.dataset.tab === "profile")       ensureWeeksFilled("profWeekPicker");
+
     if (b.dataset.tab === "taxe")      { loadTaxe(); loadDrill(); }
     if (b.dataset.tab === "dashboard") loadDashboard();
     if (b.dataset.tab === "drillfamilies") loadBF();
@@ -150,18 +183,20 @@ $$(".tabbtn").forEach(b => {
   });
 });
 
-// ===== SSE =====
+// ===== SSE (live) =====
 let es;
 function connectSSE() {
   try { es?.close?.(); } catch {}
   es = new EventSource("/events");
-  es.addEventListener("taxe:new", () => { loadTaxe(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile(); });
+  es.addEventListener("taxe:new",  () => { loadTaxe();  loadDashboard(); loadTableAll(); loadAdmin(); loadProfile(); });
   es.addEventListener("drill:new", () => { loadDrill(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile(); loadBF(); });
+  es.addEventListener("ping", () => {});
 }
 
 // ===== Taxe =====
 const metodaSelect = $("#metodaSelect");
 const gratisWrap    = $("#gratisWrap");
+
 metodaSelect?.addEventListener("change", () => {
   const isGratis = metodaSelect.value === "gratis";
   gratisWrap.classList.toggle("hidden", !isGratis);
@@ -183,6 +218,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   loadTaxe(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile();
 });
 
+// state + search
 let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
 
@@ -279,7 +315,6 @@ async function loadDashboard() {
   let clean = 0, dirty = 0;
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
 
-  // taxe ISTORIC: încercă /taxe/all; dacă nu există, folosește /taxe (active)
   let taxe = [];
   let rT = await api("/taxe/all");
   if (!rT.ok) rT = await api("/taxe");
@@ -458,6 +493,8 @@ $("#tblRefresh")?.addEventListener("click", loadTableAll);
 $("#tblType")?.addEventListener("change", loadTableAll);
 
 async function loadTableAll(){
+  ensureWeeksFilled("tblWeekPicker");
+
   const type = $("#tblType").value;
   const filterUser = ($("#tblFilterUser").value||"").toLowerCase();
   const filterCnp = ($("#tblFilterCnp").value||"").toLowerCase();
@@ -473,7 +510,6 @@ async function loadTableAll(){
   if (type === "taxe") {
     head.innerHTML = `<tr><th class="left">CNP</th><th>Sumă</th><th>Timp rămas</th><th class="left">User</th><th class="left">Familie</th><th>Creat</th></tr>`;
 
-    // istoric taxe dacă există
     let r = await api("/taxe/all");
     if (!r.ok) r = await api("/taxe");
     if (!r.ok) return;
@@ -521,6 +557,8 @@ $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
 async function loadProfile(){
+  ensureWeeksFilled("profWeekPicker");
+
   const period = $("#profPeriod")?.value || "week";
   let selYear, selWeek;
   try { if (period === "week" && $("#profWeekPicker")?.value) ({year:selYear,week:selWeek} = JSON.parse($("#profWeekPicker").value)); } catch {}
@@ -528,7 +566,6 @@ async function loadProfile(){
   let clean=0, dirty=0, pieces=0, drillMoney=0;
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
 
-  // taxe istoric
   let rT = await api("/taxe/all");
   if (!rT.ok) rT = await api("/taxe");
   if (rT.ok) {
@@ -566,6 +603,7 @@ async function loadProfile(){
     body.appendChild(tr);
   });
 
+  // split 50/50
   const userClean = clean * 0.5, famClean = clean * 0.5;
   const userDirty = (dirty+drillMoney) * 0.5, famDirty = (dirty+drillMoney) * 0.5;
   $("#splitCleanUser").textContent = money(userClean);
