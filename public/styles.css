@@ -96,3 +96,14 @@ input[type="number"]{text-align:center}
 
 /* auth/app hide */
 #app.hidden, #auth.hidden{display:none}
+
+/* ---- FIX ALINIERE BUTON TRIMITE ---- */
+form {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* egal între inputuri și buton */
+}
+form .gold-btn {
+  margin-left: 12px; /* să nu fie lipit de input */
+  margin-right: 0;
+}
