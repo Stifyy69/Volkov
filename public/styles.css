@@ -1,18 +1,8 @@
-/* layout de bază al tău rămâne neschimbat */
-
 :root{
-  --bg:#0e1217;
-  --card:#151b23;
-  --muted:#8aa0b2;
-  --accent:#1f2835;
-  --text:#e8eef4;
-  --border:#263140;
-  --gold:#FFD700;
-  --red1:#8B0000;
-  --red2:#B22222;
-  --red3:#FF0000;
+  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
+  --text:#e8eef4; --border:#263140; --gold:#FFD700;
+  --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
 }
-
 body{background:#0e1217;color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
 .container{max-width:1100px;margin:24px auto;padding:0 16px}
 .topbar{display:flex;align-items:center;justify-content:space-between;background:#0b0f14;border-bottom:1px solid var(--border);padding:10px 16px;position:sticky;top:0;z-index:20}
@@ -29,9 +19,11 @@ body{background:#0e1217;color:var(--text);font-family:Inter,system-ui,Arial,sans
 .grid-2{grid-template-columns:1fr 1fr}
 .grid-3{grid-template-columns:1fr 1fr 1fr}
 .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.col-span-3{grid-column: span 3}
 .col-span-2{grid-column: span 2}
 .right{display:flex;justify-content:flex-end;align-items:center}
 .flex-end{display:flex;align-items:center;justify-content:flex-end}
+.align-center{align-items:end}
 .row{display:flex;gap:12px;align-items:center}
 .split{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
 .mt{margin-top:16px}
@@ -58,9 +50,8 @@ input[type="number"]{text-align:center}
 .primary:hover{border-color:#3a4b61}
 .danger{background:#2a1111;border-color:#4a1a1a}
 .sm{padding:6px 10px;font-size:.9rem}
-.smh{height:40px}
 
-/* BUTON auriu-roșu ca în exemplul tău, dimensionat pe înălțimea inputului */
+/* Buton TRIMITE */
 .gold-btn{
   padding:10px 18px;
   font-weight:700;
@@ -72,12 +63,9 @@ input[type="number"]{text-align:center}
   transition:all .2s ease;
   box-shadow:0 0 8px rgba(0,0,0,.6);
 }
-.gold-btn:hover{
-  background:linear-gradient(180deg, var(--red2), var(--red3));
-  color:#fff;
-  box-shadow:0 0 12px rgba(255,215,0,.8);
-}
+.gold-btn:hover{ background:linear-gradient(180deg, var(--red2), var(--red3)); color:#fff; box-shadow:0 0 12px rgba(255,215,0,.8); }
 .xl{font-size:1rem}
+.same-height{height:42px; display:inline-flex; align-items:center;}
 
 /* Tables */
 .table{width:100%;border-collapse:separate;border-spacing:0 6px}
@@ -91,8 +79,20 @@ input[type="number"]{text-align:center}
 .bar{display:flex;gap:12px;align-items:center}
 .weekSel{min-width:180px}
 
+/* Period blocks */
+.period-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.period-wrap .label{font-weight:600;color:#c7d1dc}
+.period-row{display:flex;gap:12px;align-items:center}
+
+/* filters */
+.filters.two-rows{display:flex;flex-direction:column;gap:8px}
+
 /* hints */
 .hint{color:#a7b6c6;font-size:.92rem}
+
+/* admin total highlight */
+.admin-table .total-col{font-weight:800;border:2px solid var(--gold)}
+.table .total-col{font-weight:800;border:2px solid var(--gold)}
 
 /* auth/app hide */
 #app.hidden, #auth.hidden{display:none}
