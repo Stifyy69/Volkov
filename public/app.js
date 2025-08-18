@@ -11,7 +11,7 @@ const api = (path, opts = {}) =>
 
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
-const money = (n=0) => `${(n||0).toLocaleString("ro-RO")}$.`;
+const money = (n=0) => `${(n||0).toLocaleString("ro-RO")}$`;
 
 function setTabs(active) {
   $$(".tabbtn").forEach(b => b.dataset.active = (b.dataset.tab === active));
@@ -42,17 +42,21 @@ function inISOWeek(d, year, week){
 }
 const dayNames = ["Lun","Mar","Mie","Joi","Vin","Sâm","Dum"];
 
-// populează săpt. 33..53
+// Populează săpt. 33..53 + selectează automat săptămâna curentă (dacă e în interval)
 function fillWeeks33toEnd(sel){
   if (!sel) return;
   sel.innerHTML = "";
-  const nowYear = new Date().getUTCFullYear();
+  const now = new Date();
+  const { year:nowYear, week:nowWeek } = isoYearWeek(now);
+  let defaultVal = null;
   for (let w=33; w<=53; w++){
     const opt = document.createElement("option");
     opt.value = JSON.stringify({year: nowYear, week: w});
     opt.textContent = `${nowYear}-W${String(w).padStart(2,"0")}`;
     sel.appendChild(opt);
+    if (nowWeek === w) defaultVal = opt.value;
   }
+  sel.value = defaultVal || sel.querySelector("option")?.value || "";
 }
 
 // ===== Auth =====
@@ -77,11 +81,16 @@ async function hydrateMe() {
     $("#app").classList.remove("hidden");
     setTabs("taxe");
 
+    // Populare săptămâni (33..53) în toate controalele
     ["dashWeekPicker","bfWeekPicker","weekSelect","tblWeekPicker","profWeekPicker"].forEach(id => fillWeeks33toEnd($(id)));
 
     loadTaxe();
     loadDrill();
     loadDashboard();
+    loadBF();       // tab Statistici Familii
+    loadAdmin();
+    loadTableAll();
+    loadProfile();
     connectSSE();
   } catch {
     $("#auth").classList.remove("hidden");
@@ -128,7 +137,7 @@ $$(".tabbtn").forEach(b => {
     setTabs(b.dataset.tab);
     if (b.dataset.tab === "taxe")      { loadTaxe(); loadDrill(); }
     if (b.dataset.tab === "dashboard") loadDashboard();
-    if (b.dataset.tab === "drillfamilies") loadDashboard();
+    if (b.dataset.tab === "drillfamilies") loadBF();
     if (b.dataset.tab === "admin")     loadAdmin();
     if (b.dataset.tab === "tables")    loadTableAll();
     if (b.dataset.tab === "profile")   loadProfile();
@@ -140,8 +149,8 @@ let es;
 function connectSSE() {
   if (es) { try { es.close(); } catch {} }
   es = new EventSource("/events");
-  es.addEventListener("taxe:new", () => { loadTaxe(); loadDashboard(); loadTableAll(); });
-  es.addEventListener("drill:new", () => { loadDrill(); loadDashboard(); loadTableAll(); });
+  es.addEventListener("taxe:new", () => { loadTaxe(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile(); });
+  es.addEventListener("drill:new", () => { loadDrill(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile(); loadBF(); });
   es.addEventListener("ping", () => {});
 }
 
@@ -158,7 +167,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   const cnp = (f.cnp.value||"").trim();
-  if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
+  if (!/^[0-9]{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
 
   const body = { cnp, metoda: f.metoda.value };
   if (f.metoda.value === "gratis") body.gratisFamilie = f.gratisFamilie.value;
@@ -167,7 +176,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   const j = await r.json();
   if (!r.ok) return alert(j.error || "Eroare la taxă");
   f.reset(); metodaSelect.dispatchEvent(new Event("change"));
-  loadTaxe(); loadDashboard(); loadTableAll();
+  loadTaxe(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile();
 });
 
 // state + search
@@ -206,7 +215,7 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   const cnp = (f.cnp.value||"").trim();
-  if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
+  if (!/^[0-9]{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
 
   const pieces = [
     { key:"cadru",    val: Number(f.cadru.value||0) },
@@ -218,19 +227,14 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
   if (!f.family.value) return alert("Selectează o familie.");
 
   for (const p of pieces) {
-    const body = {
-      cnp,
-      part: p.key,
-      quantity: p.val,
-      family: f.family.value
-    };
+    const body = { cnp, part: p.key, quantity: p.val, family: f.family.value };
     const r = await api("/drill", { method: "POST", body: JSON.stringify(body) });
     const j = await r.json();
     if (!r.ok) return alert(j.error || `Eroare la ${p.key}`);
   }
 
   f.reset();
-  loadDrill(); loadDashboard(); loadTableAll();
+  loadDrill(); loadDashboard(); loadTableAll(); loadAdmin(); loadProfile(); loadBF();
 });
 
 let drillCache = [];
@@ -253,26 +257,14 @@ function renderDrill(list){
       <td>${j.mecanism}</td>
       <td>${j.fixare}</td>
       <td>${j.metodaPlata}</td>
-      <td>${(j.costTotal || 0).toLocaleString("ro-RO")}$. </td>
+      <td>${money(j.costTotal || 0)}</td>
       <td class="left">${j.user||"-"}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// ===== Period Controls (shared) =====
-function hookPeriodControls(scope){
-  const wrap = $(`${scope} .period-wrap`);
-  if (!wrap) return;
-  const selectPeriod = wrap.querySelector(".period-select");
-  const weekPicker   = wrap.querySelector(".weekSel");
-  selectPeriod?.addEventListener("change", () => {
-    wrap.classList.toggle("alltime", selectPeriod.value === "all");
-  });
-}
-
 // ===== Dashboard =====
-hookPeriodControls("#tab-dashboard");
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 
@@ -302,14 +294,14 @@ async function loadDashboard() {
       if (t.tip === "Bani murdari") row.dirty += 60000;
     });
   }
-  $("#statTaxClean").textContent = `${clean.toLocaleString("ro-RO")}$.`;
-  $("#statTaxDirty").textContent = `${dirty.toLocaleString("ro-RO")}$.`;
+  $("#statTaxClean").textContent = money(clean);
+  $("#statTaxDirty").textContent = money(dirty);
 
   const dBody = $("#dashDailyTable tbody");
   dBody.innerHTML = "";
   daily.forEach(d => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${d.clean.toLocaleString("ro-RO")}$. </td><td>${d.dirty.toLocaleString("ro-RO")}$. </td>`;
+    tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${money(d.clean)}</td><td>${money(d.dirty)}</td>`;
     dBody.appendChild(tr);
   });
 
@@ -333,11 +325,7 @@ async function loadDashboard() {
       totalPieces += pieces;
       const fam = j.family || "(fără)";
       const prev = famAgg.get(fam) || {cadru:0,teava:0,mecanism:0,fixare:0,total:0};
-      prev.cadru += j.cadru;
-      prev.teava += j.teava;
-      prev.mecanism += j.mecanism;
-      prev.fixare += j.fixare;
-      prev.total  += pieces;
+      prev.cadru += j.cadru; prev.teava += j.teava; prev.mecanism += j.mecanism; prev.fixare += j.fixare; prev.total += pieces;
       famAgg.set(fam, prev);
 
       const keyD = j.user || "";
@@ -349,13 +337,11 @@ async function loadDashboard() {
 
   const famBody = $("#drillFamiliesTable tbody");
   famBody.innerHTML = "";
-  [...famAgg.entries()]
-    .sort((a,b)=>b[1].total - a[1].total)
-    .forEach(([fam, agg])=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="left">${fam}</td><td>${agg.cadru}</td><td>${agg.teava}</td><td>${agg.mecanism}</td><td>${agg.fixare}</td><td>${agg.total}</td>`;
-      famBody.appendChild(tr);
-    });
+  [...famAgg.entries()].sort((a,b)=>b[1].total - a[1].total).forEach(([fam, agg])=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="left">${fam}</td><td>${agg.cadru}</td><td>${agg.teava}</td><td>${agg.mecanism}</td><td>${agg.fixare}</td><td>${agg.total}</td>`;
+    famBody.appendChild(tr);
+  });
 
   (taxe||[]).forEach(t=>{
     const key = t.user || "";
@@ -375,13 +361,43 @@ async function loadDashboard() {
   topDrillBody.innerHTML = "";
   [...topDrillMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,20).forEach(([user, val])=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="left">${user||"-"}</td><td>${val.toLocaleString("ro-RO")}$. </td>`;
+    tr.innerHTML = `<td class="left">${user||"-"}</td><td>${money(val||0)}</td>`;
     topDrillBody.appendChild(tr);
   });
+}
 
-  $("#famSearch")?.addEventListener("input", (e) => {
+// ===== Statistici Familii (tab dedicat) =====
+$("#bfPeriod")?.addEventListener("change", loadBF);
+$("#bfWeekPicker")?.addEventListener("change", loadBF);
+
+async function loadBF(){
+  // Folosim aceleași date ca în Dashboard → agregate pe familii
+  const period = "week";
+  const {year,week} = JSON.parse($("#bfWeekPicker")?.value || "{}");
+  const rD = await api("/drill");
+  if (!rD.ok) return;
+  const list = await rD.json();
+  const famAgg = new Map();
+  list.forEach(j=>{
+    const dt = j.createdAt ? new Date(j.createdAt) : new Date();
+    if (!(year && week) || inISOWeek(dt, year, week)) {
+      const fam = j.family || "(fără)";
+      const prev = famAgg.get(fam) || {cadru:0,teava:0,mecanism:0,fixare:0,total:0};
+      prev.cadru += j.cadru; prev.teava += j.teava; prev.mecanism += j.mecanism; prev.fixare += j.fixare;
+      prev.total += j.cadru + j.teava + j.mecanism + j.fixare;
+      famAgg.set(fam, prev);
+    }
+  });
+  const tbody = $("#bfTable tbody");
+  tbody.innerHTML = "";
+  [...famAgg.entries()].sort((a,b)=>b[1].total-a[1].total).forEach(([fam,agg])=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="left">${fam}</td><td>${agg.cadru}</td><td>${agg.teava}</td><td>${agg.mecanism}</td><td>${agg.fixare}</td><td>${agg.total}</td>`;
+    tbody.appendChild(tr);
+  });
+  $("#bfSearch")?.addEventListener("input", (e) => {
     const q = (e.target.value||"").toLowerCase();
-    [...$("#drillFamiliesTable tbody").rows].forEach(tr=>{
+    [...$("#bfTable tbody").rows].forEach(tr=>{
       const name = (tr.cells[0]?.textContent||"").toLowerCase();
       tr.style.display = name.includes(q) ? "" : "none";
     });
@@ -389,7 +405,6 @@ async function loadDashboard() {
 }
 
 // ===== Admin =====
-hookPeriodControls("#tab-admin");
 $("#admPeriod")?.addEventListener("change", loadAdmin);
 $("#weekSelect")?.addEventListener("change", loadAdmin);
 
@@ -415,20 +430,19 @@ async function loadAdmin() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="left">${row.username}</td>
-      <td>${(row.userShareClean||0).toLocaleString("ro-RO")}$. </td>
-      <td>${(row.userShareDirty||0).toLocaleString("ro-RO")}$. </td>
-      <td>${(row.familyShareClean||0).toLocaleString("ro-RO")}$. </td>
-      <td>${(row.familyShareDirty||0).toLocaleString("ro-RO")}$. </td>
-      <td>${(row.totalClean||0).toLocaleString("ro-RO")}$. </td>
-      <td>${(row.totalDirty||0).toLocaleString("ro-RO")}$. </td>
-      <td class="total-col">${(row.total||0).toLocaleString("ro-RO")}$. </td>
+      <td>${money(row.userShareClean||0)}</td>
+      <td>${money(row.userShareDirty||0)}</td>
+      <td>${money(row.familyShareClean||0)}</td>
+      <td>${money(row.familyShareDirty||0)}</td>
+      <td>${money(row.totalClean||0)}</td>
+      <td>${money(row.totalDirty||0)}</td>
+      <td class="total-col">${money(row.total||0)}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
 // ===== Tabele All =====
-hookPeriodControls("#tab-tables");
 $("#tblPeriod")?.addEventListener("change", loadTableAll);
 $("#tblWeekPicker")?.addEventListener("change", loadTableAll);
 $("#tblRefresh")?.addEventListener("click", loadTableAll);
@@ -468,14 +482,13 @@ async function loadTableAll(){
       .filter(x => !filterFam || (x.family||"").toLowerCase().includes(filterFam))
       .forEach(j=>{
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="font-mono">${j.cnp}</td><td class="left">${j.family||"-"}</td><td>${j.cadru}</td><td>${j.teava}</td><td>${j.mecanism}</td><td>${j.fixare}</td><td>${j.metodaPlata}</td><td>${(j.costTotal||0).toLocaleString("ro-RO")}$. </td><td class="left">${j.user||"-"}</td><td>${j.createdAt?new Date(j.createdAt).toLocaleString("ro-RO"):""}</td>`;
+        tr.innerHTML = `<td class="font-mono">${j.cnp}</td><td class="left">${j.family||"-"}</td><td>${j.cadru}</td><td>${j.teava}</td><td>${j.mecanism}</td><td>${j.fixare}</td><td>${j.metodaPlata}</td><td>${money(j.costTotal||0)}</td><td class="left">${j.user||"-"}</td><td>${j.createdAt?new Date(j.createdAt).toLocaleString("ro-RO"):""}</td>`;
         body.appendChild(tr);
       });
   }
 }
 
 // ===== Profile =====
-hookPeriodControls("#tab-profile");
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -509,31 +522,30 @@ async function loadProfile(){
     });
   }
 
-  $("#profClean").textContent = `${clean.toLocaleString("ro-RO")}$.`;
-  $("#profDirty").textContent = `${(dirty + drillMoney).toLocaleString("ro-RO")}$.`;
+  $("#profClean").textContent = money(clean);
+  $("#profDirty").textContent = money(dirty + drillMoney);
   $("#profPieces").textContent = (pieces||0).toLocaleString("ro-RO");
-  $("#profDrillMoney").textContent = `${(drillMoney).toLocaleString("ro-RO")}$.`;
+  $("#profDrillMoney").textContent = money(drillMoney);
 
   const body = $("#profDailyTable tbody");
   body.innerHTML = "";
   daily.forEach(d=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${d.clean.toLocaleString("ro-RO")}$. </td><td>${d.dirty.toLocaleString("ro-RO")}$. </td>`;
+    tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${money(d.clean)}</td><td>${money(d.dirty)}</td>`;
     body.appendChild(tr);
   });
 
   const userClean = clean * 0.5, famClean = clean * 0.5;
   const userDirty = (dirty+drillMoney) * 0.5, famDirty = (dirty+drillMoney) * 0.5;
-
-  $("#splitCleanUser").textContent = `${userClean.toLocaleString("ro-RO")}$.`;
-  $("#splitCleanFam").textContent  = `${famClean.toLocaleString("ro-RO")}$.`;
-  $("#splitCleanTot").textContent  = `${clean.toLocaleString("ro-RO")}$.`;
-  $("#splitDirtyUser").textContent = `${userDirty.toLocaleString("ro-RO")}$.`;
-  $("#splitDirtyFam").textContent  = `${famDirty.toLocaleString("ro-RO")}$.`;
-  $("#splitDirtyTot").textContent  = `${(dirty+drillMoney).toLocaleString("ro-RO")}$.`;
-  $("#splitAllUser").textContent   = `${(userClean+userDirty).toLocaleString("ro-RO")}$.`;
-  $("#splitAllFam").textContent    = `${(famClean+famDirty).toLocaleString("ro-RO")}$.`;
-  $("#splitAllTot").textContent    = `${(clean+dirty+drillMoney).toLocaleString("ro-RO")}$.`;
+  $("#splitCleanUser").textContent = money(userClean);
+  $("#splitCleanFam").textContent  = money(famClean);
+  $("#splitCleanTot").textContent  = money(clean);
+  $("#splitDirtyUser").textContent = money(userDirty);
+  $("#splitDirtyFam").textContent  = money(famDirty);
+  $("#splitDirtyTot").textContent  = money(dirty+drillMoney);
+  $("#splitAllUser").textContent   = money(userClean+userDirty);
+  $("#splitAllFam").textContent    = money(famClean+famDirty);
+  $("#splitAllTot").textContent    = money(clean+dirty+drillMoney);
 }
 
 // ===== Init =====
