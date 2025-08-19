@@ -25,7 +25,6 @@
     </div>
   </header>
 
-  <!-- Auth -->
   <main id="auth" class="container">
     <section class="card">
       <h2>Autentificare</h2>
@@ -49,15 +48,12 @@
     </section>
   </main>
 
-  <!-- App -->
   <main id="app" class="container hidden">
 
-    <!-- Taxe & Burghiu -->
     <section id="tab-taxe" class="tab">
       <div class="card">
         <h3>Taxe</h3>
 
-        <!-- LINIA 1: CNP – Tip plată – (Familie GRATIS când e cazul) – TRIMITE -->
         <form id="taxeForm" class="row-taxe">
           <label>CNP
             <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
@@ -81,12 +77,14 @@
           </label>
 
           <div class="btn-wrap">
-            <button class="primary xl gold-btn same-height">Trimite</button>
+            <button type="submit" class="primary gold-btn sm-compact same-height">Trimite</button>
           </div>
         </form>
 
-        <div class="split">
+        <div class="split spacer-12">
           <h4>Taxe active</h4>
+        </div>
+        <div class="row mb">
           <input id="taxSearch" class="w-300" placeholder="Caută CNP…" />
         </div>
 
@@ -103,7 +101,6 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <!-- LINIA 1: CNP – Familie – TRIMITE -->
         <form id="drillForm">
           <div class="row-drill1">
             <label>CNP
@@ -131,11 +128,10 @@
               </select>
             </label>
             <div class="btn-wrap">
-              <button class="primary gold-btn sm-compact same-height">Trimite</button>
+              <button type="submit" class="primary gold-btn sm-compact same-height">Trimite</button>
             </div>
           </div>
 
-          <!-- LINIA 2: Cadru – Țeavă – Mecanism – Elemente de fixare -->
           <div class="row-drill2">
             <label><input name="cadru"    type="number" min="0" step="1" placeholder="Cadru" /></label>
             <label><input name="teava"    type="number" min="0" step="1" placeholder="Țeavă" /></label>
@@ -143,7 +139,6 @@
             <label><input name="fixare"   type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
           </div>
 
-          <!-- LINIA 3: text plată -->
           <div class="hint">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
         </form>
 
@@ -161,7 +156,6 @@
       </div>
     </section>
 
-    <!-- Restul tab-urilor (nemodificate vizual) -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -359,6 +353,13 @@
             <div>Total: <b id="splitAllTot">0$</b></div>
           </div>
         </div>
+
+        <h4 class="mt">Schimbă parola</h4>
+        <form id="resetForm" class="grid grid-2">
+          <label>Parola veche <input name="oldPassword" type="password" required/></label>
+          <label>Parola nouă <input name="newPassword" type="password" required/></label>
+          <div class="col-span-2 right"><button class="primary">Actualizează</button></div>
+        </form>
       </div>
     </section>
 
