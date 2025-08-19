@@ -42,21 +42,20 @@
         <label>Username <input name="username" required /></label>
         <label>Nickname <input name="nickname" /></label>
         <label>Parolă <input name="password" type="password" required /></label>
-        <label>CNP (max 6) <input name="cnp" pattern="\\d{0,6}" /></label>
+        <label>CNP (max 6) <input name="cnp" pattern="\d{0,6}" /></label>
         <div class="col-span-2 right"><button class="primary">Register</button></div>
       </form>
     </section>
   </main>
 
   <main id="app" class="container hidden">
-
     <section id="tab-taxe" class="tab">
       <div class="card">
         <h3>Taxe</h3>
 
-        <form id="taxeForm" class="row-taxe">
+        <form id="taxeForm" class="grid grid-3 gap">
           <label>CNP
-            <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
+            <input name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
           </label>
 
           <label>Tip plată
@@ -68,20 +67,22 @@
             </select>
           </label>
 
-          <label id="gratisWrap" class="hidden">Familie (GRATIS)
-            <select name="gratisFamilie">
-              <option value="Medelin Cartel">Medelin Cartel</option>
-              <option value="818">818</option>
-              <option value="Stefanos Cartel">Stefanos Cartel</option>
-            </select>
-          </label>
+          <div id="gratisWrap" class="hidden">
+            <label>Familie (GRATIS)
+              <select name="gratisFamilie">
+                <option value="Medelin Cartel">Medelin Cartel</option>
+                <option value="818">818</option>
+                <option value="Stefanos Cartel">Stefanos Cartel</option>
+              </select>
+            </label>
+          </div>
 
-          <div class="btn-wrap">
-            <button type="submit" class="primary gold-btn sm-compact same-height">Trimite</button>
+          <div class="col-span-3 right">
+            <button class="primary xl gold-btn">Trimite</button>
           </div>
         </form>
 
-        <div class="split spacer-12">
+        <div class="split">
           <h4>Taxe active</h4>
         </div>
         <div class="row mb">
@@ -101,10 +102,10 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <form id="drillForm">
-          <div class="row-drill1">
+        <form id="drillForm" class="grid grid-2 gap">
+          <div class="grid grid-3">
             <label>CNP
-              <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
+              <input name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
             </label>
             <label>Familie
               <select name="family" id="drillFamily" required>
@@ -127,19 +128,19 @@
                 <option>BACM</option>
               </select>
             </label>
-            <div class="btn-wrap">
-              <button type="submit" class="primary gold-btn sm-compact same-height">Trimite</button>
+            <div class="flex-end">
+              <button class="primary gold-btn smh">Trimite</button>
             </div>
           </div>
 
-          <div class="row-drill2">
-            <label><input name="cadru"    type="number" min="0" step="1" placeholder="Cadru" /></label>
-            <label><input name="teava"    type="number" min="0" step="1" placeholder="Țeavă" /></label>
+          <div class="grid grid-4">
+            <label><input name="cadru" type="number" min="0" step="1" placeholder="Cadru" /></label>
+            <label><input name="teava" type="number" min="0" step="1" placeholder="Țeavă" /></label>
             <label><input name="mecanism" type="number" min="0" step="1" placeholder="Mecanism" /></label>
-            <label><input name="fixare"   type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
+            <label><input name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
           </div>
 
-          <div class="hint">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
+          <div class="hint col-span-2">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
         </form>
 
         <h4>Ultimele joburi</h4>
@@ -169,8 +170,8 @@
         </div>
 
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0$</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0 $</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0 $</b></div>
           <div class="stat">Total piese burghiu: <b id="statDrillPieces">0</b></div>
         </div>
 
@@ -212,8 +213,9 @@
       <div class="card">
         <div class="bar">
           <label>Alege perioada:
-            <select id="bfPeriod" disabled>
+            <select id="bfPeriod">
               <option value="week" selected>Săptămână</option>
+              <option value="all">All time</option>
             </select>
           </label>
           <select id="bfWeekPicker" class="weekSel"></select>
@@ -244,7 +246,7 @@
         </div>
 
         <h4>Split pe utilizator</h4>
-        <table id="admTable" class="table admin-table">
+        <table id="admTable" class="table">
           <thead>
             <tr>
               <th class="left">User</th>
@@ -320,10 +322,10 @@
         </div>
 
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="profClean">0 $</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0 $</b></div>
           <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
-          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0$</b></div>
+          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0 $</b></div>
         </div>
 
         <h4>Activitate (zile)</h4>
@@ -336,21 +338,21 @@
         <div class="grid grid-3">
           <div class="card inner">
             <h5>Bani curați</h5>
-            <div>User: <b id="splitCleanUser">0$</b></div>
-            <div>Familie: <b id="splitCleanFam">0$</b></div>
-            <div>Total: <b id="splitCleanTot">0$</b></div>
+            <div>User: <b id="splitCleanUser">0 $</b></div>
+            <div>Familie: <b id="splitCleanFam">0 $</b></div>
+            <div>Total: <b id="splitCleanTot">0 $</b></div>
           </div>
           <div class="card inner">
             <h5>Bani murdari</h5>
-            <div>User: <b id="splitDirtyUser">0$</b></div>
-            <div>Familie: <b id="splitDirtyFam">0$</b></div>
-            <div>Total: <b id="splitDirtyTot">0$</b></div>
+            <div>User: <b id="splitDirtyUser">0 $</b></div>
+            <div>Familie: <b id="splitDirtyFam">0 $</b></div>
+            <div>Total: <b id="splitDirtyTot">0 $</b></div>
           </div>
           <div class="card inner">
             <h5>Total</h5>
-            <div>User: <b id="splitAllUser">0$</b></div>
-            <div>Familie: <b id="splitAllFam">0$</b></div>
-            <div>Total: <b id="splitAllTot">0$</b></div>
+            <div>User: <b id="splitAllUser">0 $</b></div>
+            <div>Familie: <b id="splitAllFam">0 $</b></div>
+            <div>Total: <b id="splitAllTot">0 $</b></div>
           </div>
         </div>
 
