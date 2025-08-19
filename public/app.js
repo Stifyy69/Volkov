@@ -1,3 +1,4 @@
+// ===== Helpers =====
 const api = (path, opts = {}) =>
   fetch(path, {
     ...opts,
@@ -17,6 +18,7 @@ function setTabs(active) {
   $$(".tab").forEach(sec => sec.id === `tab-${active}` ? sec.classList.remove("hidden") : sec.classList.add("hidden"));
 }
 
+// ISO week utils
 function isoYearWeek(d){
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const day = date.getUTCDay() || 7;
@@ -40,18 +42,31 @@ function inISOWeek(d, year, week){
 }
 const dayNames = ["Lun","Mar","Mie","Joi","Vin","Sâm","Dum"];
 
+// populează săpt. 33..53 & selectează current (clamp 33–53)
 function fillWeeks33toEnd(sel){
   if (!sel) return;
   sel.innerHTML = "";
-  const nowYear = new Date().getUTCFullYear();
+  const now = new Date();
+  const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((date - yearStart)/86400000)+1)/7);
+  const year = date.getUTCFullYear();
+
   for (let w=33; w<=53; w++){
     const opt = document.createElement("option");
-    opt.value = JSON.stringify({year: nowYear, week: w});
-    opt.textContent = `${nowYear}-W${String(w).padStart(2,"0")}`;
+    opt.value = JSON.stringify({year, week:w});
+    opt.textContent = `${year}-W${String(w).padStart(2,"0")}`;
     sel.appendChild(opt);
   }
+  const targetWeek = Math.min(Math.max(weekNo,33),53);
+  const targetVal = JSON.stringify({year, week:targetWeek});
+  const found = [...sel.options].find(o => o.value === targetVal);
+  if (found) sel.value = targetVal;
 }
 
+// ===== Auth =====
 async function hydrateMe() {
   try {
     const r = await api("/auth/me");
@@ -59,6 +74,7 @@ async function hydrateMe() {
     const me = await r.json();
     $("#whoami").textContent = `${me.username} [${me.role}]`;
 
+    // vizibilitate tab-uri pe rol
     const show = (tab, cond) => {
       const btn = $$(".tabbtn").find(b => b.dataset.tab === tab);
       if (btn) btn.classList.toggle("hidden", !cond);
@@ -73,7 +89,9 @@ async function hydrateMe() {
     $("#app").classList.remove("hidden");
     setTabs("taxe");
 
-    ["dashWeekPicker","bfWeekPicker","weekSelect","tblWeekPicker","profWeekPicker"].forEach(id => fillWeeks33toEnd($(id)));
+    // FIX: folosim getElementById, nu $()
+    ["dashWeekPicker","bfWeekPicker","weekSelect","tblWeekPicker","profWeekPicker"]
+      .forEach(id => fillWeeks33toEnd(document.getElementById(id)));
 
     loadTaxe();
     loadDrill();
@@ -118,18 +136,20 @@ $("#registerForm")?.addEventListener("submit", async (e) => {
   hydrateMe();
 });
 
+// ===== Tabs =====
 $$(".tabbtn").forEach(b => {
   b.addEventListener("click", async () => {
     setTabs(b.dataset.tab);
     if (b.dataset.tab === "taxe")      { loadTaxe(); loadDrill(); }
     if (b.dataset.tab === "dashboard") loadDashboard();
-    if (b.dataset.tab === "drillfamilies") loadDashboard();
+    if (b.dataset.tab === "drillfamilies") loadDashboard(); // folosim aceleași date agregate
     if (b.dataset.tab === "admin")     loadAdmin();
     if (b.dataset.tab === "tables")    loadTableAll();
     if (b.dataset.tab === "profile")   loadProfile();
   });
 });
 
+// ===== SSE (live) =====
 let es;
 function connectSSE() {
   if (es) { try { es.close(); } catch {} }
@@ -139,6 +159,7 @@ function connectSSE() {
   es.addEventListener("ping", () => {});
 }
 
+// ===== Taxe =====
 const metodaSelect = $("#metodaSelect");
 const gratisWrap    = $("#gratisWrap");
 
@@ -163,6 +184,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   loadTaxe(); loadDashboard(); loadTableAll();
 });
 
+// state + search
 let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
 
@@ -193,6 +215,7 @@ function renderTaxe(list) {
     });
 }
 
+// ===== Burghiu =====
 $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -251,6 +274,7 @@ function renderDrill(list){
   });
 }
 
+// ===== Dashboard (strict pe săptămâna selectată sau all) =====
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 
@@ -259,6 +283,7 @@ async function loadDashboard() {
   let selYear, selWeek;
   try { if (period === "week" && $("#dashWeekPicker")?.value) ({year:selYear,week:selWeek} = JSON.parse($("#dashWeekPicker").value)); } catch {}
 
+  // 1) Taxe pe săptămână (folosește istoricul complet)
   let clean = 0, dirty = 0;
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
 
@@ -291,10 +316,11 @@ async function loadDashboard() {
     dBody.appendChild(tr);
   });
 
+  // 2) Burghiu + familii + topuri
   const rD = await api("/drill");
-  const famAgg = new Map();
-  const topTaxMap = new Map();
-  const topDrillMap = new Map();
+  const famAgg = new Map(); // fam -> {cadru, teava, mecanism, fixare, total}
+  const topTaxMap = new Map();   // user -> count taxe (săpt selectată)
+  const topDrillMap = new Map(); // user -> valoare murdar (săpt selectată)
   let totalPieces = 0;
 
   if (rD.ok) {
@@ -325,6 +351,7 @@ async function loadDashboard() {
     $("#statDrillPieces").textContent = (totalPieces||0).toLocaleString("ro-RO");
   }
 
+  // Familii table
   const famBody = $("#drillFamiliesTable tbody");
   famBody.innerHTML = "";
   [...famAgg.entries()]
@@ -335,6 +362,7 @@ async function loadDashboard() {
       famBody.appendChild(tr);
     });
 
+  // Top taxe pe user (din taxe filtrate pe săpt)
   (taxe||[]).forEach(t=>{
     const key = t.user || "";
     if (!key) return;
@@ -357,6 +385,7 @@ async function loadDashboard() {
     topDrillBody.appendChild(tr);
   });
 
+  // Filtru familii text
   $("#famSearch")?.addEventListener("input", (e) => {
     const q = (e.target.value||"").toLowerCase();
     [...$("#drillFamiliesTable tbody").rows].forEach(tr=>{
@@ -366,6 +395,7 @@ async function loadDashboard() {
   }, { once:true });
 }
 
+// ===== Admin =====
 $("#admPeriod")?.addEventListener("change", loadAdmin);
 $("#weekSelect")?.addEventListener("change", loadAdmin);
 
@@ -403,6 +433,7 @@ async function loadAdmin() {
   });
 }
 
+// ===== Tabele All =====
 $("#tblPeriod")?.addEventListener("change", loadTableAll);
 $("#tblWeekPicker")?.addEventListener("change", loadTableAll);
 $("#tblRefresh")?.addEventListener("click", loadTableAll);
@@ -448,6 +479,7 @@ async function loadTableAll(){
   }
 }
 
+// ===== Profile =====
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -494,6 +526,7 @@ async function loadProfile(){
     body.appendChild(tr);
   });
 
+  // split 50/50
   const userClean = clean * 0.5, famClean = clean * 0.5;
   const userDirty = (dirty+drillMoney) * 0.5, famDirty = (dirty+drillMoney) * 0.5;
   $("#splitCleanUser").textContent = money(userClean);
@@ -507,5 +540,6 @@ async function loadProfile(){
   $("#splitAllTot").textContent    = money(clean+dirty+drillMoney);
 }
 
+// ===== Init =====
 hydrateMe();
 setTabs("taxe");
