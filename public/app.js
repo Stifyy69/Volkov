@@ -261,7 +261,7 @@ function renderDrill(list){
   });
 }
 
-// ===== Dashboard (strict pe săptămâna selectată sau all) =====
+// ===== Dashboard =====
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 
