@@ -23,7 +23,6 @@ const HOST = "0.0.0.0";
 const JWT_SECRET = process.env.JWT_SECRET || "change-me";
 const FRONT_ORIGIN = process.env.FRONT_ORIGIN || "*";
 
-/* ----------------------------- Middleware/CORS ----------------------------- */
 app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", FRONT_ORIGIN);
@@ -33,13 +32,11 @@ app.use((req, res, next) => {
   next();
 });
 
-/* --------------------------------- Static --------------------------------- */
 app.use(express.static(path.join(__dirname, "../public")));
 app.get("/", (_req, res) =>
   res.sendFile(path.join(__dirname, "../public/index.html"))
 );
 
-/* --------------------------------- Helpers -------------------------------- */
 function plusHours(h) {
   return new Date(Date.now() + h * 3600 * 1000);
 }
@@ -113,10 +110,8 @@ function requireRole(...roles) {
   };
 }
 
-/* --------------------------------- Health --------------------------------- */
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-/* ---------------------------------- Auth ---------------------------------- */
 app.post("/auth/register", async (req, res) => {
   try {
     const { username, password, nickname, cnp, inviteCode, email } = req.body || {};
@@ -186,7 +181,6 @@ app.get("/auth/me", auth(), async (req, res) => {
   res.json(me);
 });
 
-/* -------------------------------- Invites --------------------------------- */
 app.post(
   "/invites",
   auth(),
@@ -219,8 +213,6 @@ app.get(
   }
 );
 
-/* ---------------------------------- Taxe ---------------------------------- */
-// metoda: 'curat' | 'murdar' | 'gratis'
 app.post("/taxe", auth(), async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
@@ -229,7 +221,6 @@ app.post("/taxe", auth(), async (req, res) => {
     if (!["curat", "murdar", "gratis"].includes(metoda))
       return res.status(400).json({ error: "metodă invalidă" });
 
-    // nu permitem dublură pe același CNP cât timp e activă taxa (4h)
     const now = new Date();
     const existing = await prisma.taxEntry.findFirst({
       where: { type: TaxType.TAXA, cnp, validUntil: { gt: now } },
@@ -254,10 +245,12 @@ app.post("/taxe", auth(), async (req, res) => {
     } else if (metoda === "gratis") {
       if (!["Medelin Cartel", "818", "Stefanos Cartel"].includes(gratisFamilie))
         return res.status(400).json({ error: "familie invalidă pt. gratis" });
-      const fam = await prisma.family.findUnique({ where: { name: gratisFamilie } });
+      const fam = await prisma.family.findUnique({
+        where: { name: gratisFamilie },
+      });
       if (!fam) return res.status(400).json({ error: "familia nu există" });
       familyId = fam.id;
-      currency = Currency.CLEAN; // pentru consistență
+      currency = Currency.CLEAN;
       amount = 0;
     }
 
@@ -284,7 +277,6 @@ app.post("/taxe", auth(), async (req, res) => {
   }
 });
 
-// *** NOU: toate taxele (active + istorice) pentru rapoarte ***
 app.get("/taxe/all", auth(), async (_req, res) => {
   try {
     const rows = await prisma.taxEntry.findMany({
@@ -315,7 +307,6 @@ app.get("/taxe/all", auth(), async (_req, res) => {
   }
 });
 
-// active (doar cele în fereastra de 4h, pentru pagina live)
 app.get("/taxe", auth(), async (_req, res) => {
   try {
     const now = new Date();
@@ -347,7 +338,6 @@ app.get("/taxe", auth(), async (_req, res) => {
   }
 });
 
-/* --------------------------------- Drill ---------------------------------- */
 app.post("/drill", auth(), async (req, res) => {
   try {
     const { cnp, part, family, quantity } = req.body || {};
@@ -436,7 +426,6 @@ app.get("/drill", auth(), async (_req, res) => {
   }
 });
 
-/* ---------------------------- Admin weekly stats --------------------------- */
 app.get(
   "/admin/stats",
   auth(),
@@ -448,7 +437,10 @@ app.get(
       const selWeek = req.query.week ? Number(req.query.week) : null;
 
       const users = await prisma.user.findMany({
-        include: { taxEntries: true, drillJobs: true },
+        include: {
+          taxEntries: true,
+          drillJobs: true,
+        },
       });
 
       function inISOWeek(d) {
@@ -502,7 +494,6 @@ app.get(
   }
 );
 
-/* ---------------------------------- SSE ----------------------------------- */
 let sseClients = [];
 app.get("/events", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
@@ -533,7 +524,6 @@ function sseBroadcast(event, payload) {
   }
 }
 
-/* --------------------------------- Start ---------------------------------- */
 (async () => {
   await ensureFamilies();
   await bootstrapAdminInvite();
