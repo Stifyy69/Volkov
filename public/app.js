@@ -1,4 +1,3 @@
-// ===== Helpers =====
 const api = (path, opts = {}) =>
   fetch(path, {
     ...opts,
@@ -18,7 +17,7 @@ function setTabs(active) {
   $$(".tab").forEach(sec => sec.id === `tab-${active}` ? sec.classList.remove("hidden") : sec.classList.add("hidden"));
 }
 
-// ===== ISO week (robust, UTC) =====
+/* ISO week helpers (UTC) */
 function getISOYearWeekUTC(d) {
   const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   const day = date.getUTCDay() || 7;
@@ -39,36 +38,34 @@ function isoYearWeekNow(){
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   return getISOYearWeekUTC(d);
 }
-const dayNames = ["Lun","Mar","Mie","Joi","Vin","Sâm","Dum"];
-
-// ===== Weeks 33..53 + placeholder (fix iOS “No Options”) =====
 function fillWeeks33toEnd(sel){
   if (!sel) return;
   sel.innerHTML = "";
-  const ph = document.createElement("option");
-  ph.value = "";
-  ph.textContent = "— Selectează —";
-  sel.appendChild(ph);
-
   const { year: nowYear, week: nowWeek } = isoYearWeekNow();
-  let defValue = "";
-
+  const defWeek = (nowWeek >= 33 && nowWeek <= 53) ? nowWeek : 33;
   for (let w=33; w<=53; w++){
     const opt = document.createElement("option");
     opt.value = JSON.stringify({year: nowYear, week: w});
     opt.textContent = `${nowYear}-W${String(w).padStart(2,"0")}`;
-    if (w === nowWeek) defValue = opt.value;
     sel.appendChild(opt);
   }
-  sel.value = defValue || "";
+  sel.value = JSON.stringify({year: nowYear, week: defWeek});
 }
 function ensureWeeksFilled(id){
   const el = document.getElementById(id);
   if (!el) return;
   if (!el.options || el.options.length === 0) fillWeeks33toEnd(el);
 }
+function getSelectedWeek(selectId, periodId){
+  const period = document.getElementById(periodId)?.value || "week";
+  if (period === "all") return null;
+  const v = document.getElementById(selectId)?.value || "";
+  try { return JSON.parse(v); } catch { return null; }
+}
 
-// ===== Auth =====
+const dayNames = ["Lun","Mar","Mie","Joi","Vin","Sâm","Dum"];
+
+/* Auth */
 async function hydrateMe() {
   try {
     const r = await api("/auth/me");
@@ -99,7 +96,6 @@ async function hydrateMe() {
     loadAdmin();
     loadTableAll();
     loadProfile();
-
     connectSSE();
   } catch {
     $("#auth").classList.remove("hidden");
@@ -140,7 +136,7 @@ $("#registerForm")?.addEventListener("submit", async (e) => {
   hydrateMe();
 });
 
-// ===== Tabs =====
+/* Tabs */
 $$(".tabbtn").forEach(b => {
   b.addEventListener("click", async () => {
     setTabs(b.dataset.tab);
@@ -159,38 +155,41 @@ $$(".tabbtn").forEach(b => {
   });
 });
 
-// ===== SSE (live doar pentru Taxe & Burghiu) =====
+/* SSE (live doar pentru pagina Taxe & Burghiu) */
 let es;
 function connectSSE() {
   try { es?.close?.(); } catch {}
   es = new EventSource("/events");
   es.addEventListener("taxe:new",  () => { loadTaxe();  });
   es.addEventListener("drill:new", () => { loadDrill(); });
-  es.addEventListener("ping", () => {});
 }
 
-// ===== Taxe (LIVE: doar activele 4h) =====
+/* Taxe (LIVE, doar active 4h) */
 const metodaSelect = $("#metodaSelect");
 const gratisWrap    = $("#gratisWrap");
 
 metodaSelect?.addEventListener("change", () => {
   const isGratis = metodaSelect.value === "gratis";
-  gratisWrap.classList.toggle("hidden", !isGratis);
+  if (gratisWrap) gratisWrap.classList.toggle("hidden", !isGratis);
 });
 
 $("#taxeForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   const cnp = (f.cnp.value||"").trim();
-  if (!/^[0-9]{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
+  if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
 
   const body = { cnp, metoda: f.metoda.value };
-  if (f.metoda.value === "gratis") body.gratisFamilie = f.gratisFamilie.value;
+  if (f.metoda.value === "gratis") {
+    if (!f.gratisFamilie.value) return alert("Alege familia pentru GRATIS.");
+    body.gratisFamilie = f.gratisFamilie.value;
+  }
 
   const r = await api("/taxe", { method: "POST", body: JSON.stringify(body) });
   const j = await r.json();
   if (!r.ok) return alert(j.error || "Eroare la taxă");
-  f.reset(); metodaSelect.dispatchEvent(new Event("change"));
+  f.reset();
+  metodaSelect.dispatchEvent(new Event("change"));
   loadTaxe();
 });
 
@@ -198,7 +197,7 @@ let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
 
 async function loadTaxe() {
-  const r = await api("/taxe"); // DOAR activele pentru live
+  const r = await api("/taxe");
   if (!r.ok) return;
   taxeCache = await r.json();
   renderTaxe(taxeCache);
@@ -210,22 +209,21 @@ function renderTaxe(list) {
   (list||[])
     .filter(row => !q || String(row.cnp).toLowerCase().includes(q))
     .forEach(row => {
-      let suma = "";
-      if (row.metoda === "gratis" || row.tip === "GRATIS") suma = "GRATIS";
-      else if (row.tip === "Bani curați")  suma = "40.000$";
-      else if (row.tip === "Bani murdari") suma = "60.000$";
+      let suma = "GRATIS";
+      if (row.tip === "Bani curați")  suma = "40.000$";
+      if (row.tip === "Bani murdari") suma = "60.000$";
       const tr = document.createElement("tr");
       tr.innerHTML = `<td class="font-mono">${row.cnp}</td><td>${suma}</td><td>${row.remaining||""}</td><td class="left">${row.user||"-"}</td>`;
       tbody.appendChild(tr);
     });
 }
 
-// ===== Burghiu (LIVE list) =====
+/* Burghiu (LIVE list) */
 $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   const cnp = (f.cnp.value||"").trim();
-  if (!/^[0-9]{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
+  if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
 
   const pieces = [
     { key:"cadru",    val: Number(f.cadru.value||0) },
@@ -274,25 +272,26 @@ function renderDrill(list){
   });
 }
 
-// ===== Dashboard (ISTORIC complet) =====
+/* Dashboard – ISTORIC complet */
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 
 async function loadDashboard() {
+  ensureWeeksFilled("dashWeekPicker");
   const period = $("#dashPeriod")?.value || "week";
-  let selYear, selWeek;
-  try { if (period === "week" && $("#dashWeekPicker")?.value) ({year:selYear,week:selWeek} = JSON.parse($("#dashWeekPicker").value)); } catch {}
+  const sel = getSelectedWeek("dashWeekPicker", "dashPeriod");
+  const selYear = sel?.year, selWeek = sel?.week;
 
   let clean = 0, dirty = 0;
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
 
-  const rT = await api("/taxe/all"); // ISTORIC
+  const rT = await api("/taxe/all");
   const taxe = rT.ok ? await rT.json() : [];
   taxe.forEach(t => {
     const created = t.createdAt ? new Date(t.createdAt) : new Date();
-    if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
-    if (t.tip === "Bani curați")  { clean += 40000; }
-    if (t.tip === "Bani murdari"){ dirty += 60000; }
+    if (period === "week" && sel && !inISOWeek(created, selYear, selWeek)) return;
+    if (t.tip === "Bani curați")  clean += 40000;
+    if (t.tip === "Bani murdari") dirty += 60000;
     const wd = (created.getDay() + 6) % 7;
     daily[wd].count += 1;
     if (t.tip === "Bani curați")  daily[wd].clean += 40000;
@@ -321,7 +320,7 @@ async function loadDashboard() {
     const jobs = await rD.json();
     const jobsFilt = jobs.filter(j => {
       if (period === "all") return true;
-      if (!selYear || !selWeek) return true;
+      if (!sel) return true;
       const dt = j.createdAt ? new Date(j.createdAt) : new Date();
       return inISOWeek(dt, selYear, selWeek);
     });
@@ -350,7 +349,7 @@ async function loadDashboard() {
 
   (taxe||[]).forEach(t=>{
     const created = t.createdAt ? new Date(t.createdAt) : new Date();
-    if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
+    if (period === "week" && sel && !inISOWeek(created, selYear, selWeek)) return;
     const key = t.user || "";
     if (!key) return;
     topTaxMap.set(key, (topTaxMap.get(key)||0) + (t.tip === "GRATIS" ? 0 : 1));
@@ -373,12 +372,12 @@ async function loadDashboard() {
   });
 }
 
-// ===== Statistici Familii (ISTORIC burghiu) =====
+/* Statistici Familii – ISTORIC */
 $("#bfWeekPicker")?.addEventListener("change", loadBF);
 async function loadBF(){
-  const sel = $("#bfWeekPicker")?.value || "";
-  let selYear, selWeek;
-  try { ({year:selYear,week:selWeek} = JSON.parse(sel)); } catch {}
+  ensureWeeksFilled("bfWeekPicker");
+  const sel = getSelectedWeek("bfWeekPicker", "bfPeriod");
+  const selYear = sel?.year, selWeek = sel?.week;
 
   let rD = await api("/drill/all");
   if (!rD.ok) rD = await api("/drill");
@@ -388,7 +387,7 @@ async function loadBF(){
   const famAgg = new Map();
   list.forEach(j=>{
     const dt = j.createdAt ? new Date(j.createdAt) : new Date();
-    if (!inISOWeek(dt, selYear, selWeek)) return;
+    if (sel && !inISOWeek(dt, selYear, selWeek)) return;
     const fam = j.family || "(fără)";
     const prev = famAgg.get(fam) || {cadru:0,teava:0,mecanism:0,fixare:0,total:0};
     prev.cadru += j.cadru; prev.teava += j.teava; prev.mecanism += j.mecanism; prev.fixare += j.fixare;
@@ -404,17 +403,19 @@ async function loadBF(){
   });
 }
 
-// ===== Admin (backend calculează din istoricul complet) =====
+/* Admin – backend din istoric */
 $("#admPeriod")?.addEventListener("change", loadAdmin);
 $("#weekSelect")?.addEventListener("change", loadAdmin);
 
 async function loadAdmin() {
+  ensureWeeksFilled("weekSelect");
   const period = $("#admPeriod")?.value || "week";
   let url = "/admin/stats";
-  if (period === "all") url = "/admin/stats?period=all";
-  else if ($("#weekSelect")?.value) {
-    const {year, week} = JSON.parse($("#weekSelect").value);
-    url = `/admin/stats?year=${year}&week=${week}`;
+  if (period === "all") {
+    url = "/admin/stats?period=all";
+  } else {
+    const sel = getSelectedWeek("weekSelect", "admPeriod");
+    if (sel?.year && sel?.week) url = `/admin/stats?year=${sel.year}&week=${sel.week}`;
   }
 
   const r = await api(url);
@@ -442,7 +443,7 @@ async function loadAdmin() {
   });
 }
 
-// ===== Invite (Admin) =====
+/* Invite Admin */
 $("#inviteBtn")?.addEventListener("click", async ()=>{
   const role = $("#inviteRole").value || "OPERATOR";
   const r = await api("/invites", { method:"POST", body: JSON.stringify({ role }) });
@@ -456,7 +457,7 @@ $("#inviteCopy")?.addEventListener("click", ()=>{
   navigator.clipboard.writeText(v);
 });
 
-// ===== Tabele All (ISTORIC complet) =====
+/* Tabele All – ISTORIC */
 $("#tblPeriod")?.addEventListener("change", loadTableAll);
 $("#tblWeekPicker")?.addEventListener("change", loadTableAll);
 $("#tblRefresh")?.addEventListener("click", loadTableAll);
@@ -473,8 +474,8 @@ async function loadTableAll(){
   const body = $("#tblAll tbody");
   body.innerHTML = "";
 
-  let selYear, selWeek;
-  try { ({year:selYear,week:selWeek} = JSON.parse($("#tblWeekPicker")?.value||"")); } catch {}
+  const sel = getSelectedWeek("tblWeekPicker", "tblPeriod");
+  const selYear = sel?.year, selWeek = sel?.week;
   const weekMode = ($("#tblPeriod")?.value||"week") === "week";
 
   if (type === "taxe") {
@@ -486,14 +487,20 @@ async function loadTableAll(){
       .filter(x => !filterCnp  || (x.cnp||"").toLowerCase().includes(filterCnp))
       .filter(x => !filterFam  || (x.gratisFamilie||"").toLowerCase().includes(filterFam))
       .filter(x => {
-        if (!weekMode) return true;
+        if (!weekMode || !sel) return true;
         const created = x.createdAt ? new Date(x.createdAt) : new Date();
         return inISOWeek(created, selYear, selWeek);
       })
       .forEach(x=>{
         const suma = x.tip==="GRATIS" ? "GRATIS" : (x.tip==="Bani curați"?"40.000$":"60.000$");
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="font-mono">${x.cnp}</td><td>${suma}</td><td>${x.remaining||""}</td><td class="left">${x.user||"-"}</td><td class="left">${x.gratisFamilie||"-"}</td><td>${x.createdAt?new Date(x.createdAt).toLocaleString("ro-RO"):""}</td>`;
+        tr.innerHTML =
+          `<td class="font-mono">${x.cnp}</td>`+
+          `<td>${suma}</td>`+
+          `<td>${x.remaining||""}</td>`+
+          `<td class="left">${x.user||"-"}</td>`+
+          `<td class="left">${x.gratisFamilie||"-"}</td>`+
+          `<td>${x.createdAt?new Date(x.createdAt).toLocaleString("ro-RO"):""}</td>`;
         body.appendChild(tr);
       });
   } else {
@@ -507,19 +514,26 @@ async function loadTableAll(){
       .filter(x => !filterCnp  || (x.cnp||"").toLowerCase().includes(filterCnp))
       .filter(x => !filterFam  || (x.family||"").toLowerCase().includes(filterFam))
       .filter(x => {
-        if (!weekMode) return true;
+        if (!weekMode || !sel) return true;
         const created = x.createdAt ? new Date(x.createdAt) : new Date();
         return inISOWeek(created, selYear, selWeek);
       })
       .forEach(j=>{
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="font-mono">${j.cnp}</td><td class="left">${j.family||"-"}</td><td>${j.cadru}</td><td>${j.teava}</td><td>${j.mecanism}</td><td>${j.fixare}</td><td>${j.metodaPlata}</td><td>${money(j.costTotal||0)}</td><td class="left">${j.user||"-"}</td><td>${j.createdAt?new Date(j.createdAt).toLocaleString("ro-RO"):""}</td>`;
+        tr.innerHTML =
+          `<td class="font-mono">${j.cnp}</td>`+
+          `<td class="left">${j.family||"-"}</td>`+
+          `<td>${j.cadru}</td><td>${j.teava}</td><td>${j.mecanism}</td><td>${j.fixare}</td>`+
+          `<td>${j.metodaPlata}</td>`+
+          `<td>${money(j.costTotal||0)}</td>`+
+          `<td class="left">${j.user||"-"}</td>`+
+          `<td>${j.createdAt?new Date(j.createdAt).toLocaleString("ro-RO"):""}</td>`;
         body.appendChild(tr);
       });
   }
 }
 
-// ===== Profile (ISTORIC complet) =====
+/* Profile – ISTORIC */
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -527,8 +541,8 @@ async function loadProfile(){
   ensureWeeksFilled("profWeekPicker");
 
   const period = $("#profPeriod")?.value || "week";
-  let selYear, selWeek;
-  try { if (period === "week" && $("#profWeekPicker")?.value) ({year:selYear,week:selWeek} = JSON.parse($("#profWeekPicker").value)); } catch {}
+  const sel = getSelectedWeek("profWeekPicker", "profPeriod");
+  const selYear = sel?.year, selWeek = sel?.week;
 
   let clean=0, dirty=0, pieces=0, drillMoney=0;
   const daily = Array.from({length:7}, (_,i)=>({ day: dayNames[i], count:0, clean:0, dirty:0 }));
@@ -537,7 +551,7 @@ async function loadProfile(){
   const taxe = rT.ok ? await rT.json() : [];
   taxe.forEach(t=>{
     const created = t.createdAt ? new Date(t.createdAt) : new Date();
-    if (period==="week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
+    if (period==="week" && sel && !inISOWeek(created, selYear, selWeek)) return;
     if (t.tip === "Bani curați")  { clean += 40000; daily[(created.getDay()+6)%7].clean += 40000; daily[(created.getDay()+6)%7].count++; }
     if (t.tip === "Bani murdari"){ dirty += 60000; daily[(created.getDay()+6)%7].dirty += 60000; daily[(created.getDay()+6)%7].count++; }
   });
@@ -548,7 +562,7 @@ async function loadProfile(){
     const jobs = await rD.json();
     jobs.forEach(j=>{
       const created = j.createdAt ? new Date(j.createdAt) : new Date();
-      if (period==="week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
+      if (period==="week" && sel && !inISOWeek(created, selYear, selWeek)) return;
       const p = j.cadru + j.teava + j.mecanism + j.fixare;
       pieces += p;
       drillMoney += (j.costTotal||0);
@@ -581,6 +595,6 @@ async function loadProfile(){
   $("#splitAllTot").textContent    = money(clean+dirty+drillMoney);
 }
 
-// ===== Init =====
+/* Init */
 hydrateMe();
 setTabs("taxe");
