@@ -3,6 +3,7 @@
   --text:#e8eef4; --border:#263140; --gold:#FFD700;
   --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
 }
+
 body{background:#0e1217;color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
 .container{max-width:1100px;margin:24px auto;padding:0 16px}
 .topbar{display:flex;align-items:center;justify-content:space-between;background:#0b0f14;border-bottom:1px solid var(--border);padding:10px 16px;position:sticky;top:0;z-index:20}
@@ -50,6 +51,7 @@ input[type="number"]{text-align:center}
 .primary:hover{border-color:#3a4b61}
 .danger{background:#2a1111;border-color:#4a1a1a}
 .sm{padding:6px 10px;font-size:.9rem}
+.smh{height:42px}
 
 /* Buton TRIMITE */
 .gold-btn{
@@ -66,11 +68,12 @@ input[type="number"]{text-align:center}
 .gold-btn:hover{ background:linear-gradient(180deg, var(--red2), var(--red3)); color:#fff; box-shadow:0 0 12px rgba(255,215,0,.8); }
 .xl{font-size:1rem}
 .same-height{height:42px; display:inline-flex; align-items:center;}
+.sm-compact{padding:10px 14px;} /* buton drill puțin mai îngust, dar la aceeași înălțime */
 
 /* Tables */
 .table{width:100%;border-collapse:separate;border-spacing:0 6px}
 .table thead th,
-.table td {
+.table td{
   padding:10px;
   font-size:0.95rem;
   vertical-align:middle;
@@ -84,14 +87,6 @@ input[type="number"]{text-align:center}
 .bar{display:flex;gap:12px;align-items:center}
 .weekSel{min-width:180px}
 
-/* Period blocks */
-.period-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.period-wrap .label{font-weight:600;color:#c7d1dc}
-.period-row{display:flex;gap:12px;align-items:center}
-
-/* filters */
-.filters.two-rows{display:flex;flex-direction:column;gap:8px}
-
 /* hints */
 .hint{color:#a7b6c6;font-size:.92rem}
 
@@ -102,13 +97,27 @@ input[type="number"]{text-align:center}
 /* auth/app hide */
 #app.hidden, #auth.hidden{display:none}
 
-/* ---- FIX ALINIERE BUTON TRIMITE ---- */
-form {
-  display:flex;
-  align-items:center;
+/* === LAYOUT NOU DOAR PENTRU ALINIERE === */
+.row-taxe{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr auto; /* CNP | Tip | Familie (GRATIS) | Buton */
   gap:12px;
+  align-items:end;
 }
-form .gold-btn {
-  margin-left:12px;
-  margin-right:0;
+.row-taxe .btn-wrap{display:flex;align-items:end}
+.row-taxe .btn-wrap .gold-btn{width:100%;}
+
+.row-drill1{
+  display:grid;
+  grid-template-columns: 1fr 1fr auto; /* CNP | Familie | Buton */
+  gap:12px;
+  align-items:end;
+}
+.row-drill1 .btn-wrap{display:flex;align-items:end}
+
+.row-drill2{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr; /* Cadru | Țeavă | Mecanism | Fixare */
+  gap:12px;
+  margin-top:12px;
 }
