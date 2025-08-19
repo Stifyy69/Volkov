@@ -25,6 +25,7 @@
     </div>
   </header>
 
+  <!-- Auth -->
   <main id="auth" class="container">
     <section class="card">
       <h2>Autentificare</h2>
@@ -48,13 +49,16 @@
     </section>
   </main>
 
+  <!-- App -->
   <main id="app" class="container hidden">
 
+    <!-- Taxe & Burghiu -->
     <section id="tab-taxe" class="tab">
       <div class="card">
         <h3>Taxe</h3>
 
-        <form id="taxeForm" class="grid grid-3 gap">
+        <!-- LINIA 1: CNP – Tip plată – (Familie GRATIS când e cazul) – TRIMITE -->
+        <form id="taxeForm" class="row-taxe">
           <label>CNP
             <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
           </label>
@@ -68,17 +72,15 @@
             </select>
           </label>
 
-          <div id="gratisWrap" class="hidden">
-            <label>Familie (GRATIS)
-              <select name="gratisFamilie">
-                <option value="Medelin Cartel">Medelin Cartel</option>
-                <option value="818">818</option>
-                <option value="Stefanos Cartel">Stefanos Cartel</option>
-              </select>
-            </label>
-          </div>
+          <label id="gratisWrap" class="hidden">Familie (GRATIS)
+            <select name="gratisFamilie">
+              <option value="Medelin Cartel">Medelin Cartel</option>
+              <option value="818">818</option>
+              <option value="Stefanos Cartel">Stefanos Cartel</option>
+            </select>
+          </label>
 
-          <div class="col-span-3 right">
+          <div class="btn-wrap">
             <button class="primary xl gold-btn same-height">Trimite</button>
           </div>
         </form>
@@ -101,8 +103,9 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <form id="drillForm" class="grid grid-2 gap">
-          <div class="grid grid-3">
+        <!-- LINIA 1: CNP – Familie – TRIMITE -->
+        <form id="drillForm">
+          <div class="row-drill1">
             <label>CNP
               <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
             </label>
@@ -127,19 +130,21 @@
                 <option>BACM</option>
               </select>
             </label>
-            <div class="flex-end">
-              <button class="primary gold-btn smh same-height">Trimite</button>
+            <div class="btn-wrap">
+              <button class="primary gold-btn sm-compact same-height">Trimite</button>
             </div>
           </div>
 
-          <div class="grid grid-4">
-            <label><input name="cadru" type="number" min="0" step="1" placeholder="Cadru" /></label>
-            <label><input name="teava" type="number" min="0" step="1" placeholder="Țeavă" /></label>
+          <!-- LINIA 2: Cadru – Țeavă – Mecanism – Elemente de fixare -->
+          <div class="row-drill2">
+            <label><input name="cadru"    type="number" min="0" step="1" placeholder="Cadru" /></label>
+            <label><input name="teava"    type="number" min="0" step="1" placeholder="Țeavă" /></label>
             <label><input name="mecanism" type="number" min="0" step="1" placeholder="Mecanism" /></label>
-            <label><input name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
+            <label><input name="fixare"   type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
           </div>
 
-          <div class="hint col-span-2">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
+          <!-- LINIA 3: text plată -->
+          <div class="hint">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
         </form>
 
         <h4>Ultimele joburi</h4>
@@ -156,6 +161,7 @@
       </div>
     </section>
 
+    <!-- Restul tab-urilor (nemodificate vizual) -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
         <div class="bar">
