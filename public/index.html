@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ro">
+<html lang="ro" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Volkov</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body data-theme="dark">
   <header class="topbar">
     <div class="brand">Volkov</div>
 
@@ -20,6 +20,11 @@
     </nav>
 
     <div class="who">
+      <select id="themeSel" class="themeSel">
+        <option value="dark">Dark (curent)</option>
+        <option value="onyx">Onyx</option>
+        <option value="slate">Slate</option>
+      </select>
       <span id="whoami"></span>
       <button id="logoutBtn" class="danger sm">Logout</button>
     </div>
@@ -65,8 +70,8 @@
           <label>Tip plată
             <select id="metodaSelect" name="metoda" class="select-strong" required>
               <option value="" disabled selected>Alege…</option>
-              <option value="curat">Bani curați (40.000$)</option>
-              <option value="murdar">Bani murdari (60.000$)</option>
+              <option value="curat">Bani curați (40.000 $)</option>
+              <option value="murdar">Bani murdari (60.000 $)</option>
               <option value="gratis">GRATIS</option>
             </select>
           </label>
@@ -82,7 +87,7 @@
           </div>
 
           <div class="col-span-3 right">
-            <button class="primary xl gold-btn same-height">Trimite</button>
+            <button class="primary xl gold-btn">Trimite</button>
           </div>
         </form>
 
@@ -106,7 +111,7 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <form id="drillForm" class="grid gap">
+        <form id="drillForm" class="grid grid-2 gap">
           <div class="drill-line1">
             <label>CNP
               <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
@@ -132,7 +137,7 @@
                 <option>BACM</option>
               </select>
             </label>
-            <button class="primary gold-btn same-height">Trimite</button>
+            <button class="primary gold-btn smh">Trimite</button>
           </div>
 
           <div class="grid grid-4">
@@ -142,7 +147,7 @@
             <label><input name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
           </div>
 
-          <div class="hint">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
+          <div class="hint col-span-2">Plată: <b>Bani murdari</b> (1000 $ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.</div>
         </form>
 
         <h4>Ultimele joburi</h4>
@@ -159,7 +164,7 @@
       </div>
     </section>
 
-    <!-- Dashboard -->
+    <!-- celelalte tab-uri neschimbate -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -173,8 +178,8 @@
         </div>
 
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0$</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0 $</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0 $</b></div>
           <div class="stat">Total piese burghiu: <b id="statDrillPieces">0</b></div>
         </div>
 
@@ -212,7 +217,6 @@
       </div>
     </section>
 
-    <!-- Statistici Familii -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -237,7 +241,6 @@
       </div>
     </section>
 
-    <!-- Admin -->
     <section id="tab-admin" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -251,12 +254,12 @@
         </div>
 
         <h4>Split pe utilizator</h4>
-        <table id="admTable" class="table admin-table">
+        <table id="admTable" class="table">
           <thead>
             <tr>
               <th class="left">User</th>
-              <th>Bani curați (User)</th>
-              <th>Bani murdari (User)</th>
+              <th>Bani curați</th>
+              <th>Bani murdari</th>
               <th>Bani curați (Familie)</th>
               <th>Bani murdari (Familie)</th>
               <th>Total Bani curați</th>
@@ -282,7 +285,6 @@
       </div>
     </section>
 
-    <!-- Tabele All -->
     <section id="tab-tables" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -315,7 +317,6 @@
       </div>
     </section>
 
-    <!-- My profile -->
     <section id="tab-profile" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -329,10 +330,10 @@
         </div>
 
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="profClean">0 $</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0 $</b></div>
           <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
-          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0$</b></div>
+          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0 $</b></div>
         </div>
 
         <h4>Activitate (zile)</h4>
@@ -345,23 +346,30 @@
         <div class="grid grid-3">
           <div class="card inner">
             <h5>Bani curați</h5>
-            <div>User: <b id="splitCleanUser">0$</b></div>
-            <div>Familie: <b id="splitCleanFam">0$</b></div>
-            <div>Total: <b id="splitCleanTot">0$</b></div>
+            <div>User: <b id="splitCleanUser">0 $</b></div>
+            <div>Familie: <b id="splitCleanFam">0 $</b></div>
+            <div>Total: <b id="splitCleanTot">0 $</b></div>
           </div>
           <div class="card inner">
             <h5>Bani murdari</h5>
-            <div>User: <b id="splitDirtyUser">0$</b></div>
-            <div>Familie: <b id="splitDirtyFam">0$</b></div>
-            <div>Total: <b id="splitDirtyTot">0$</b></div>
+            <div>User: <b id="splitDirtyUser">0 $</b></div>
+            <div>Familie: <b id="splitDirtyFam">0 $</b></div>
+            <div>Total: <b id="splitDirtyTot">0 $</b></div>
           </div>
           <div class="card inner">
             <h5>Total</h5>
-            <div>User: <b id="splitAllUser">0$</b></div>
-            <div>Familie: <b id="splitAllFam">0$</b></div>
-            <div>Total: <b id="splitAllTot">0$</b></div>
+            <div>User: <b id="splitAllUser">0 $</b></div>
+            <div>Familie: <b id="splitAllFam">0 $</b></div>
+            <div>Total: <b id="splitAllTot">0 $</b></div>
           </div>
         </div>
+
+        <h4 class="mt">Schimbă parola</h4>
+        <form id="resetForm" class="grid grid-2">
+          <label>Parola veche <input name="oldPassword" type="password" required/></label>
+          <label>Parola nouă <input name="newPassword" type="password" required/></label>
+          <div class="col-span-2 right"><button class="primary">Actualizează</button></div>
+        </form>
       </div>
     </section>
 
