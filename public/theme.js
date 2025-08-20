@@ -1,43 +1,23 @@
-// TEMA (dropdown: #themeSel). Persistă în localStorage.
-(function themeInit(){
-  const sel = document.getElementById('themeSel');
-  const saved = localStorage.getItem('theme') || document.body.getAttribute('data-theme') || 'dark';
-  document.body.setAttribute('data-theme', saved);
-  if (sel) sel.value = saved;
+// public/theme.js
+(function () {
+  const KEY = "ui.theme";
+  const sel = document.getElementById("themeSel");
+  const body = document.body;
 
-  function applyTheme(value){
-    document.body.setAttribute('data-theme', value);
-    localStorage.setItem('theme', value);
+  function applyTheme(t) {
+    const theme = t || "dark";
+    body.setAttribute("data-theme", theme);
+    try { localStorage.setItem(KEY, theme); } catch {}
+    if (sel && sel.value !== theme) sel.value = theme;
   }
-  if (sel){
-    sel.addEventListener('change', () => applyTheme(sel.value));
-  }
-})();
 
-// Afișează "Gratis familie" doar când metoda = gratis (din pagina Taxe)
-(function gratisToggle(){
-  function run(){
-    const metoda = document.getElementById('metodaSelect');
-    const wrap = document.getElementById('gratisWrap');
-    if (!metoda || !wrap) return;
-    const v = metoda.value;
-    wrap.classList.toggle('hidden', v !== 'gratis');
-  }
-  document.addEventListener('change', (e)=>{
-    if (e.target && e.target.id === 'metodaSelect') run();
-  });
-  // în caz că browserul reține ultima stare
-  window.addEventListener('DOMContentLoaded', run);
-})();
+  // la load – citește ce e în localStorage sau "dark"
+  let initial = "dark";
+  try { initial = localStorage.getItem(KEY) || "dark"; } catch {}
+  applyTheme(initial);
 
-// Asigură clickabilitatea butoanelor dacă apar overlay-uri accidentale
-(function ensureButtonsClickable(){
-  try{
-    const btns = document.querySelectorAll('button, .btn, .gold-btn');
-    btns.forEach(b => {
-      if (!b.style.position) b.style.position = 'relative';
-      if (!b.style.zIndex)   b.style.zIndex   = '2';
-      b.style.pointerEvents = 'auto';
-    });
-  }catch(e){}
+  // pe schimbare în select
+  if (sel) {
+    sel.addEventListener("change", (e) => applyTheme(e.target.value));
+  }
 })();
