@@ -1,47 +1,35 @@
-/* ================= TEME ================= */
-[data-theme="dark"]{
-  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
-  --text:#e8eef4; --border:#263140; --gold:#FFD700;
-  --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
-  --accent-rose:#a44361; --btn:#0f141b; --btnHover:#131a22;
-}
-[data-theme="onyx"]{
-  --bg:#0c0f13; --card:#12161d; --muted:#93a6b8; --accent:#1a2230;
-  --text:#e5ecf2; --border:#222b38; --gold:#F2D14A;
-  --red1:#7c0f20; --red2:#9b2436; --red3:#c02e47;
-  --accent-rose:#9b3d59; --btn:#0f141b; --btnHover:#151d26;
-}
-[data-theme="slate"]{
-  --bg:#0f1318; --card:#161c23; --muted:#9bb0c2; --accent:#202a38;
-  --text:#e9f0f6; --border:#2a3545; --gold:#F7DA5E;
-  --red1:#82223a; --red2:#a23953; --red3:#c24964;
-  --accent-rose:#b04c6d; --btn:#101820; --btnHover:#17212b;
+:root{
+  --bg:#0e1217;
+  --card:#151b23;
+  --muted:#8aa0b2;
+  --accent:#1f2835;
+  --text:#e8eef4;
+  --border:#263140;
+  --gold:#FFD700;
+  --red1:#8B0000;
+  --red2:#B22222;
+  --red3:#FF0000;
 }
 
-/* =============== BAZĂ / LAYOUT =============== */
-body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
-.app-wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-.sidebar{background:#0b0f14;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;padding:14px}
-.app-title{font-size:1.6rem;font-weight:800;letter-spacing:.5px;margin:8px 0 12px}
-.tabs{display:flex;flex-direction:column;gap:8px}
-.tabbtn{background:#121821;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;cursor:pointer;text-align:left}
-.tabbtn[data-active="true"]{background:var(--accent);border-color:#324152}
-.sidebar-foot{display:flex;flex-direction:column;gap:8px}
+body{background:#0e1217;color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
+.container{max-width:1100px;margin:24px auto;padding:0 16px}
+.topbar{display:flex;align-items:center;justify-content:space-between;background:#0b0f14;border-bottom:1px solid var(--border);padding:10px 16px;position:sticky;top:0;z-index:20}
+.brand{font-weight:700;letter-spacing:.5px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabbtn{background:#121821;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}
+.tabbtn[data-active="true"]{background:#1a2431;border-color:#324152}
+.who{display:flex;gap:8px;align-items:center}
 
-.content{padding:18px}
-.stack{display:flex;flex-direction:column;gap:16px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
-.card.inner{padding:12px}
-.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px}
+.card:first-child{margin-top:0}
 .grid{display:grid;gap:12px}
 .grid-2{grid-template-columns:1fr 1fr}
 .grid-3{grid-template-columns:1fr 1fr 1fr}
 .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
-.col-span-3{grid-column: span 3}
+.grid-tax{grid-template-columns: 1fr 1fr 1fr auto;align-items:end}
 .col-span-2{grid-column: span 2}
 .right{display:flex;justify-content:flex-end;align-items:center}
 .flex-end{display:flex;align-items:center;justify-content:flex-end}
-.align-center{align-items:end}
 .row{display:flex;gap:12px;align-items:center}
 .split{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
 .mt{margin-top:16px}
@@ -52,53 +40,63 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sa
 .hidden{display:none}
 .left{text-align:left}
 
-/* INPUTS / BUTOANE */
 label{display:flex;flex-direction:column;gap:6px;font-size:.92rem;color:#c7d1dc}
 input, select, button{
-  background:var(--btn);border:1px solid var(--border);color:var(--text);
+  background:#0f141b;border:1px solid var(--border);color:var(--text);
   padding:10px 12px;border-radius:8px;outline:none
 }
-input::placeholder{text-align:left;color:var(--muted)}
+input::placeholder{text-align:center;color:#99a9b8}
 input[type="number"]{text-align:center}
 .w-300{width:300px}
 .w-200{width:200px}
 .w-160{width:160px}
+
 .primary{cursor:pointer}
 .primary:hover{border-color:#3a4b61}
 .danger{background:#2a1111;border-color:#4a1a1a}
 .sm{padding:6px 10px;font-size:.9rem}
 
-/* LINII FORM */
-.line-form{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.same-height{height:42px;display:inline-flex;align-items:center}
-.smh{height:42px}
-
-/* BUTON TRIMITE (roz închis subtil) */
 .gold-btn{
-  padding:10px 18px;font-weight:700;color:var(--gold);
-  background:linear-gradient(180deg, var(--accent-rose), #7a2e44);
-  border:2px solid var(--gold);border-radius:8px;text-transform:uppercase;
-  transition:all .2s ease;box-shadow:0 0 8px rgba(0,0,0,.6);
+  padding:10px 18px;
+  font-weight:700;
+  color:var(--gold);
+  background:linear-gradient(180deg, var(--red1), var(--red2));
+  border:2px solid var(--gold);
+  border-radius:8px;
+  text-transform:uppercase;
+  transition:all .2s ease;
+  box-shadow:0 0 8px rgba(0,0,0,.6);
 }
-.gold-btn:hover{background:linear-gradient(180deg,#7a2e44,#5a2132);color:#fff;box-shadow:0 0 12px rgba(255,215,0,.8)}
-.xl{font-size:1rem}
+.gold-btn:hover{
+  background:linear-gradient(180deg, var(--red2), var(--red3));
+  color:#fff;
+  box-shadow:0 0 12px rgba(255,215,0,.8);
+}
+.same-height{height:42px}
+.sm.same-height{height:40px}
 
-/* TABELE */
 .table{width:100%;border-collapse:separate;border-spacing:0 6px}
-.table thead th,.table td{padding:10px;font-size:0.95rem;vertical-align:middle;text-align:center}
-.table thead th{font-weight:600;color:#c7d1dc}
-.table thead th.left,.table td.left{text-align:left}
+.table thead th{font-weight:600;color:#c7d1dc;text-align:center}
+.table thead th.left{ text-align:left; }
 .table tbody tr{background:#10161e;border:1px solid var(--border)}
+.table td, .table th{padding:10px}
+.table td{ text-align:center }
 
-/* BARE / FILTRE */
 .bar{display:flex;gap:12px;align-items:center}
+.bar.compact-under{margin-top:8px}
 .weekSel{min-width:180px}
+.label{font-weight:600;color:#c7d1dc}
 
-/* HINTS */
 .hint{color:#a7b6c6;font-size:.92rem}
 
-/* ADMIN TOTAL highlight */
-.admin-table .total-col,.table .total-col{font-weight:800;border:2px solid var(--gold)}
+#app.hidden, #auth.hidden{display:none}
 
-/* ascunde/arată app/auth */
-#app.hidden,#auth.hidden{display:none}
+/* Burghiu: supraaliniere buton/inputs linia 1 */
+.drill-grid .grid-3 > .flex-end { align-self:end }
+
+/* Emphasis pe total la Admin */
+.emphasis-total td.total-col{
+  font-weight:800;
+  border:2px solid var(--gold);
+  box-shadow:0 0 0 1px rgba(255,215,0,.15) inset;
+}
