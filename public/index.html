@@ -10,7 +10,6 @@
   <div class="app-wrap">
     <aside class="sidebar">
       <div class="app-title">Taxe Active</div>
-
       <nav class="tabs">
         <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
         <button class="tabbtn" data-tab="dashboard">Dashboard</button>
@@ -34,6 +33,7 @@
     </aside>
 
     <main class="content">
+
       <!-- Auth -->
       <section id="auth" class="stack">
         <div class="card">
@@ -64,11 +64,9 @@
         <!-- Taxe & Burghiu -->
         <section id="tab-taxe" class="tab">
           <div class="card">
-            <div class="card-head">
-              <h3>Taxe active</h3>
-            </div>
+            <div class="card-head"><h3>Taxe active</h3></div>
 
-            <!-- Linia 1: CNP - Tip plată - (Familie dacă GRATIS) - TRIMITE -->
+            <!-- Linia 1 -->
             <form id="taxeForm" class="line-form">
               <label>CNP
                 <input name="cnp" placeholder="0–i-6 cifre" pattern="\d{1,6}" required />
@@ -113,11 +111,9 @@
           </div>
 
           <div class="card mt">
-            <div class="card-head">
-              <h3>Burghiu</h3>
-            </div>
+            <div class="card-head"><h3>Burghiu</h3></div>
 
-            <!-- Linia 1: CNP - Familie - TRIMITE -->
+            <!-- Linia 1 -->
             <form id="drillForm" class="line-form">
               <label>CNP
                 <input name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
@@ -148,15 +144,14 @@
               <button class="primary gold-btn same-height smh">Trimite</button>
             </form>
 
-            <!-- Linia 2: Cadru - Țeavă - Mecanism - Elemente de fixare -->
-            <div class="line-form gap" style="grid-template-columns: repeat(4, 1fr);">
+            <!-- Linia 2 -->
+            <div class="line-form gap">
               <label><input name="cadru" type="number" min="0" step="1" placeholder="Cadru" /></label>
               <label><input name="teava" type="number" min="0" step="1" placeholder="Țeavă" /></label>
               <label><input name="mecanism" type="number" min="0" step="1" placeholder="Mecanism" /></label>
               <label><input name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
             </div>
 
-            <!-- Linia 3: hint plată -->
             <div class="hint mt-compact">
               Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
             </div>
@@ -288,7 +283,7 @@
             </table>
 
             <h4 class="mt">Invite link</h4>
-            <div class="row">
+            <div class="bar">
               <select id="inviteRole">
                 <option value="OPERATOR">OPERATOR</option>
                 <option value="HEAD_OPERATOR">HEAD_OPERATOR</option>
