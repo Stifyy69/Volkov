@@ -4,7 +4,7 @@
     "builder": "NIXPACKS",
     "nixpacksPlan": {
       "phases": {
-        "install": { "cmds": ["npm ci"] },
+        "install": { "cmds": ["npm install"] },
         "build": {
           "cmds": [
             "npx prisma generate",
