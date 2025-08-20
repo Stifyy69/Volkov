@@ -1,18 +1,19 @@
-/* ---------- Tema / culori ---------- */
+/* ===== Baza (comuna ambelor teme) ===== */
 :root{
-  --bg:#111315;            /* background general */
-  --card:#1b1e22;          /* card panels */
+  --bg:#111315;
+  --card:#1b1e22;
   --border:#2a2f36;
   --text:#f1f5f9;
   --muted:#a8b3bf;
   --muted-2:#c7d1dc;
 
-  --gold:#FFD700;          /* accente buton */
-  --red1:#7e1212;
-  --red2:#a11616;
-  --red3:#c61c1c;
+  /* Accente – setate de theme class (mai jos) */
+  --accent-1:#7e1212;
+  --accent-2:#a11616;
+  --accent-3:#c61c1c;
+  --accent-gold:#FFD700;
 
-  --pad:12px;              /* spațiere consistentă */
+  --pad:12px;
   --radius:10px;
 }
 
@@ -23,7 +24,23 @@ body{
   background:var(--bg); color:var(--text);
 }
 
-/* ---------- wrapper / top bar ---------- */
+/* ===== Theme presets ===== */
+/* Default: roșu + auriu */
+body.theme-red{
+  --accent-1:#7e1212;
+  --accent-2:#a11616;
+  --accent-3:#c61c1c;
+  --accent-gold:#FFD700;
+}
+/* Dark‑rose (mai „cuminte”) */
+body.theme-rose{
+  --accent-1:#6f2a42;   /* rose închis */
+  --accent-2:#8b3556;
+  --accent-3:#a53e65;
+  --accent-gold:#f2c94c; /* puțin mai domol */
+}
+
+/* ===== Layout / card ===== */
 .container{max-width:1200px;margin:20px auto;padding:0 16px}
 .card{
   background:var(--card);
@@ -31,28 +48,24 @@ body{
   border-radius:var(--radius);
   padding:18px;
 }
+.section{margin-bottom:18px}
+.section-title{margin:0 0 8px 0;font-weight:700;letter-spacing:.2px}
 
-/* ---------- titluri secțiuni ---------- */
-.section-title{
-  margin:0 0 8px 0;
-  font-weight:700; letter-spacing:.2px;
-}
-
-/* ---------- formular: rânduri egale ---------- */
+/* ===== Form rows ===== */
 .form-row{
   display:grid;
-  grid-template-columns: 260px 220px 240px 140px; /* CNP | Tip | Familie | TRIMITE */
+  grid-template-columns: 260px 220px 240px auto; /* CNP | Tip | Familie | Buton */
   gap:var(--pad);
   align-items:center;
+  overflow:visible;
 }
-.form-row.drill{ /* CNP | Familie | TRIMITE */
-  grid-template-columns: 260px 240px 140px;
+.form-row.drill{
+  grid-template-columns: 260px 240px auto;       /* CNP | Familie | Buton */
 }
-
 label{color:var(--muted-2); font-size:.92rem; margin-bottom:6px; display:block}
 
-/* controale */
-input, select, button{
+/* Inputuri */
+input, select{
   width:100%;
   height:42px;
   padding:0 12px;
@@ -64,45 +77,40 @@ input, select, button{
 }
 input::placeholder{color:#8fa1b2}
 
-/* buton TRIMITE (mic) */
+/* Butoane */
+button{
+  /* IMPORTANT: nu mai face butonul full‑width ca să nu calce peste alte coloane */
+  width:auto;
+  height:42px;
+  padding:0 16px;
+  background:#121518;
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:8px;
+  outline:none;
+}
 .btn{
   display:inline-flex; align-items:center; justify-content:center;
-  height:42px; padding:0 16px; border-radius:8px; cursor:pointer;
-  border:2px solid transparent; font-weight:700;
+  border:2px solid transparent; font-weight:700; cursor:pointer;
+  position:relative; z-index:2; pointer-events:auto;
 }
 .btn-gold{
-  color:var(--gold);
-  background:linear-gradient(180deg,var(--red1),var(--red2));
-  border-color:var(--gold);
+  color:var(--accent-gold);
+  background:linear-gradient(180deg,var(--accent-1),var(--accent-2));
+  border-color:var(--accent-gold);
   box-shadow:0 0 8px rgba(0,0,0,.45);
   text-transform:uppercase;
 }
 .btn-gold:hover{
-  background:linear-gradient(180deg,var(--red2),var(--red3));
+  background:linear-gradient(180deg,var(--accent-2),var(--accent-3));
   color:#fff;
 }
 
-/* ---------- bloc „Taxe active” ---------- */
+/* Căutare sub „Taxe active” */
 .subheader{margin:10px 0 6px 0; font-weight:600; color:var(--muted-2)}
-.search-under{
-  margin-top:6px; margin-bottom:12px; /* căutarea CNP sub titlu, cu spacing */
-  max-width:320px;
-}
+.search-under{max-width:320px; margin:6px 0 12px 0}
 
-/* ---------- tabele ---------- */
-.table{width:100%; border-collapse:separate; border-spacing:0 8px}
-.table thead th{
-  color:var(--muted-2); font-weight:600;
-  text-align:center; padding:10px; vertical-align:middle;
-}
-.table tbody tr{
-  background:#15181c; border:1px solid var(--border);
-}
-.table td{ padding:12px 10px; text-align:center; vertical-align:middle }
-
-.table .left, thead .left{text-align:left}
-
-/* ---------- rând 2 burghiu (piese) ---------- */
+/* Piese burghiu (linia 2) */
 .parts-row{
   display:grid;
   grid-template-columns: repeat(4, 1fr);
@@ -110,10 +118,15 @@ input::placeholder{color:#8fa1b2}
   margin-top:12px;
 }
 
-/* ---------- hint plată ---------- */
-.hint{
-  margin-top:12px; color:var(--muted); font-size:.92rem;
-}
+/* Hint */
+.hint{margin-top:12px; color:var(--muted); font-size:.92rem}
 
-/* ---------- spațiere între secțiuni ---------- */
-.section{margin-bottom:18px}
+/* ===== Tabele ===== */
+.table{width:100%; border-collapse:separate; border-spacing:0 8px}
+.table thead th{
+  color:var(--muted-2); font-weight:600;
+  text-align:center; padding:10px; vertical-align:middle;
+}
+.table tbody tr{background:#15181c; border:1px solid var(--border)}
+.table td{padding:12px 10px; text-align:center; vertical-align:middle}
+.table .left, thead .left{text-align:left}
