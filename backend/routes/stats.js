@@ -10,7 +10,7 @@ const router = express.Router();
 // ?year=YYYY&week=WW  -> săptămâna selectată
 // ?period=all        -> all time
 router.get(
-  "/stats",
+  "/",
   auth(),
   requireRole(Role.ADMIN, Role.HEAD_OPERATOR, Role.AUDIT),
   async (req, res) => {
@@ -19,7 +19,6 @@ router.get(
       const selYear = req.query.year ? Number(req.query.year) : null;
       const selWeek = req.query.week ? Number(req.query.week) : null;
 
-      // obținem utilizatori + intrări
       const users = await prisma.user.findMany({
         include: {
           taxEntries: true,
@@ -72,7 +71,6 @@ router.get(
         };
       });
 
-      // sortare desc după total
       out.sort((a, b) => b.total - a.total);
       res.json(out);
     } catch (e) {
