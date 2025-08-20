@@ -1,17 +1,16 @@
-// backend/routes/index.js
-import { Router } from "express";
-import authRoutes from "./auth.js";
-import taxRoutes from "./tax.js";
-import drillRoutes from "./drill.js";
-import adminRoutes from "./admin.js";
-import profileRoutes from "./profile.js";
+import express from "express";
+import authRouter from "./auth.js";
+import taxeRouter from "./taxe.js";
+import drillRouter from "./drill.js";
+import statsRouter from "./stats.js";
+import adminRouter from "./admin.js";
 
-const router = Router();
+const router = express.Router();
 
-router.use("/auth", authRoutes);
-router.use("/taxe", taxRoutes);
-router.use("/drill", drillRoutes);
-router.use("/admin", adminRoutes);
-router.use("/profile", profileRoutes);
+router.use(authRouter);
+router.use(taxeRouter);
+router.use(drillRouter);
+router.use(statsRouter);
+router.use(adminRouter);
 
 export default router;
