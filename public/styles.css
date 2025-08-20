@@ -3,7 +3,26 @@
   --text:#e8eef4; --border:#263140; --gold:#FFD700;
   --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
 }
-body{background:#0e1217;color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
+
+/* === TEME (alegi din body[data-theme="..."]) === */
+body[data-theme="dark"]{
+  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
+  --text:#e8eef4; --border:#263140; --gold:#FFD700;
+  --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
+}
+body[data-theme="onyx"]{
+  --bg:#0a0c10; --card:#12161d; --muted:#9fb3c5; --accent:#18202b;
+  --text:#f1f5f9; --border:#202a38; --gold:#FFD666;
+  --red1:#6f0000; --red2:#a30f0f; --red3:#ff1a1a;
+}
+body[data-theme="slate"]{
+  --bg:#0b1220; --card:#121a2a; --muted:#90a8c7; --accent:#162238;
+  --text:#e7eef8; --border:#243249; --gold:#E6C55A;
+  --red1:#5f0d0d; --red2:#9c2b2b; --red3:#e23d3d;
+}
+
+/* layout */
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
 .container{max-width:1100px;margin:24px auto;padding:0 16px}
 .topbar{display:flex;align-items:center;justify-content:space-between;background:#0b0f14;border-bottom:1px solid var(--border);padding:10px 16px;position:sticky;top:0;z-index:20}
 .brand{font-weight:700;letter-spacing:.5px}
@@ -51,7 +70,7 @@ input[type="number"]{text-align:center}
 .danger{background:#2a1111;border-color:#4a1a1a}
 .sm{padding:6px 10px;font-size:.9rem}
 
-/* Buton TRIMITE */
+/* Buton TRIMITE (se colorează din variabile) */
 .gold-btn{
   padding:10px 14px;
   font-weight:700;
@@ -67,15 +86,10 @@ input[type="number"]{text-align:center}
 .gold-btn:hover{ background:linear-gradient(180deg, var(--red2), var(--red3)); color:#fff; box-shadow:0 0 12px rgba(255,215,0,.8); }
 .xl{font-size:1rem}
 
-/* Tables */
+/* Tables – header pe aceeași linie cu celulele */
 .table{width:100%;border-collapse:collapse}
 .table thead th,
-.table td {
-  padding:10px;
-  font-size:0.95rem;
-  vertical-align:middle;
-  text-align:center;
-}
+.table td { padding:10px; font-size:0.95rem; vertical-align:middle; text-align:center; }
 .table thead th{font-weight:600;color:#c7d1dc}
 .table thead th.left, .table td.left{ text-align:left; }
 .table tbody tr{background:#10161e;border:1px solid var(--border)}
@@ -106,5 +120,8 @@ input[type="number"]{text-align:center}
 .drill-line1{display:flex;align-items:center;gap:12px}
 .drill-line1 label{flex:1}
 
-/* spacing uniform */
+/* uniform spacing */
 form > label, .row, .drill-line1, .period-row {margin-bottom:12px}
+
+/* mic detaliu pentru selectorul de temă */
+.themeSel{background:#0f141b;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px}
