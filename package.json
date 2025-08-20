@@ -1,21 +1,32 @@
 {
-  "name": "volkov",
+  "name": "taxe-app",
   "version": "1.0.0",
+  "description": "Aplicatie pentru gestiunea taxelor si burghiului",
+  "main": "backend/server.js",
   "type": "module",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
     "postinstall": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev --name init",
+    "db:seed": "node prisma/seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "bcryptjs": "^2.4.3",
+    "@prisma/client": "^5.17.0",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2"
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.0"
   },
   "devDependencies": {
-    "prisma": "^5.22.0"
-  }
+    "nodemon": "^3.1.0",
+    "prisma": "^5.17.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
 }
