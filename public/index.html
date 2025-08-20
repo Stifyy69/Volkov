@@ -10,6 +10,7 @@
   <div class="app-wrap">
     <aside class="sidebar">
       <div class="app-title">Taxe Active</div>
+
       <nav class="tabs">
         <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
         <button class="tabbtn" data-tab="dashboard">Dashboard</button>
@@ -33,7 +34,6 @@
     </aside>
 
     <main class="content">
-
       <!-- Auth -->
       <section id="auth" class="stack">
         <div class="card">
@@ -52,7 +52,7 @@
             <label>Username <input name="username" required /></label>
             <label>Nickname <input name="nickname" /></label>
             <label>Parolă <input name="password" type="password" required /></label>
-            <label>CNP (max 6) <input name="cnp" pattern="\\d{0,6}" /></label>
+            <label>CNP (max 6) <input name="cnp" pattern="\d{0,6}" /></label>
             <div class="col-span-2 right"><button class="primary">Register</button></div>
           </form>
         </div>
@@ -71,7 +71,7 @@
             <!-- Linia 1: CNP - Tip plată - (Familie dacă GRATIS) - TRIMITE -->
             <form id="taxeForm" class="line-form">
               <label>CNP
-                <input name="cnp" placeholder="0–i-6 cifre" pattern="\\d{1,6}" required />
+                <input name="cnp" placeholder="0–i-6 cifre" pattern="\d{1,6}" required />
               </label>
 
               <label>Metodă
@@ -120,7 +120,7 @@
             <!-- Linia 1: CNP - Familie - TRIMITE -->
             <form id="drillForm" class="line-form">
               <label>CNP
-                <input name="cnp" placeholder="CNP" pattern="\\d{1,6}" required />
+                <input name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
               </label>
 
               <label>Familie
@@ -149,7 +149,7 @@
             </form>
 
             <!-- Linia 2: Cadru - Țeavă - Mecanism - Elemente de fixare -->
-            <div class="line-form gap">
+            <div class="line-form gap" style="grid-template-columns: repeat(4, 1fr);">
               <label><input name="cadru" type="number" min="0" step="1" placeholder="Cadru" /></label>
               <label><input name="teava" type="number" min="0" step="1" placeholder="Țeavă" /></label>
               <label><input name="mecanism" type="number" min="0" step="1" placeholder="Mecanism" /></label>
@@ -288,7 +288,7 @@
             </table>
 
             <h4 class="mt">Invite link</h4>
-            <div class="bar">
+            <div class="row">
               <select id="inviteRole">
                 <option value="OPERATOR">OPERATOR</option>
                 <option value="HEAD_OPERATOR">HEAD_OPERATOR</option>
@@ -402,6 +402,7 @@
     </main>
   </div>
 
+  <script src="theme.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
