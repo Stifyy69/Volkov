@@ -1,26 +1,45 @@
-// backend/routes/taxe.js
 import express from "express";
-import prisma from "../db.js";
-import { TaxType, Currency } from "@prisma/client";
-import { plusHours, timeLeft, auth } from "../utils.js";
+import { PrismaClient, TaxType, Currency } from "@prisma/client";
 
+const prisma = new PrismaClient();
 const router = express.Router();
 
-// adăugare taxă
-router.post("/", auth(), async (req, res) => {
+function plusHours(h) {
+  return new Date(Date.now() + h * 3600 * 1000);
+}
+function timeLeft(until) {
+  const ms = until.getTime() - Date.now();
+  const h = Math.max(0, Math.floor(ms / 3600000));
+  const m = Math.max(0, Math.floor((ms % 3600000) / 60000));
+  return `${h}h ${m}m`;
+}
+
+function auth(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ error: "no token" });
+  try {
+    const jwt = await import("jsonwebtoken");
+    const payload = jwt.default.verify(token, process.env.JWT_SECRET || "change-me");
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ error: "invalid token" });
+  }
+}
+
+router.post("/taxe", auth, async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
-    if (!/^\d{1,6}$/.test(cnp || ""))
-      return res.status(400).json({ error: "CNP invalid (max 6 cifre)" });
-    if (!["curat", "murdar", "gratis"].includes(metoda))
-      return res.status(400).json({ error: "metodă invalidă" });
+    if (!/^\d{1,6}$/.test(cnp || "")) return res.status(400).json({ error: "CNP invalid (max 6 cifre)" });
+    if (!["curat", "murdar", "gratis"].includes(metoda)) return res.status(400).json({ error: "metodă invalidă" });
 
     const now = new Date();
     const existing = await prisma.taxEntry.findFirst({
       where: { type: TaxType.TAXA, cnp, validUntil: { gt: now } },
+      orderBy: { createdAt: "desc" }
     });
-    if (existing)
-      return res.status(409).json({ error: "Există deja o taxă activă pe acest CNP." });
+    if (existing) return res.status(409).json({ error: "Există deja o taxă activă pe acest CNP." });
 
     let currency = Currency.CLEAN;
     let amount = 0;
@@ -33,9 +52,12 @@ router.post("/", auth(), async (req, res) => {
       currency = Currency.DIRTY;
       amount = 60000;
     } else if (metoda === "gratis") {
+      if (!["Medelin Cartel", "818", "Stefanos Cartel"].includes(gratisFamilie))
+        return res.status(400).json({ error: "familie invalidă pt. gratis" });
       const fam = await prisma.family.findUnique({ where: { name: gratisFamilie } });
       if (!fam) return res.status(400).json({ error: "familia nu există" });
       familyId = fam.id;
+      currency = Currency.CLEAN;
       amount = 0;
     }
 
@@ -48,98 +70,43 @@ router.post("/", auth(), async (req, res) => {
         cnp,
         userId: req.user.id,
         payment: metoda,
-        familyId,
+        familyId
       },
-      include: { family: true, user: true },
+      include: { user: true, family: true }
     });
 
-    res.json({
-      id: entry.id,
-      cnp: entry.cnp,
-      tip:
-        entry.payment === "gratis"
-          ? "GRATIS"
-          : entry.currency === "CLEAN"
-          ? "Bani curați"
-          : "Bani murdari",
-      amount: entry.amount,
-      gratisFamilie: entry.family?.name || null,
-      remaining: timeLeft(entry.validUntil),
-      user: entry.user?.username,
-    });
-  } catch (e) {
-    console.error(e);
+    try {
+      const { sseBroadcast } = await import("../sse.js");
+      sseBroadcast("taxe:new", { id: entry.id });
+    } catch {}
+
+    res.json({ ok: true, id: entry.id });
+  } catch {
     res.status(500).json({ error: "eroare server" });
   }
 });
 
-// listare taxe active
-router.get("/", auth(), async (_req, res) => {
+router.get("/taxe", auth, async (_req, res) => {
   try {
     const now = new Date();
-    const list = await prisma.taxEntry.findMany({
+    const rows = await prisma.taxEntry.findMany({
       where: { type: TaxType.TAXA, validUntil: { gt: now } },
       include: { family: true, user: true },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "desc" }
     });
-    res.json(
-      list.map((r) => ({
-        id: r.id,
-        cnp: r.cnp,
-        tip:
-          r.payment === "gratis"
-            ? "GRATIS"
-            : r.currency === "CLEAN"
-            ? "Bani curați"
-            : "Bani murdari",
-        amount: r.amount,
-        gratisFamilie: r.family?.name || null,
-        remaining: timeLeft(r.validUntil),
-        user: r.user?.username,
-        createdAt: r.createdAt,
-      }))
-    );
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "eroare server" });
-  }
-});
-
-// listare taxe ALL pentru admin / statistici
-router.get("/all", auth(), async (_req, res) => {
-  try {
-    const list = await prisma.taxEntry.findMany({
-      where: { type: TaxType.TAXA },
-      include: { family: true, user: true },
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(
-      list.map((r) => ({
-        id: r.id,
-        cnp: r.cnp,
-        tip:
-          r.payment === "gratis"
-            ? "GRATIS"
-            : r.currency === "CLEAN"
-            ? "Bani curați"
-            : "Bani murdari",
-        amount: r.amount,
-        gratisFamilie: r.family?.name || null,
-        user: r.user?.username,
-        createdAt: r.createdAt,
-      }))
-    );
-  } catch (e) {
-    res.status(500).json({ error: "eroare server" });
-  }
-});
-
-// ștergere taxă
-router.delete("/:id", auth(), async (req, res) => {
-  try {
-    await prisma.taxEntry.delete({ where: { id: req.params.id } });
-    res.json({ ok: true });
-  } catch (e) {
+    const out = rows.map((r) => ({
+      id: r.id,
+      cnp: r.cnp,
+      tip: r.payment === "gratis" ? "GRATIS" : r.currency === "CLEAN" ? "Bani curați" : "Bani murdari",
+      amount: r.payment === "gratis" ? 0 : r.currency === "CLEAN" ? 40000 : 60000,
+      metoda: r.payment,
+      gratisFamilie: r.family?.name || null,
+      remaining: r.validUntil ? timeLeft(r.validUntil) : null,
+      createdAt: r.createdAt,
+      user: r.user?.username || ""
+    }));
+    res.json(out);
+  } catch {
     res.status(500).json({ error: "eroare server" });
   }
 });
