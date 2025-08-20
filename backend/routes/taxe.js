@@ -1,8 +1,11 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 import { PrismaClient, TaxType, Currency } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+const JWT_SECRET = process.env.JWT_SECRET || "change-me";
 
 function plusHours(h) {
   return new Date(Date.now() + h * 3600 * 1000);
@@ -14,13 +17,13 @@ function timeLeft(until) {
   return `${h}h ${m}m`;
 }
 
+// middleware auth simplu
 function auth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: "no token" });
   try {
-    const jwt = await import("jsonwebtoken");
-    const payload = jwt.default.verify(token, process.env.JWT_SECRET || "change-me");
+    const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
     next();
   } catch {
@@ -28,6 +31,7 @@ function auth(req, res, next) {
   }
 }
 
+// creare taxă
 router.post("/taxe", auth, async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
@@ -75,17 +79,19 @@ router.post("/taxe", auth, async (req, res) => {
       include: { user: true, family: true }
     });
 
+    // broadcast SSE (dacă ai sse.js cu export sseBroadcast)
     try {
       const { sseBroadcast } = await import("../sse.js");
       sseBroadcast("taxe:new", { id: entry.id });
     } catch {}
 
     res.json({ ok: true, id: entry.id });
-  } catch {
+  } catch (e) {
     res.status(500).json({ error: "eroare server" });
   }
 });
 
+// listează DOAR taxele active (4h)
 router.get("/taxe", auth, async (_req, res) => {
   try {
     const now = new Date();
