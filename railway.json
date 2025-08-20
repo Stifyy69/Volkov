@@ -4,7 +4,7 @@
     "builder": "NIXPACKS",
     "nixpacksPlan": {
       "phases": {
-        "install": { "cmds": ["npm install"] },
+        "install": { "cmds": ["npm ci"] },
         "build": {
           "cmds": [
             "npx prisma generate",
@@ -17,7 +17,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "node src/index.js",
+    "startCommand": "node backend/server.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5
   }
