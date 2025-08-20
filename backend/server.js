@@ -1,45 +1,46 @@
 // backend/server.js
 import express from "express";
-import cors from "cors";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import path from "path";
 import { fileURLToPath } from "url";
-import authRoutes from "./routes/auth.js";
-import taxeRoutes from "./routes/taxe.js";
-import drillRoutes from "./routes/drill.js";
-import statsRoutes from "./routes/stats.js";
-import adminRoutes from "./routes/admin.js";
-import profileRoutes from "./routes/profile.js";
-import prisma from "./db.js";
+import { PrismaClient, Role } from "@prisma/client";
+import routes from "./routes/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const prisma = new PrismaClient();
+
 const PORT = process.env.PORT || 8081;
 const HOST = "0.0.0.0";
+const JWT_SECRET = process.env.JWT_SECRET || "change-me";
 const FRONT_ORIGIN = process.env.FRONT_ORIGIN || "*";
 
+/* ----------------------------- Middleware/CORS ----------------------------- */
 app.use(express.json());
-app.use(cors({ origin: FRONT_ORIGIN }));
-
-// static files
-app.use(express.static(path.join(__dirname, "../public")));
-app.get("/", (_req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", FRONT_ORIGIN);
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
 });
 
-// health
+/* --------------------------------- Static --------------------------------- */
+app.use(express.static(path.join(__dirname, "../public")));
+app.get("/", (_req, res) =>
+  res.sendFile(path.join(__dirname, "../public/index.html"))
+);
+
+/* --------------------------------- Health --------------------------------- */
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// routes
-app.use("/auth", authRoutes);
-app.use("/taxe", taxeRoutes);
-app.use("/drill", drillRoutes);
-app.use("/stats", statsRoutes);
-app.use("/admin", adminRoutes);
-app.use("/profile", profileRoutes);
+/* --------------------------------- Routes --------------------------------- */
+app.use("/", routes);
 
-// start
+/* --------------------------------- Start ---------------------------------- */
 (async () => {
   app.listen(PORT, HOST, () =>
     console.log(`Listening on http://${HOST}:${PORT}`)
