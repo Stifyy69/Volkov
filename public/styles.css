@@ -1,127 +1,122 @@
 :root{
-  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
-  --text:#e8eef4; --border:#263140; --gold:#FFD700;
+  --bg:#0c0f13;
+  --panel:#0f141a;
+  --card:#141a22;
+  --muted:#9ab0c3;
+  --text:#e8eef4;
+  --border:#263241;
+  --surface:#0b1016;
+
+  /* accent principal rece + un roz discret */
+  --accent:#3b82f6;
+  --pink:#b44c7a;          /* roz închis discret */
+  --pink-25:rgba(180,76,122,.25);
+
+  --gold:#FFD700;
   --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
+
+  --radius:12px;
 }
 
-/* === TEME (alegi din body[data-theme="..."]) === */
-body[data-theme="dark"]{
-  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
-  --text:#e8eef4; --border:#263140; --gold:#FFD700;
-  --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
-}
 body[data-theme="onyx"]{
-  --bg:#0a0c10; --card:#12161d; --muted:#9fb3c5; --accent:#18202b;
-  --text:#f1f5f9; --border:#202a38; --gold:#FFD666;
-  --red1:#6f0000; --red2:#a30f0f; --red3:#ff1a1a;
+  --panel:#0d0f14; --card:#12151c; --accent:#a78bfa; --border:#2b3748;
+  --pink:#a04a78; --pink-25:rgba(160,74,120,.25);
 }
 body[data-theme="slate"]{
-  --bg:#0b1220; --card:#121a2a; --muted:#90a8c7; --accent:#162238;
-  --text:#e7eef8; --border:#243249; --gold:#E6C55A;
-  --red1:#5f0d0d; --red2:#9c2b2b; --red3:#e23d3d;
+  --panel:#101519; --card:#151b20; --accent:#2dd4bf; --border:#2a3644;
+  --pink:#8f456b; --pink-25:rgba(143,69,107,.25);
 }
 
-/* layout */
-body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0}
-.container{max-width:1100px;margin:24px auto;padding:0 16px}
-.topbar{display:flex;align-items:center;justify-content:space-between;background:#0b0f14;border-bottom:1px solid var(--border);padding:10px 16px;position:sticky;top:0;z-index:20}
-.brand{font-weight:700;letter-spacing:.5px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tabbtn{background:#121821;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}
-.tabbtn[data-active="true"]{background:#1a2431;border-color:#324152}
-.who{display:flex;gap:8px;align-items:center}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;margin:0;}
 
-/* Cards / grid */
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px}
-.card:first-child{margin-top:0}
+/* layout */
+.app-wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;gap:16px;padding:18px 14px}
+.app-title{font-weight:800;font-size:22px;letter-spacing:.5px;margin-bottom:6px}
+.content{padding:18px}
+
+.stack{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.card.inner{background:var(--surface)}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.card-head h3{margin:0}
+
+.tabs{display:flex;flex-direction:column;gap:8px}
+.tabbtn{background:#121821;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer;text-align:left}
+.tabbtn[data-active="true"]{background:linear-gradient(180deg, #17202b, #111821);border-color:#324152;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.sidebar-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.who-mini{font-size:.95rem;color:#c7d1dc}
+
+/* rows / grids */
 .grid{display:grid;gap:12px}
 .grid-2{grid-template-columns:1fr 1fr}
 .grid-3{grid-template-columns:1fr 1fr 1fr}
 .grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
-.col-span-3{grid-column: span 3}
 .col-span-2{grid-column: span 2}
 .right{display:flex;justify-content:flex-end;align-items:center}
-.flex-end{display:flex;align-items:center;justify-content:flex-end}
-.align-center{align-items:end}
 .row{display:flex;gap:12px;align-items:center}
 .split{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
 .mt{margin-top:16px}
 .mt-compact{margin-top:8px}
-.mb{margin-bottom:12px}
-.gap{gap:12px}
 .grow{flex:1}
 .hidden{display:none}
 .left{text-align:left}
+
+/* line form: elemente pe un singur rând cu spațiere constantă */
+.line-form{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.line-form > label{min-width:220px;flex:0 0 auto}
 
 /* Inputs / buttons */
 label{display:flex;flex-direction:column;gap:6px;font-size:.92rem;color:#c7d1dc}
 input, select, button{
   background:#0f141b;border:1px solid var(--border);color:var(--text);
-  padding:10px 12px;border-radius:8px;outline:none
+  padding:10px 12px;border-radius:10px;outline:none
 }
-input::placeholder{text-align:center;color:#99a9b8}
+input::placeholder{color:#9fb1c0}
 input[type="number"]{text-align:center}
 .w-300{width:300px}
 .w-200{width:200px}
 .w-160{width:160px}
 
-.primary{cursor:pointer}
+.primary{cursor:pointer;transition:.15s ease}
 .primary:hover{border-color:#3a4b61}
 .danger{background:#2a1111;border-color:#4a1a1a}
 .sm{padding:6px 10px;font-size:.9rem}
+.smh{height:42px}
+.same-height{height:42px;display:inline-flex;align-items:center}
 
-/* Buton TRIMITE (se colorează din variabile) */
+/* Buton TRIMITE (gold + roz discret în umbră) */
 .gold-btn{
-  padding:10px 14px;
-  font-weight:700;
-  color:var(--gold);
+  padding:10px 18px;font-weight:700;color:var(--gold);
   background:linear-gradient(180deg, var(--red1), var(--red2));
-  border:2px solid var(--gold);
-  border-radius:8px;
-  text-transform:uppercase;
-  transition:all .2s ease;
-  box-shadow:0 0 8px rgba(0,0,0,.6);
-  height:42px; display:inline-flex; align-items:center; justify-content:center;
+  border:2px solid var(--gold);border-radius:10px;text-transform:uppercase;
+  box-shadow:0 0 0 1px var(--pink-25),0 6px 18px rgba(0,0,0,.35);
 }
-.gold-btn:hover{ background:linear-gradient(180deg, var(--red2), var(--red3)); color:#fff; box-shadow:0 0 12px rgba(255,215,0,.8); }
-.xl{font-size:1rem}
+.gold-btn:hover{ background:linear-gradient(180deg, var(--red2), var(--red3)); color:#fff; box-shadow:0 0 0 1px var(--pink-25),0 10px 22px rgba(0,0,0,.45); }
 
-/* Tables – header pe aceeași linie cu celulele */
-.table{width:100%;border-collapse:collapse}
-.table thead th,
-.table td { padding:10px; font-size:0.95rem; vertical-align:middle; text-align:center; }
+/* tables */
+.table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.table thead th,.table td{padding:10px;font-size:.95rem;vertical-align:middle;text-align:center}
 .table thead th{font-weight:600;color:#c7d1dc}
-.table thead th.left, .table td.left{ text-align:left; }
-.table tbody tr{background:#10161e;border:1px solid var(--border)}
+.table thead th.left,.table td.left{text-align:left}
+.table tbody tr{background:#0f141b;border:1px solid var(--border)}
+.table tbody tr:hover{box-shadow:0 0 0 1px var(--pink-25) inset}
 
-/* bars */
+/* bars / filters */
 .bar{display:flex;gap:12px;align-items:center}
 .weekSel{min-width:180px}
 
-/* Period blocks */
-.period-wrap{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.period-wrap .label{font-weight:600;color:#c7d1dc}
-.period-row{display:flex;gap:12px;align-items:center}
-
-/* filters */
-.filters.two-rows{display:flex;flex-direction:column;gap:8px}
-
-/* hints */
+/* hints/stats */
 .hint{color:#a7b6c6;font-size:.92rem}
+.stats{display:flex;gap:12px;flex-wrap:wrap}
+.stat{background:linear-gradient(180deg,#101823,#0d1219);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
 
 /* admin total highlight */
-.admin-table .total-col{font-weight:800;border:2px solid var(--gold)}
 .table .total-col{font-weight:800;border:2px solid var(--gold)}
 
-/* auth/app hide */
-#app.hidden, #auth.hidden{display:none}
+/* hide handlers */
+#app.hidden,#auth.hidden{display:none}
 
-/* drill forms spacing */
-.drill-line1{display:flex;align-items:center;gap:12px}
-.drill-line1 label{flex:1}
-
-/* uniform spacing */
-form > label, .row, .drill-line1, .period-row {margin-bottom:12px}
-
-/* mic detaliu pentru selectorul de temă */
-.themeSel{background:#0f141b;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px}
+/* subtle glass on cards */
+.card{backdrop-filter:saturate(120%) blur(4px)}
