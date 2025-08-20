@@ -1,97 +1,153 @@
-/* =============== Bază =============== */
-:root{
-  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
-  --text:#e8eef4; --border:#263140; --gold:#FFD700;
-  --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
-  --rose1:#22141c; --rose2:#2a1822; --rose3:#3a1f2f; --roseAccent:#ff6ea8;
+/* ========== RESET & BASE ========== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:Inter,system-ui,Arial,sans-serif;
-  margin:0;
+/* ---------- THEME TOKENS ---------- */
+/* DARK */
+body[data-theme="dark"]{
+  --bg:#0e1217; --panel:#11171f; --card:#151b23; --muted:#9fb1c2; --text:#e8eef4;
+  --border:#243040; --accent:#1f2835;
+  --btnGrad1:#8B0000; --btnGrad2:#B22222; --btnGrad3:#FF0000; --gold:#FFD700;
+  --input:#0f141b; --input-border:#2b3646; --input-placeholder:#9fb1c2;
+}
+/* ONYX (ușor mai contrastat, rece) */
+body[data-theme="onyx"]{
+  --bg:#0b0d11; --panel:#0f1218; --card:#141820; --muted:#9fb1c2; --text:#e6ecf2;
+  --border:#2a3342; --accent:#1a2230;
+  --btnGrad1:#7a0612; --btnGrad2:#a3141d; --btnGrad3:#d51f28; --gold:#ffd24a;
+  --input:#0d1218; --input-border:#2a3342; --input-placeholder:#9fb1c2;
+}
+/* SLATE (tonuri neutre, mai luminoase) */
+body[data-theme="slate"]{
+  --bg:#111418; --panel:#141a21; --card:#18202a; --muted:#b5c2cf; --text:#f1f6fb;
+  --border:#2f3a49; --accent:#1e2733;
+  --btnGrad1:#7a1b00; --btnGrad2:#b2380d; --btnGrad3:#de4e1b; --gold:#ffe07d;
+  --input:#111821; --input-border:#2f3a49; --input-placeholder:#b5c2cf;
 }
 
-/* =============== Topbar =============== */
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  background:#0b0f14;border-bottom:1px solid var(--border);
-  padding:10px 16px;position:sticky;top:0;z-index:20
+/* ========== LAYOUT ========== */
+.app-wrap{
+  min-height:100%;
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  gap:0;
 }
-.brand{font-weight:700;letter-spacing:.5px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.sidebar{
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display:flex; flex-direction:column;
+  padding:16px 12px;
+  position:sticky; top:0; height:100dvh;
+}
+.app-title{
+  font-size:26px; font-weight:800; letter-spacing:.5px; margin-bottom:14px;
+}
+.tabs{ display:flex; flex-direction:column; gap:8px; }
 .tabbtn{
-  background:#121821;border:1px solid var(--border);color:var(--text);
-  padding:8px 12px;border-radius:8px;cursor:pointer
+  background:#121821; color:var(--text);
+  border:1px solid var(--border); border-radius:10px;
+  text-align:left; padding:10px 12px; cursor:pointer;
 }
-.tabbtn[data-active="true"]{background:#1a2431;border-color:#324152}
-.who{display:flex;gap:8px;align-items:center}
+.tabbtn[data-active="true"]{ background:#1a2431; border-color:#324152; }
 
-.theme-select{
-  height:36px;background:#121518;border:1px solid #2a2f36;color:#f1f5f9;
-  border-radius:8px;padding:0 10px
+.sidebar-foot{ margin-top:auto; display:flex; flex-direction:column; gap:8px; }
+.who-mini{ font-size:.9rem; color:var(--muted); }
+
+.content{
+  padding:22px 22px 28px;
 }
 
-/* =============== Layout & cărți =============== */
-.container{max-width:1100px;margin:24px auto;padding:0 16px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px}
-.card:first-child{margin-top:0}
+/* ========== CARDS, GRID, UTILS ========== */
+.stack{ display:flex; flex-direction:column; gap:16px; }
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+}
+.card .inner{ padding:12px; }
+.card-head{ display:flex; align-items:center; gap:12px; }
+h2,h3,h4,h5{ margin:0 0 10px 0; }
+.mt{ margin-top:16px; }
+.mt-compact{ margin-top:8px; }
+.right{ display:flex; justify-content:flex-end; align-items:center; gap:8px; }
+.row{ display:flex; align-items:center; gap:10px; }
+.grow{ flex:1; }
 
-/* =============== Form controls =============== */
-label{display:flex;flex-direction:column;gap:6px;font-size:.92rem;color:#c7d1dc}
+/* Grid */
+.grid{ display:grid; gap:12px; }
+.grid-2{ grid-template-columns:1fr 1fr; }
+.grid-3{ grid-template-columns:1fr 1fr 1fr; }
+.col-span-2{ grid-column: span 2; }
+
+/* ========== FORMS & CONTROLS ========== */
+label{ display:flex; flex-direction:column; gap:6px; color:#c7d3de; font-size:.95rem; }
 input, select, button{
-  background:#0f141b;border:1px solid var(--border);color:var(--text);
-  padding:10px 12px;border-radius:8px;outline:none
+  height:40px;
+  background:var(--input);
+  color:var(--text);
+  border:1px solid var(--input-border);
+  border-radius:8px;
+  padding:8px 10px;
+  outline:none;
 }
-input::placeholder{text-align:center;color:#99a9b8}
-input[type="number"]{text-align:center}
+input::placeholder{ color:var(--input-placeholder); }
+input[type="number"]{ text-align:center; }
+.w-160{ width:160px; } .w-200{ width:200px; } .w-300{ width:300px; }
 
-.primary{cursor:pointer}
-.primary:hover{border-color:#3a4b61}
-.danger{background:#2a1111;border-color:#4a1a1a}
-.sm{padding:6px 10px;font-size:.9rem}
+/* Linie orizontală de form (alinieri perfecte) */
+.line-form{
+  display:grid;
+  grid-template-columns: 220px 260px 260px 140px;
+  align-items:end;
+  gap:12px;
+}
+.line-form .same-height{ height:40px; }
 
-/* =============== Buton TRIMITE =============== */
+/* Butoane */
+.primary{ cursor:pointer; }
+.danger{ background:#2a1111; border-color:#4a1a1a; color:#ffd4d4; }
+.sm{ height:34px; padding:0 10px; font-size:.92rem; }
+
+/* GOLD submit */
 .gold-btn{
-  padding:10px 18px;font-weight:700;color:var(--gold);
-  background:linear-gradient(180deg, var(--red1), var(--red2));
-  border:2px solid var(--gold);border-radius:8px;text-transform:uppercase;
-  transition:all .2s ease;box-shadow:0 0 8px rgba(0,0,0,.6);
+  font-weight:800; text-transform:uppercase; letter-spacing:.3px;
+  color:var(--gold);
+  background: linear-gradient(180deg, var(--btnGrad1), var(--btnGrad2));
+  border:2px solid var(--gold);
+  border-radius:8px;
+  box-shadow: 0 0 8px rgba(0,0,0,.6);
+  transition: all .2s ease;
 }
-.gold-btn:hover{ background:linear-gradient(180deg, var(--red2), var(--red3)); color:#fff; box-shadow:0 0 12px rgba(255,215,0,.8); }
-.same-height{height:42px; display:inline-flex; align-items:center;}
+.gold-btn:hover{
+  background: linear-gradient(180deg, var(--btnGrad2), var(--btnGrad3));
+  color:#fff; box-shadow:0 0 12px rgba(255,215,0,.85);
+}
 
-/* =============== Tabele =============== */
-.table{width:100%;border-collapse:separate;border-spacing:0 6px}
-.table thead th,
-.table td {padding:10px;font-size:0.95rem;vertical-align:middle;text-align:center}
-.table thead th{font-weight:600;color:#c7d1dc}
+/* ========== TABLES ========== */
+.table{ width:100%; border-collapse:separate; border-spacing:0 6px; }
+.table thead th, .table td{
+  padding:10px; vertical-align:middle; text-align:center;
+  font-size:.95rem;
+}
+.table thead th{ font-weight:700; color:#c7d1dc; }
 .table thead th.left, .table td.left{ text-align:left; }
-.table tbody tr{background:#10161e;border:1px solid var(--border)}
+.table tbody tr{ background:#10161e; border:1px solid var(--border); }
 
-/* =============== TEME =============== */
-/* Dark current (roșu‑auriu) */
-.theme-red{
-  --bg:#0e1217; --card:#151b23; --muted:#8aa0b2; --accent:#1f2835;
-  --text:#e8eef4; --border:#263140; --gold:#FFD700;
-  --red1:#8B0000; --red2:#B22222; --red3:#FF0000;
-}
-/* Dark rose (roz închis) */
-.theme-rose{
-  --bg:var(--rose1); --card:#1b1218; --muted:#c3a8b5; --accent:var(--rose3);
-  --text:#f5e9ef; --border:#3a2a34; --gold:#ffcde1;
-}
-/* Ajustări de accent pentru tema rose */
-.theme-rose .tabbtn{background:#191118;border-color:#2c2130}
-.theme-rose .tabbtn[data-active="true"]{background:#241726;border-color:#3a2a37}
-.theme-rose .gold-btn{
-  color:#ffd9e8;border-color:#ffb4d1;
-  background:linear-gradient(180deg, #62243f, #7a2a51);
-}
-.theme-rose .gold-btn:hover{
-  background:linear-gradient(180deg, #7a2a51, #9a3467);
-  color:#fff; box-shadow:0 0 12px rgba(255,110,168,.7);
-}
+/* ========== SMALLS ========== */
+.hint{ color:var(--muted); font-size:.92rem; }
+
+/* Săptămână picker */
+.weekSel{ min-width:180px; }
+
+/* Prevenim accidente de click din cauza unor overlay-uri */
+button, .gold-btn { position:relative; z-index:2; pointer-events:auto; }
+
+/* Autentificare ascunsă când e logat */
+.hidden{ display:none; }
