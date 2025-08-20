@@ -1,22 +1,22 @@
-import express from "express";
-
+import { Router } from "express";
 import auth from "./auth.js";
 import taxe from "./taxe.js";
 import drill from "./drill.js";
-import statsTaxe from "./stats-taxe.js";
-import statsFam from "./stats-fam.js";
+import dashboard from "./dashboard.js";
+import families from "./families.js";
+import admin from "./admin.js";
 import tables from "./tables.js";
+import profile from "./profile.js";
 
-const router = express.Router();
+const router = Router();
 
 router.use("/auth", auth);
 router.use("/taxe", taxe);
 router.use("/drill", drill);
-router.use("/stats-taxe", statsTaxe);
-router.use("/stats-fam", statsFam);
+router.use("/dashboard", dashboard);
+router.use("/families", families);
+router.use("/admin", admin);
 router.use("/tables", tables);
-
-// Fallback 404 pentru rutele neacoperite în acest grup
-router.use((_req, res) => res.status(404).json({ error: "not found" }));
+router.use("/profile", profile);
 
 export default router;
