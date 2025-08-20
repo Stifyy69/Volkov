@@ -6,9 +6,23 @@ import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-/* ---------------------------- Admin weekly stats --------------------------- */
-// ?year=YYYY&week=WW  -> săptămâna selectată
-// ?period=all        -> all time
+// --------------------- Helper: calcul ISO week --------------------- //
+function getISOWeekYear(date) {
+  const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = tmp.getUTCDay() || 7;
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+  return { year: tmp.getUTCFullYear(), week: weekNo };
+}
+
+function inISOWeek(date, year, week) {
+  const { year: y, week: w } = getISOWeekYear(date);
+  return y === year && w === week;
+}
+
+// ------------------------- Stats endpoint -------------------------- //
+// /admin/stats?year=YYYY&week=WW sau ?period=all
 router.get(
   "/",
   auth(),
@@ -26,33 +40,21 @@ router.get(
         },
       });
 
-      // funcție de filtrare pe săptămână (UTC ISO)
-      function inISOWeek(d) {
-        if (periodAll || !selYear || !selWeek) return true;
-        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        const day = date.getUTCDay() || 7;
-        date.setUTCDate(date.getUTCDate() + 4 - day);
-        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-        const year = date.getUTCFullYear();
-        return year === selYear && weekNo === selWeek;
-      }
-
       const out = users.map((u) => {
         let clean = 0, dirty = 0;
 
-        // taxe (curat/murdar/gratis)
+        // taxe
         for (const t of u.taxEntries) {
           if (t.type !== "TAXA") continue;
-          if (!inISOWeek(t.createdAt)) continue;
+          if (!periodAll && selYear && selWeek && !inISOWeek(t.createdAt, selYear, selWeek)) continue;
           if (t.payment === "gratis") continue;
           if (t.currency === "CLEAN") clean += 40000;
           else if (t.currency === "DIRTY") dirty += 60000;
         }
 
-        // drill (mereu murdar; gratis = 0)
+        // drill
         for (const d of u.drillJobs) {
-          if (!inISOWeek(d.createdAt)) continue;
+          if (!periodAll && selYear && selWeek && !inISOWeek(d.createdAt, selYear, selWeek)) continue;
           dirty += d.processed * d.unitPrice;
         }
 
