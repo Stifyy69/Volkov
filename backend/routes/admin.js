@@ -6,23 +6,12 @@ import { Role } from "@prisma/client";
 
 const router = express.Router();
 
-// GET /admin/invites
-router.get("/invites", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), async (_req, res) => {
-  try {
-    const list = await prisma.invite.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-    res.json(list);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "eroare server" });
-  }
-});
-
-// POST /admin/invites
-router.post("/invites", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), async (req, res) => {
-  try {
+/* ------------------------------ Invite codes ------------------------------- */
+router.post(
+  "/invites",
+  auth(),
+  requireRole(Role.ADMIN, Role.HEAD_OPERATOR),
+  async (req, res) => {
     const { role } = req.body || {};
     const r = role && Object.values(Role).includes(role) ? role : Role.OPERATOR;
     const code = Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -32,11 +21,45 @@ router.post("/invites", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR), asy
     res.json({
       code: inv.code,
       role: inv.role,
+      link: `${req.headers.origin || ""}/?invite=${inv.code}`,
     });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "eroare server" });
   }
-});
+);
+
+router.get(
+  "/invites",
+  auth(),
+  requireRole(Role.ADMIN, Role.HEAD_OPERATOR),
+  async (_req, res) => {
+    const list = await prisma.invite.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    res.json(list);
+  }
+);
+
+/* ---------------------------- Delete any entry ----------------------------- */
+router.delete(
+  "/entry/:id",
+  auth(),
+  requireRole(Role.ADMIN, Role.HEAD_OPERATOR),
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+      // ștergem fie din taxe, fie din drill
+      const deletedTax = await prisma.taxEntry.deleteMany({ where: { id } });
+      if (deletedTax.count > 0) return res.json({ ok: true, type: "tax" });
+
+      const deletedDrill = await prisma.drillJob.deleteMany({ where: { id } });
+      if (deletedDrill.count > 0) return res.json({ ok: true, type: "drill" });
+
+      res.status(404).json({ error: "entry not found" });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "eroare server" });
+    }
+  }
+);
 
 export default router;
