@@ -1,15 +1,17 @@
 {
-  "name": "taxe-full",
+  "name": "volkov",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "prisma db push && node src/index.js",
-    "dev": "node src/index.js",
-    "postinstall": "prisma generate"
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2"
   },
