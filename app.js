@@ -468,4 +468,22 @@ app.get("/events", (req, res) => {
   });
 });
 function sseBroadcast(event, payload) {
-  const data = `event: ${event}\ndata: ${JSON.stringify(payload ||
+  const data = `event: ${event}\ndata: ${JSON.stringify(payload || {})}\n\n`;
+  for (const c of sseClients) {
+    try { c.res.write(data); } catch {}
+  }
+}
+
+/* ------------------------------- START ---------------------------------- */
+(async () => {
+  try {
+    await ensureFamilies();
+    await bootstrapAdminInvite();
+    app.listen(PORT, HOST, () => {
+      console.log(`Listening on http://${HOST}:${PORT}`);
+    });
+  } catch (e) {
+    console.error("Startup error:", e);
+    process.exit(1);
+  }
+})();
