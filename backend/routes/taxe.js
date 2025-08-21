@@ -1,30 +1,18 @@
-// backend/routes/taxe.js
-import { Router } from "express";
-import prisma from "../db.js";
-import { auth } from "../utils.js";
-import { TaxType, Currency } from "@prisma/client";
+import express from "express";
+import { PrismaClient, TaxType, Currency } from "@prisma/client";
 
-const router = Router();
+const prisma = new PrismaClient();
+const router = express.Router();
 
-// POST /taxe
-router.post("/", auth(), async (req, res) => {
+// POST /taxe - adaugă taxă
+router.post("/", async (req, res) => {
   try {
-    const { cnp, metoda, gratisFamilie } = req.body || {};
-    if (!/^\d{1,6}$/.test(cnp || ""))
-      return res.status(400).json({ error: "CNP invalid (max 6 cifre)" });
-    if (!["curat", "murdar", "gratis"].includes(metoda))
-      return res.status(400).json({ error: "metodă invalidă" });
-
-    const now = new Date();
-    const existing = await prisma.taxEntry.findFirst({
-      where: { type: TaxType.TAXA, cnp, validUntil: { gt: now } },
-    });
-    if (existing)
-      return res.status(409).json({ error: "Există deja taxă activă pe acest CNP." });
+    const { cnp, metoda, family } = req.body || {};
+    if (!cnp || !/^\d{1,6}$/.test(cnp))
+      return res.status(400).json({ error: "CNP invalid" });
 
     let currency = Currency.CLEAN;
     let amount = 0;
-    let familyId = null;
 
     if (metoda === "curat") {
       currency = Currency.CLEAN;
@@ -33,53 +21,44 @@ router.post("/", auth(), async (req, res) => {
       currency = Currency.DIRTY;
       amount = 60000;
     } else if (metoda === "gratis") {
-      const fam = await prisma.family.findUnique({ where: { name: gratisFamilie } });
-      if (!fam) return res.status(400).json({ error: "familia nu există" });
-      familyId = fam.id;
+      amount = 0;
+    } else {
+      return res.status(400).json({ error: "Metodă invalidă" });
     }
 
     const entry = await prisma.taxEntry.create({
       data: {
         type: TaxType.TAXA,
+        cnp,
         currency,
         amount,
-        validUntil: new Date(Date.now() + 4 * 3600 * 1000),
-        cnp,
-        userId: req.user.id,
         payment: metoda,
-        familyId,
+        familyId: family || null,
+        userId: req.user?.id || null,
       },
+      include: { user: true, family: true },
     });
 
-    res.json({ ok: true, id: entry.id });
+    res.json(entry);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "eroare server" });
+    res.status(500).json({ error: "Eroare server la taxă" });
   }
 });
 
-// GET /taxe
-router.get("/", auth(), async (_req, res) => {
+// GET /taxe - listă taxe
+router.get("/", async (_req, res) => {
   try {
-    const now = new Date();
-    const rows = await prisma.taxEntry.findMany({
-      where: { type: TaxType.TAXA, validUntil: { gt: now } },
-      include: { family: true, user: true },
+    const taxes = await prisma.taxEntry.findMany({
+      where: { type: TaxType.TAXA },
+      include: { user: true, family: true },
       orderBy: { createdAt: "desc" },
+      take: 50,
     });
-
-    res.json(rows.map((r) => ({
-      id: r.id,
-      cnp: r.cnp,
-      tip: r.payment,
-      familie: r.family?.name || null,
-      user: r.user?.username || "",
-      amount: r.amount,
-      createdAt: r.createdAt,
-    })));
+    res.json(taxes);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "eroare server" });
+    res.status(500).json({ error: "Eroare server la listă taxe" });
   }
 });
 
