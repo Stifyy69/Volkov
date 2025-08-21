@@ -1,59 +1,48 @@
-const API_URL = window.location.origin;
+const API_URL = "http://localhost:3000"; // ajustează pentru Railway
 
-let token = localStorage.getItem("token") || null;
-
-function showView(viewId) {
-  document.querySelectorAll("main section").forEach(sec => sec.classList.add("hidden"));
-  document.getElementById(viewId).classList.remove("hidden");
-}
-
-document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
+// LOGIN
+document.getElementById("loginBtn").addEventListener("click", async () => {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
-  try {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Eroare login");
-    token = data.token;
-    localStorage.setItem("token", token);
-    loadDashboard();
-  } catch (err) {
-    document.getElementById("loginError").innerText = err.message;
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+    alert("Login reușit!");
+    document.getElementById("login-section").classList.add("hidden");
+    document.getElementById("taxe-section").classList.remove("hidden");
+  } else {
+    alert("Eroare login!");
   }
 });
 
-document.getElementById("logoutBtn")?.addEventListener("click", () => {
-  token = null;
-  localStorage.removeItem("token");
-  showView("loginView");
+// GRATIS la taxe
+document.getElementById("tipPlata").addEventListener("change", e => {
+  if (e.target.value === "gratis") {
+    document.getElementById("gratisFamilii").classList.remove("hidden");
+  } else {
+    document.getElementById("gratisFamilii").classList.add("hidden");
+  }
 });
 
-function authHeaders() {
-  return token ? { Authorization: `Bearer ${token}` } : {};
+// FORMATARE BANI
+function formatMoney(amount) {
+  return amount.toLocaleString("ro-RO") + "$";
 }
 
-async function loadDashboard() {
-  showView("dashboardView");
-  const res = await fetch(`${API_URL}/dashboard`, { headers: authHeaders() });
-  const data = await res.json();
-  document.getElementById("dashboardView").innerHTML = `
-    <h2>Datele mele</h2>
-    <pre>${JSON.stringify(data, null, 2)}</pre>
-  `;
+// POPULARE SELECTOARE SĂPTĂMÂNI
+function populateWeeks(selectId) {
+  const select = document.getElementById(selectId);
+  select.innerHTML = "";
+  for (let w = 1; w <= 52; w++) {
+    const opt = document.createElement("option");
+    opt.value = w;
+    opt.textContent = `Săptămâna ${w}`;
+    select.appendChild(opt);
+  }
 }
-
-document.querySelectorAll("nav button[data-tab]")?.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const tab = btn.dataset.tab;
-    if (tab === "dashboard") loadDashboard();
-    else showView(tab + "View");
-  });
-});
-
-if (token) loadDashboard();
-else showView("loginView");
+["dashboardWeek", "statsFamWeek", "adminWeek", "tablesWeek", "profileWeek"].forEach(populateWeeks);
