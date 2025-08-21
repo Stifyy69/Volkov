@@ -1,22 +1,21 @@
+// backend/utils.js
 import jwt from "jsonwebtoken";
-import { Role } from "@prisma/client";
-import prisma from "./db.js";
-import { isoWeekRange } from "./db.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "change-me";
 
-/* --- auth: atașează userul în req.user, altfel 401 --- */
+/** Middleware: extrage user din Bearer token; 401 dacă required și lipsește/invalid */
 export function auth(required = true) {
   return (req, res, next) => {
     const h = req.headers.authorization || "";
     const token = h.startsWith("Bearer ") ? h.slice(7) : null;
+
     if (!token) {
       if (required) return res.status(401).json({ error: "no token" });
       return next();
     }
     try {
-      const payload = jwt.verify(token, JWT_SECRET);
-      req.user = payload; // { id, role, username }
+      const payload = jwt.verify(token, JWT_SECRET); // { id, role, username }
+      req.user = payload;
       next();
     } catch {
       return res.status(401).json({ error: "invalid token" });
@@ -24,7 +23,7 @@ export function auth(required = true) {
   };
 }
 
-/* --- requireRole: permite acces doar pentru rolurile date --- */
+/** Middleware util pt. protejare pe roluri */
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
@@ -34,28 +33,8 @@ export function requireRole(...roles) {
   };
 }
 
-/* --- parsează interogarea de perioadă: week vs all --- */
-export function parsePeriodQuery(q) {
-  const periodAll = q.period === "all";
-  if (periodAll) return { periodAll, start: null, end: null };
-
-  const year = q.year ? Number(q.year) : null;
-  const week = q.week ? Number(q.week) : null;
-
-  if (!year || !week) {
-    // default: săptămâna curentă (ISO, UTC)
-    const now = new Date();
-    const iso = isoWeekNumber(now);
-    const { start, end } = isoWeekRange(iso.year, iso.week);
-    return { periodAll: false, start, end, year: iso.year, week: iso.week };
-  }
-
-  const { start, end } = isoWeekRange(year, week);
-  return { periodAll: false, start, end, year, week };
-}
-
-/* --- helper: ISO week number pentru o dată --- */
-export function isoWeekNumber(date) {
+/** ISO year/week pentru o dată (UTC) */
+export function isoYearWeek(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const day = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - day);
@@ -64,12 +43,7 @@ export function isoWeekNumber(date) {
   return { year: d.getUTCFullYear(), week: weekNo };
 }
 
-/* --- helper: filtrează după interval dacă nu e all --- */
-export function inRange(createdAt, start, end, periodAll) {
-  if (periodAll) return true;
-  const t = createdAt.getTime();
-  return t >= start.getTime() && t < end.getTime();
+/** Format bani „1.000.000$” (dacă îți trebuie pe backend) */
+export function formatMoney(n = 0) {
+  return `${(n || 0).toLocaleString("ro-RO")}$`;
 }
-
-/* --- exporturi utile şi pentru alte module --- */
-export { prisma, Role };
