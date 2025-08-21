@@ -1,88 +1,60 @@
-import express from "express";
-import prisma, { isoWeekRange } from "../db.js";
-import { auth } from "../utils.js";
+// backend/routes/stats-fam.js
+import { Router } from "express";
+import prisma from "../db.js";
+import { auth, requireRole } from "../utils.js";
+import { Role } from "@prisma/client";
 
-const router = express.Router();
+const router = Router();
 
-const ALLOWED_ROLES = new Set(["ADMIN", "HEAD_OPERATOR", "AUDIT"]);
-function adminOnly(req, res, next) {
-  if (!req.user || !ALLOWED_ROLES.has(req.user.role)) return res.status(403).json({ error: "forbidden" });
-  next();
-}
-
-function inRange(periodAll, year, week, d) {
-  if (periodAll || !year || !week) return true;
-  const { start, end } = isoWeekRange(year, week);
-  return d >= start && d < end;
-}
-
-/* --------------------------- Familii – agregate --------------------------- */
-/*
-  Output: [{ family, cadru, teava, mecanism, fixare, totalPieces }]
-*/
-router.get("/families", auth(), adminOnly, async (req, res) => {
+/**
+ * GET /stats/fam
+ * Statistici agregate pe familii
+ */
+router.get("/", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR, Role.AUDIT), async (req, res) => {
   try {
     const periodAll = req.query.period === "all";
-    const year = req.query.year ? Number(req.query.year) : null;
-    const week = req.query.week ? Number(req.query.week) : null;
+    const selYear = req.query.year ? Number(req.query.year) : null;
+    const selWeek = req.query.week ? Number(req.query.week) : null;
 
-    const jobs = await prisma.drillJob.findMany({
-      include: { family: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
+    const families = await prisma.family.findMany({
+      include: { taxEntries: true, drillJobs: true },
     });
 
-    const byFam = new Map();
-    for (const j of jobs) {
-      if (!inRange(periodAll, year, week, j.createdAt)) continue;
-      const fname = j.family?.name || "(fără familie)";
-      if (!byFam.has(fname)) byFam.set(fname, { family: fname, cadru: 0, teava: 0, mecanism: 0, fixare: 0, totalPieces: 0 });
-      const row = byFam.get(fname);
-      row.cadru += j.cadru || 0;
-      row.teava += j.teava || 0;
-      row.mecanism += j.mecanism || 0;
-      row.fixare += j.fixare || 0;
-      row.totalPieces += (j.cadru||0) + (j.teava||0) + (j.mecanism||0) + (j.fixare||0);
+    function inISOWeek(d) {
+      if (periodAll || !selYear || !selWeek) return true;
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const day = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - day);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      const year = date.getUTCFullYear();
+      return year === selYear && weekNo === selWeek;
     }
 
-    const out = Array.from(byFam.values()).sort((a,b) => b.totalPieces - a.totalPieces);
-    res.json(out);
-  } catch (e) {
-    res.status(500).json({ error: "eroare server" });
-  }
-});
-
-/* ---------------------------- Top operatori ------------------------------- */
-/*
-  Output: [{ userId, user, cadru, teava, mecanism, fixare, totalPieces }]
-*/
-router.get("/top-users", auth(), adminOnly, async (req, res) => {
-  try {
-    const periodAll = req.query.period === "all";
-    const year = req.query.year ? Number(req.query.year) : null;
-    const week = req.query.week ? Number(req.query.week) : null;
-
-    const jobs = await prisma.drillJob.findMany({
-      include: { user: { select: { id: true, username: true } } },
-      orderBy: { createdAt: "desc" },
+    const out = families.map((f) => {
+      let clean = 0, dirty = 0;
+      for (const t of f.taxEntries) {
+        if (!inISOWeek(t.createdAt)) continue;
+        if (t.payment === "gratis") continue;
+        if (t.currency === "CLEAN") clean += 40000;
+        else if (t.currency === "DIRTY") dirty += 60000;
+      }
+      for (const d of f.drillJobs) {
+        if (!inISOWeek(d.createdAt)) continue;
+        dirty += d.processed * d.unitPrice;
+      }
+      return {
+        familie: f.name,
+        totalClean: clean,
+        totalDirty: dirty,
+        total: clean + dirty,
+      };
     });
 
-    const byUser = new Map();
-    for (const j of jobs) {
-      if (!inRange(periodAll, year, week, j.createdAt)) continue;
-      const uid = j.user?.id || "unknown";
-      const uname = j.user?.username || "unknown";
-      if (!byUser.has(uid)) byUser.set(uid, { userId: uid, user: uname, cadru: 0, teava: 0, mecanism: 0, fixare: 0, totalPieces: 0 });
-      const row = byUser.get(uid);
-      row.cadru += j.cadru || 0;
-      row.teava += j.teava || 0;
-      row.mecanism += j.mecanism || 0;
-      row.fixare += j.fixare || 0;
-      row.totalPieces += (j.cadru||0) + (j.teava||0) + (j.mecanism||0) + (j.fixare||0);
-    }
-
-    const out = Array.from(byUser.values()).sort((a,b) => b.totalPieces - a.totalPieces);
+    out.sort((a, b) => b.total - a.total);
     res.json(out);
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: "eroare server" });
   }
 });
