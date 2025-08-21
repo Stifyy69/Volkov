@@ -1,99 +1,72 @@
-import express from "express";
-import prisma, { isoWeekRange } from "../db.js";
+// backend/routes/tables.js
+import { Router } from "express";
+import prisma from "../db.js";
 import { auth } from "../utils.js";
-import { Role } from "@prisma/client";
 
-const router = express.Router();
+const router = Router();
 
-function inWeek(periodAll, year, week, d) {
-  if (periodAll || !year || !week) return true;
-  const { start, end } = isoWeekRange(year, week);
-  return d >= start && d < end;
-}
-
-// Tabele all – doar pentru ADMIN
-router.get("/", auth([Role.ADMIN]), async (req, res) => {
+/**
+ * GET /tables
+ * Returnează toate intrările (taxe + burghiu)
+ * Filtrare pe ?year=YYYY&week=WW sau ?period=all
+ */
+router.get("/", auth(), async (req, res) => {
   try {
-    const { type = "taxe", period = "week", year, week, user, cnp, family } = req.query;
-    const periodAll = period === "all";
-    const y = year ? Number(year) : null;
-    const w = week ? Number(week) : null;
+    const periodAll = req.query.period === "all";
+    const selYear = req.query.year ? Number(req.query.year) : null;
+    const selWeek = req.query.week ? Number(req.query.week) : null;
 
-    if (type === "taxe") {
-      const taxe = await prisma.taxEntry.findMany({
-        include: { user: true, family: true },
-        orderBy: { createdAt: "desc" },
-      });
+    const taxEntries = await prisma.taxEntry.findMany({
+      include: { family: true, user: true },
+      orderBy: { createdAt: "desc" },
+    });
+    const drills = await prisma.drillJob.findMany({
+      include: { family: true, user: true },
+      orderBy: { createdAt: "desc" },
+    });
 
-      const filtered = taxe.filter(
-        (t) =>
-          inWeek(periodAll, y, w, t.createdAt) &&
-          (!user || t.user?.username?.includes(user)) &&
-          (!cnp || t.cnp?.includes(cnp)) &&
-          (!family || t.family?.name?.includes(family))
-      );
-
-      return res.json(
-        filtered.map((t) => ({
-          id: t.id,
-          cnp: t.cnp,
-          amount: t.amount,
-          type: t.type,
-          currency: t.currency,
-          user: t.user?.username || "",
-          family: t.family?.name || null,
-          createdAt: t.createdAt,
-        }))
-      );
-    } else {
-      const drills = await prisma.drillJob.findMany({
-        include: { user: true, family: true },
-        orderBy: { createdAt: "desc" },
-      });
-
-      const filtered = drills.filter(
-        (d) =>
-          inWeek(periodAll, y, w, d.createdAt) &&
-          (!user || d.user?.username?.includes(user)) &&
-          (!cnp || d.cnp?.includes(cnp)) &&
-          (!family || d.family?.name?.includes(family))
-      );
-
-      return res.json(
-        filtered.map((d) => ({
-          id: d.id,
-          cnp: d.cnp,
-          cadru: d.cadru,
-          teava: d.teava,
-          mecanism: d.mecanism,
-          fixare: d.fixare,
-          metodaPlata: d.unitPrice === 0 ? "GRATIS" : "Bani murdari",
-          costTotal: d.processed * d.unitPrice,
-          user: d.user?.username || "",
-          family: d.family?.name || null,
-          createdAt: d.createdAt,
-        }))
-      );
+    // filtrare săptămână
+    function inISOWeek(d) {
+      if (periodAll || !selYear || !selWeek) return true;
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const day = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - day);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      const year = date.getUTCFullYear();
+      return year === selYear && weekNo === selWeek;
     }
+
+    const taxe = taxEntries
+      .filter((t) => inISOWeek(t.createdAt))
+      .map((t) => ({
+        id: t.id,
+        type: "TAXA",
+        user: t.user?.username,
+        cnp: t.cnp,
+        familie: t.family?.name,
+        tip: t.payment,
+        amount: t.amount,
+        createdAt: t.createdAt,
+      }));
+
+    const burghiu = drills
+      .filter((d) => inISOWeek(d.createdAt))
+      .map((d) => ({
+        id: d.id,
+        type: "BURGHIU",
+        user: d.user?.username,
+        cnp: d.cnp,
+        familie: d.family?.name,
+        tip: d.unitPrice === 0 ? "GRATIS" : "Bani murdari",
+        amount: d.processed * d.unitPrice,
+        createdAt: d.createdAt,
+      }));
+
+    res.json([...taxe, ...burghiu].sort((a, b) => b.createdAt - a.createdAt));
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "eroare server" });
-  }
-});
-
-// DELETE – admin poate șterge fără eroare
-router.delete("/:type/:id", auth([Role.ADMIN]), async (req, res) => {
-  try {
-    const { type, id } = req.params;
-    if (type === "taxe") {
-      await prisma.taxEntry.delete({ where: { id } });
-    } else {
-      await prisma.drillJob.delete({ where: { id } });
-    }
-    res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "eroare la ștergere" });
   }
 });
 
