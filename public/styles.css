@@ -1,9 +1,9 @@
-/* Reset & Base */
+/* RESET */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; font-family: Arial, sans-serif; background: #f7f7f7; color: #222; }
 body { display: flex; flex-direction: column; }
 
-/* Topbar */
+/* TOPBAR */
 .topbar {
   display: flex;
   align-items: center;
@@ -21,10 +21,9 @@ body { display: flex; flex-direction: column; }
 .topbar .tabbtn:hover { background: #666; }
 .topbar .who { display: flex; align-items: center; gap: 10px; }
 
-/* Layout */
+/* CONTAINER & CARDS */
 .container { flex: 1; padding: 20px; }
 .hidden { display: none; }
-
 .card {
   background: #fff;
   padding: 20px;
@@ -32,11 +31,10 @@ body { display: flex; flex-direction: column; }
   margin-bottom: 20px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+h2, h3, h4, h5 { margin-bottom: 14px; }
 
-h2, h3, h4, h5 { margin-bottom: 12px; }
-
-/* Grid helpers */
-.grid { display: grid; gap: 12px; }
+/* GRID HELPERS */
+.grid { display: grid; gap: 14px; }
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
@@ -44,11 +42,15 @@ h2, h3, h4, h5 { margin-bottom: 12px; }
 .align-center { align-items: center; }
 .right { text-align: right; }
 
-/* Special grids */
-.grid-tax { grid-template-columns: 160px 200px 200px auto; gap: 12px; align-items: center; }
-.drill-grid { display: flex; flex-direction: column; gap: 15px; }
+/* SPECIAL GRIDS */
+.grid-tax {
+  grid-template-columns: 150px 200px 220px auto;
+  gap: 16px;
+  align-items: center;
+}
+.drill-grid { display: flex; flex-direction: column; gap: 18px; }
 
-/* Inputs */
+/* INPUTS & BUTTONS */
 input, select, button {
   padding: 8px 10px;
   font-size: 14px;
@@ -57,8 +59,6 @@ input, select, button {
 }
 input:focus, select:focus { border-color: #666; outline: none; }
 select { background: #fff; }
-
-/* Buttons */
 button { cursor: pointer; }
 button.primary {
   background: #0077cc; color: #fff;
@@ -69,46 +69,56 @@ button.primary:hover { background: #005fa3; }
 button.gold-btn { background: goldenrod; color: #fff; }
 button.danger { background: #cc0000; color: #fff; border: none; padding: 8px 14px; }
 button.sm { padding: 6px 10px; font-size: 13px; }
-button.same-height, input.same-height, select.same-height {
-  height: 38px; /* aceeași înălțime pentru input + buton */
-}
+.same-height { height: 38px; }
 
-/* Tables */
-.table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+/* TABLES */
+.table { width: 100%; border-collapse: collapse; margin-top: 14px; }
 .table th, .table td {
-  border: 1px solid #ddd; padding: 8px; text-align: center;
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
 }
 .table th.left, .table td.left { text-align: left; }
 .table thead { background: #eee; font-weight: bold; }
 .table tbody tr:nth-child(even) { background: #fafafa; }
 
-/* Special: total row în Admin */
+/* TOTAL ROW (ADMIN) */
 .table.emphasis-total tfoot td {
   font-weight: bold;
   font-size: 16px;
   background: #ddd;
 }
 
-/* Bars & flex helpers */
-.bar { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+/* FLEX & UTILS */
+.bar { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
 .bar .label { font-weight: bold; }
-.bar.compact-under { margin-top: -5px; margin-bottom: 15px; }
+.bar.compact-under { margin-top: -4px; margin-bottom: 14px; }
 .flex-end { display: flex; justify-content: flex-end; align-items: center; }
 .grow { flex: 1; }
 
-/* Stats */
-.stats { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 15px; }
-.stat { background: #f0f0f0; padding: 10px 14px; border-radius: 6px; min-width: 200px; }
+/* STATS */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 18px 0;
+}
+.stat {
+  background: #f0f0f0;
+  padding: 12px 16px;
+  border-radius: 6px;
+  min-width: 220px;
+}
 
-/* Form hints */
-.hint { font-size: 13px; color: #555; margin-top: -8px; }
+/* FORM HINTS */
+.hint { font-size: 13px; color: #555; margin-top: -6px; }
 
-/* Utility */
+/* SPACING */
 .mt { margin-top: 20px; }
-.mt-compact { margin-top: 10px; }
-.mb { margin-bottom: 12px; }
-.split { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+.mt-compact { margin-top: 12px; }
+.mb { margin-bottom: 14px; }
+.split { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
 .w-300 { width: 300px; }
 .w-200 { width: 200px; }
 .w-160 { width: 160px; }
-.inner { padding: 15px; }
+.inner { padding: 16px; }
