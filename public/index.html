@@ -2,43 +2,177 @@
 <html lang="ro">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
-    <header>
-      <h1>Dashboard</h1>
-      <nav>
-        <button data-tab="dashboard">Dashboard</button>
-        <button data-tab="taxe">Taxe</button>
-        <button data-tab="drill">Burghiu</button>
-        <button data-tab="tables">Tabele</button>
-        <button data-tab="admin">Admin</button>
-        <button data-tab="profile">Profil</button>
-        <button id="logoutBtn">Logout</button>
-      </nav>
-    </header>
-
-    <main>
-      <section id="loginView">
-        <h2>Login</h2>
-        <form id="loginForm">
-          <input type="text" id="username" placeholder="Username" required>
-          <input type="password" id="password" placeholder="Parola" required>
-          <button type="submit">Login</button>
-        </form>
-        <p id="loginError"></p>
-      </section>
-
-      <section id="dashboardView" class="hidden"></section>
-      <section id="taxeView" class="hidden"></section>
-      <section id="drillView" class="hidden"></section>
-      <section id="tablesView" class="hidden"></section>
-      <section id="adminView" class="hidden"></section>
-      <section id="profileView" class="hidden"></section>
-    </main>
+  <!-- LOGIN -->
+  <div id="login-section" class="card">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Utilizator">
+    <input type="password" id="password" placeholder="Parolă">
+    <button id="loginBtn">Login</button>
   </div>
+
+  <!-- TAXE -->
+  <div id="taxe-section" class="card hidden">
+    <h2>Taxe</h2>
+    <div class="line">
+      <input type="text" id="cnp" placeholder="CNP">
+      <select id="tipPlata">
+        <option value="">Alege...</option>
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="gratis">Gratis</option>
+      </select>
+      <button id="trimiteTaxa">TRIMITE</button>
+    </div>
+    <div id="gratisFamilii" class="hidden">
+      <label>Familii Gratis:</label>
+      <select id="familieGratis">
+        <option value="Medelin Cartel">Medelin Cartel</option>
+        <option value="818">818</option>
+        <option value="Stefanos Cartel">Stefanos Cartel</option>
+      </select>
+    </div>
+    <h3>Taxe active</h3>
+    <input type="text" id="searchCnpTaxe" placeholder="Caută CNP...">
+    <table>
+      <thead>
+        <tr>
+          <th>CNP</th>
+          <th>Suma</th>
+          <th>Timp (hh:mm)</th>
+          <th>User</th>
+        </tr>
+      </thead>
+      <tbody id="taxeTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- DRILL -->
+  <div id="drill-section" class="card hidden">
+    <h2>Burghiu</h2>
+    <div class="line">
+      <input type="text" id="drillCnp" placeholder="CNP">
+      <select id="drillFamilie">
+        <option value="">Alege familie</option>
+        <option value="Medelin Cartel">Medelin Cartel</option>
+        <option value="818">818</option>
+        <option value="Stefanos Cartel">Stefanos Cartel</option>
+      </select>
+      <button id="trimiteDrill">TRIMITE</button>
+    </div>
+    <div class="line">
+      <input type="text" id="cadru" placeholder="Cadru">
+      <input type="text" id="teava" placeholder="Teavă">
+      <input type="text" id="mecanism" placeholder="Mecanism">
+      <input type="text" id="fixare" placeholder="Elemente fixare">
+    </div>
+    <div class="line">
+      <input type="number" id="plata" placeholder="Plată">
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-section" class="card hidden">
+    <h2>Dashboard</h2>
+    <label>Alege perioada:</label>
+    <div class="line">
+      <select id="dashboardType">
+        <option value="week">Săptămână</option>
+        <option value="all">All time</option>
+      </select>
+      <select id="dashboardWeek"></select>
+    </div>
+    <div id="dashboardData"></div>
+  </div>
+
+  <!-- STATISTICI FAMILII -->
+  <div id="stats-fam-section" class="card hidden">
+    <h2>Statistici Familii</h2>
+    <label>Alege perioada:</label>
+    <div class="line">
+      <select id="statsFamType">
+        <option value="week">Săptămână</option>
+        <option value="all">All time</option>
+      </select>
+      <select id="statsFamWeek"></select>
+    </div>
+    <div id="statsFamData"></div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="admin-section" class="card hidden">
+    <h2>Admin</h2>
+    <label>Alege perioada:</label>
+    <div class="line">
+      <select id="adminType">
+        <option value="week">Săptămână</option>
+        <option value="all">All time</option>
+      </select>
+      <select id="adminWeek"></select>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Bani curați</th>
+          <th>Bani murdari</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="adminTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- TABELE ALL -->
+  <div id="tables-section" class="card hidden">
+    <h2>Tabele All</h2>
+    <div class="line">
+      <select id="tablesType">
+        <option value="week">Săptămână</option>
+        <option value="all">All time</option>
+      </select>
+      <select id="tablesWeek"></select>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Tip</th>
+          <th>User</th>
+          <th>CNP</th>
+          <th>Familie</th>
+          <th>Reîncarcă</th>
+        </tr>
+      </thead>
+      <tbody id="tablesBody"></tbody>
+    </table>
+  </div>
+
+  <!-- MY PROFILE -->
+  <div id="profile-section" class="card hidden">
+    <h2>Profil</h2>
+    <label>Alege perioada:</label>
+    <div class="line">
+      <select id="profileType">
+        <option value="week">Săptămână</option>
+        <option value="all">All time</option>
+      </select>
+      <select id="profileWeek"></select>
+    </div>
+    <h3>Venituri</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Eu (50%)</th>
+          <th>Familie (50%)</th>
+        </tr>
+      </thead>
+      <tbody id="profileBody"></tbody>
+    </table>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
