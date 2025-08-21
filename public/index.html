@@ -1,121 +1,88 @@
 <!doctype html>
 <html lang="ro">
 <head>
-  <!-- =========================================================
-       VOLKOV – INTERFAȚĂ UI
-       Păstrăm layout-ul cerut: Taxe & Burghiu / Dashboard /
-       Statistici Familii / Admin / Tabele All / My profile.
-       NU schimbăm designul vizual, doar ordinea + spacing.
-       ========================================================= -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Volkov</title>
-
-  <!-- CSS global -->
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Meta helper (opțional, nu afectează funcțional): -->
-  <meta name="theme-color" content="#222" />
-  <meta name="color-scheme" content="light dark" />
-  <!-- /Meta helper -->
 </head>
-
 <body>
-  <!-- ========================= HEADER / NAV ========================= -->
-  <header class="topbar" role="banner" aria-label="Bara superioară">
-    <div class="brand" aria-label="Siglă aplicație">Volkov</div>
+  <header class="topbar">
+    <div class="brand">Volkov</div>
 
-    <nav class="tabs" role="navigation" aria-label="Navigație secțiuni">
-      <!-- butoanele de tab sunt controlate din app.js / setTabs() -->
-      <button class="tabbtn" data-tab="taxe" aria-controls="tab-taxe" aria-label="Taxe & Burghiu">
-        Taxe &amp; Burghiu
-      </button>
-      <button class="tabbtn" data-tab="dashboard" aria-controls="tab-dashboard" aria-label="Dashboard">
-        Dashboard
-      </button>
-      <button class="tabbtn" data-tab="drillfamilies" aria-controls="tab-drillfamilies" aria-label="Statistici Familii">
-        Statistici Familii
-      </button>
-      <button class="tabbtn" data-tab="admin" aria-controls="tab-admin" aria-label="Admin">
-        Admin
-      </button>
-      <button class="tabbtn" data-tab="tables" aria-controls="tab-tables" aria-label="Tabele All">
-        Tabele All
-      </button>
-      <button class="tabbtn" data-tab="profile" aria-controls="tab-profile" aria-label="Profilul meu">
-        My profile
-      </button>
+    <nav class="tabs">
+      <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
+      <button class="tabbtn" data-tab="dashboard">Dashboard</button>
+      <button class="tabbtn" data-tab="drillfamilies">Statistici Familii</button>
+      <button class="tabbtn" data-tab="admin">Admin</button>
+      <button class="tabbtn" data-tab="tables">Tabele All</button>
+      <button class="tabbtn" data-tab="profile">My profile</button>
     </nav>
 
-    <div class="who" aria-live="polite">
+    <div class="who">
       <span id="whoami"></span>
-      <button id="logoutBtn" class="danger sm" aria-label="Ieșire din cont">Logout</button>
+      <button id="logoutBtn" class="danger sm">Logout</button>
     </div>
   </header>
-  <!-- ======================= /HEADER / NAV ========================= -->
 
-  <!-- =========================== AUTH ============================== -->
-  <main id="auth" class="container" aria-label="Autentificare">
-    <!-- Login -->
-    <section class="card" aria-labelledby="auth-login-title">
-      <h2 id="auth-login-title">Autentificare</h2>
-      <form id="loginForm" class="grid grid-2" autocomplete="off">
+  <!-- Auth -->
+  <main id="auth" class="container">
+    <section class="card">
+      <h2>Autentificare</h2>
+      <form id="loginForm" class="grid grid-2">
         <label>Username
-          <input name="username" required aria-required="true" />
+          <input name="username" required />
         </label>
         <label>Parolă
-          <input name="password" type="password" required aria-required="true" />
+          <input name="password" type="password" required />
         </label>
         <div class="col-span-2 right">
-          <button class="primary" aria-label="Autentificare">Login</button>
+          <button class="primary">Login</button>
         </div>
       </form>
     </section>
 
-    <!-- Register -->
-    <section class="card" aria-labelledby="auth-register-title">
-      <h2 id="auth-register-title">Register</h2>
-      <form id="registerForm" class="grid grid-2" autocomplete="off">
+    <section class="card">
+      <h2>Register</h2>
+      <form id="registerForm" class="grid grid-2">
         <label>Invite code
-          <input name="inviteCode" required aria-required="true" />
+          <input name="inviteCode" required />
         </label>
         <label>Username
-          <input name="username" required aria-required="true" />
+          <input name="username" required />
         </label>
         <label>Nickname
           <input name="nickname" />
         </label>
         <label>Parolă
-          <input name="password" type="password" required aria-required="true" />
+          <input name="password" type="password" required />
         </label>
         <label>CNP (max 6)
-          <input name="cnp" pattern="\d{0,6}" inputmode="numeric" />
+          <input name="cnp" pattern="\d{0,6}" />
         </label>
         <div class="col-span-2 right">
-          <button class="primary" aria-label="Înregistrare">Register</button>
+          <button class="primary">Register</button>
         </div>
       </form>
     </section>
-
-    <!-- Notă: secțiunea AUTH se ascunde la login cu app.js (hydrateMe). -->
   </main>
-  <!-- ========================= /AUTH ================================ -->
 
-  <!-- ============================ APP =============================== -->
-  <main id="app" class="container hidden" aria-label="Aplicație">
-    <!-- =============== TAB: TAXE & BURGHIU ================= -->
-    <section id="tab-taxe" class="tab" aria-labelledby="taxe-title">
+  <!-- App -->
+  <main id="app" class="container hidden">
+
+    <!-- Taxe & Burghiu -->
+    <section id="tab-taxe" class="tab">
       <div class="card">
-        <h3 id="taxe-title">Taxe</h3>
+        <h3>Taxe</h3>
 
-        <!-- Linie 1: CNP - Tip plată - (Familie GRATIS) - Trimite -->
-        <form id="taxeForm" class="grid grid-tax" aria-label="Formular taxe">
+        <!-- Linia 1: CNP - Tip plată - (Familie GRATIS) - Trimite -->
+        <form id="taxeForm" class="grid grid-tax">
           <label>CNP
-            <input name="cnp" placeholder="CNP" pattern="\d{1,6}" required aria-required="true" inputmode="numeric" />
+            <input class="same-height" name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
           </label>
 
           <label>Tip plată
-            <select id="metodaSelect" name="metoda" class="select-strong" required aria-required="true">
+            <select id="metodaSelect" name="metoda" class="select-strong same-height" required>
               <option value="" disabled selected>Alege…</option>
               <option value="curat">Bani curați (40.000$)</option>
               <option value="murdar">Bani murdari (60.000$)</option>
@@ -124,7 +91,7 @@
           </label>
 
           <label id="gratisWrap" class="hidden">Familie (GRATIS)
-            <select name="gratisFamilie" aria-label="Familie pentru gratuitate">
+            <select name="gratisFamilie" class="same-height">
               <option value="Medelin Cartel">Medelin Cartel</option>
               <option value="818">818</option>
               <option value="Stefanos Cartel">Stefanos Cartel</option>
@@ -132,20 +99,18 @@
           </label>
 
           <div class="flex-end">
-            <button class="primary gold-btn same-height" aria-label="Trimite taxă">Trimite</button>
+            <button class="primary gold-btn same-height">Trimite</button>
           </div>
         </form>
 
-        <!-- Căutare + tabel taxe active (4h) -->
         <div class="split">
           <h4>Taxe active</h4>
         </div>
-
-        <div class="row mb" role="search">
-          <input id="taxSearch" class="w-300" placeholder="Caută CNP…" aria-label="Caută CNP" />
+        <div class="row mb">
+          <input id="taxSearch" class="w-300" placeholder="Caută CNP…" />
         </div>
 
-        <table id="taxeTable" class="table" aria-label="Tabel taxe active">
+        <table id="taxeTable" class="table">
           <thead>
             <tr>
               <th class="left">CNP</th>
@@ -154,22 +119,21 @@
               <th class="left">User</th>
             </tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
       </div>
 
-      <!-- ======================= BURGHIU ======================= -->
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <!-- Linia 1: CNP - Familie - Trimite (pe aceeași linie, aceeași înălțime) -->
-        <form id="drillForm" class="grid drill-grid" aria-label="Formular burghiu">
+        <!-- Linia 1: CNP - Familie - Trimite -->
+        <form id="drillForm" class="grid drill-grid">
           <div class="grid grid-3 align-center">
             <label>CNP
-              <input name="cnp" placeholder="CNP" pattern="\d{1,6}" required aria-required="true" inputmode="numeric" />
+              <input class="same-height" name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
             </label>
             <label>Familie
-              <select name="family" id="drillFamily" required aria-required="true">
+              <select name="family" id="drillFamily" class="same-height" required>
                 <option value="" disabled selected>Alege…</option>
                 <option>Medelin Cartel</option>
                 <option>Stefanos Cartel</option>
@@ -190,160 +154,122 @@
               </select>
             </label>
             <div class="flex-end">
-              <button class="primary gold-btn sm same-height" aria-label="Trimite burghiu">Trimite</button>
+              <button class="primary gold-btn sm same-height">Trimite</button>
             </div>
           </div>
 
-          <!-- Linia 2: Cadru - Țeavă - Mecanism - Elemente de fixare (pe aceeași linie) -->
-          <div class="grid grid-4" aria-label="Cantități componente burghiu">
-            <label><input name="cadru" type="number" min="0" step="1" placeholder="Cadru" inputmode="numeric" /></label>
-            <label><input name="teava" type="number" min="0" step="1" placeholder="Țeavă" inputmode="numeric" /></label>
-            <label><input name="mecanism" type="number" min="0" step="1" placeholder="Mecanism" inputmode="numeric" /></label>
-            <label><input name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" inputmode="numeric" /></label>
+          <!-- Linia 2: Cadru - Țeavă - Mecanism - Elemente de fixare -->
+          <div class="grid grid-4">
+            <label><input class="same-height" name="cadru" type="number" min="0" step="1" placeholder="Cadru" /></label>
+            <label><input class="same-height" name="teava" type="number" min="0" step="1" placeholder="Țeavă" /></label>
+            <label><input class="same-height" name="mecanism" type="number" min="0" step="1" placeholder="Mecanism" /></label>
+            <label><input class="same-height" name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
           </div>
 
-          <!-- Linia 3: Plata (hint) -->
-          <div class="hint col-span-2" aria-live="polite">
-            Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
+          <!-- Linia 3: Plata -->
+          <div class="hint col-span-2">
+            Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> pentru
+            <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
           </div>
         </form>
 
-        <!-- Ultimele joburi burghiu -->
         <h4>Ultimele joburi</h4>
-        <table id="drillTable" class="table" aria-label="Joburi burghiu">
+        <table id="drillTable" class="table">
           <thead>
             <tr>
-              <th class="left">CNP</th>
-              <th class="left">Familie</th>
-              <th>Cadru</th>
-              <th>Țeavă</th>
-              <th>Mecanism</th>
-              <th>Fixare</th>
-              <th>Metodă plată</th>
-              <th>Cost total</th>
-              <th class="left">User</th>
+              <th class="left">CNP</th><th class="left">Familie</th>
+              <th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th>
+              <th>Metodă plată</th><th>Cost total</th><th class="left">User</th>
             </tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
       </div>
     </section>
-    <!-- ============ /TAB: TAXE & BURGHIU ================= -->
 
-    <!-- ====================== TAB: DASHBOARD ====================== -->
-    <section id="tab-dashboard" class="tab hidden" aria-labelledby="dash-title">
+    <!-- Dashboard -->
+    <section id="tab-dashboard" class="tab hidden">
       <div class="card">
-        <h3 id="dash-title" class="sr-only">Dashboard</h3>
-
         <div class="bar">
           <span class="label">Alege perioada</span>
         </div>
-
-        <div class="bar compact-under" role="group" aria-label="Selector perioadă">
-          <select id="dashPeriod" aria-label="Tip perioadă">
+        <div class="bar compact-under">
+          <select id="dashPeriod">
             <option value="week" selected>Săptămână</option>
             <option value="all">All time</option>
           </select>
-          <select id="dashWeekPicker" class="weekSel" aria-label="Săptămână ISO"></select>
+          <select id="dashWeekPicker" class="weekSel"></select>
         </div>
 
-        <div class="stats" role="group" aria-label="Sumare">
+        <div class="stats">
           <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0$</b></div>
           <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0$</b></div>
           <div class="stat">Total piese burghiu: <b id="statDrillPieces">0</b></div>
         </div>
 
         <h4>Taxe pe zile (săptămâna selectată)</h4>
-        <table id="dashDailyTable" class="table" aria-label="Taxe pe zile">
+        <table id="dashDailyTable" class="table">
           <thead>
-            <tr>
-              <th class="left">Zi</th>
-              <th>Nr. taxe</th>
-              <th>Bani curați</th>
-              <th>Bani murdari</th>
-            </tr>
+            <tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
 
         <div class="split mt">
           <h4>Familii – Burghiu</h4>
-          <input id="famSearch" class="w-300" placeholder="Caută familie…" aria-label="Caută familie" />
+          <input id="famSearch" class="w-300" placeholder="Caută familie…" />
         </div>
-
-        <table id="drillFamiliesTable" class="table" aria-label="Familii burghiu">
+        <table id="drillFamiliesTable" class="table">
           <thead>
-            <tr>
-              <th class="left">Familie</th>
-              <th>Cadru</th>
-              <th>Țeavă</th>
-              <th>Mecanism</th>
-              <th>Fixare</th>
-              <th>Total</th>
-            </tr>
+            <tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
       </div>
     </section>
-    <!-- ==================== /TAB: DASHBOARD ====================== -->
 
-    <!-- ================ TAB: STATISTICI FAMILII =================== -->
-    <section id="tab-drillfamilies" class="tab hidden" aria-labelledby="fam-title">
+    <!-- Statistici Familii -->
+    <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
-        <h3 id="fam-title" class="sr-only">Statistici Familii</h3>
-
         <div class="bar">
           <span class="label">Alege perioada</span>
         </div>
-
-        <div class="bar compact-under" role="group" aria-label="Selector perioadă">
-          <select id="bfPeriod" aria-label="Tip perioadă">
+        <div class="bar compact-under">
+          <select id="bfPeriod">
             <option value="week" selected>Săptămână</option>
             <option value="all">All time</option>
           </select>
-          <select id="bfWeekPicker" class="weekSel" aria-label="Săptămână ISO"></select>
+          <select id="bfWeekPicker" class="weekSel"></select>
 
           <div class="grow"></div>
-          <input id="bfSearch" class="w-300" placeholder="Caută familie…" aria-label="Caută familie" />
+          <input id="bfSearch" class="w-300" placeholder="Caută familie…" />
         </div>
 
-        <table id="bfTable" class="table" aria-label="Tabel familii">
+        <table id="bfTable" class="table">
           <thead>
-            <tr>
-              <th class="left">Familie</th>
-              <th>Cadru</th>
-              <th>Țeavă</th>
-              <th>Mecanism</th>
-              <th>Fixare</th>
-              <th>Total</th>
-            </tr>
+            <tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
       </div>
     </section>
-    <!-- ============== /TAB: STATISTICI FAMILII ==================== -->
 
-    <!-- ========================= TAB: ADMIN ======================== -->
-    <section id="tab-admin" class="tab hidden" aria-labelledby="admin-title">
+    <!-- Admin -->
+    <section id="tab-admin" class="tab hidden">
       <div class="card">
-        <h3 id="admin-title" class="sr-only">Admin</h3>
-
         <div class="bar">
           <span class="label">Alege perioada</span>
         </div>
-
-        <div class="bar compact-under" role="group" aria-label="Selector perioadă">
-          <select id="admPeriod" aria-label="Tip perioadă">
+        <div class="bar compact-under">
+          <select id="admPeriod">
             <option value="week" selected>Săptămână</option>
             <option value="all">All time</option>
           </select>
-          <select id="weekSelect" class="weekSel" aria-label="Săptămână ISO"></select>
+          <select id="weekSelect" class="weekSel"></select>
         </div>
 
         <h4>Split pe utilizator</h4>
-        <table id="admTable" class="table emphasis-total" aria-label="Split utilizatori">
+        <table id="admTable" class="table emphasis-total">
           <thead>
             <tr>
               <th class="left">User</th>
@@ -356,81 +282,73 @@
               <th>Total</th>
             </tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
 
         <h4 class="mt">Invite link</h4>
-        <div class="bar" role="group" aria-label="Generator invitații">
-          <select id="inviteRole" aria-label="Rol pentru invitație">
+        <div class="bar">
+          <select id="inviteRole">
             <option value="OPERATOR">OPERATOR</option>
             <option value="HEAD_OPERATOR">HEAD_OPERATOR</option>
             <option value="ADMIN">ADMIN</option>
             <option value="AUDIT">AUDIT</option>
           </select>
-          <button id="inviteBtn" class="primary" aria-label="Generează invitație">Generează</button>
-          <input id="inviteResult" class="grow" readonly aria-readonly="true" />
-          <button id="inviteCopy" class="sm" aria-label="Copiază invitația">Copiază</button>
+          <button id="inviteBtn" class="primary">Generează</button>
+          <input id="inviteResult" class="grow" readonly />
+          <button id="inviteCopy" class="sm">Copiază</button>
         </div>
       </div>
     </section>
-    <!-- ======================= /TAB: ADMIN ========================= -->
 
-    <!-- ====================== TAB: TABELE ALL ====================== -->
-    <section id="tab-tables" class="tab hidden" aria-labelledby="tables-title">
+    <!-- Tabele All -->
+    <section id="tab-tables" class="tab hidden">
       <div class="card">
-        <h3 id="tables-title" class="sr-only">Tabele All</h3>
-
         <div class="bar">
           <span class="label">Alege perioada</span>
         </div>
-
-        <div class="bar compact-under" role="group" aria-label="Selector perioadă">
-          <select id="tblPeriod" aria-label="Tip perioadă">
+        <div class="bar compact-under">
+          <select id="tblPeriod">
             <option value="week" selected>Săptămână</option>
             <option value="all">All time</option>
           </select>
-          <select id="tblWeekPicker" class="weekSel" aria-label="Săptămână ISO"></select>
+          <select id="tblWeekPicker" class="weekSel"></select>
         </div>
 
-        <div class="bar mt-compact" role="group" aria-label="Filtre tabele">
+        <div class="bar mt-compact">
           <label>Tip:
-            <select id="tblType" aria-label="Tip listare">
+            <select id="tblType">
               <option value="taxe">Taxe</option>
               <option value="drill">Burghiu</option>
             </select>
           </label>
-          <input id="tblFilterUser" class="w-200" placeholder="User…" aria-label="Filtru user" />
-          <input id="tblFilterCnp" class="w-160" placeholder="CNP…" aria-label="Filtru CNP" />
-          <input id="tblFilterFamily" class="w-200" placeholder="Familie…" aria-label="Filtru familie" />
-          <button id="tblRefresh" class="sm" aria-label="Reîncarcă tabel">Reîncarcă</button>
+          <input id="tblFilterUser" class="w-200" placeholder="User…" />
+          <input id="tblFilterCnp" class="w-160" placeholder="CNP…" />
+          <input id="tblFilterFamily" class="w-200" placeholder="Familie…" />
+          <button id="tblRefresh" class="sm">Reîncarcă</button>
         </div>
 
-        <table id="tblAll" class="table" aria-label="Tabel general">
-          <thead id="tblHead"><!-- generat din app.js --></thead>
-          <tbody><!-- generat din app.js --></tbody>
+        <table id="tblAll" class="table">
+          <thead id="tblHead"></thead>
+          <tbody></tbody>
         </table>
       </div>
     </section>
-    <!-- ==================== /TAB: TABELE ALL ====================== -->
 
-    <!-- ======================= TAB: MY PROFILE ===================== -->
-    <section id="tab-profile" class="tab hidden" aria-labelledby="profile-title">
+    <!-- My profile -->
+    <section id="tab-profile" class="tab hidden">
       <div class="card">
-        <h3 id="profile-title" class="sr-only">Profil</h3>
-
         <div class="bar">
           <span class="label">Alege perioada</span>
         </div>
-
-        <div class="bar compact-under" role="group" aria-label="Selector perioadă">
-          <select id="profPeriod" aria-label="Tip perioadă">
+        <div class="bar compact-under">
+          <select id="profPeriod">
             <option value="week" selected>Săptămână</option>
             <option value="all">All time</option>
           </select>
-          <select id="profWeekPicker" class="weekSel" aria-label="Săptămână ISO"></select>
+          <select id="profWeekPicker" class="weekSel"></select>
         </div>
 
-        <div class="stats" role="group" aria-label="Statistici personale">
+        <div class="stats">
           <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
           <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
           <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
@@ -438,20 +356,15 @@
         </div>
 
         <h4>Activitate (zile)</h4>
-        <table id="profDailyTable" class="table" aria-label="Activitate zilnică">
+        <table id="profDailyTable" class="table">
           <thead>
-            <tr>
-              <th class="left">Zi</th>
-              <th>Nr. taxe</th>
-              <th>Bani curați</th>
-              <th>Bani murdari</th>
-            </tr>
+            <tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr>
           </thead>
-          <tbody><!-- generat din app.js --></tbody>
+          <tbody></tbody>
         </table>
 
         <h4 class="mt">Split 50/50</h4>
-        <div class="grid grid-3" aria-label="Split pe categorii">
+        <div class="grid grid-3">
           <div class="card inner">
             <h5>Bani curați</h5>
             <div>User: <b id="splitCleanUser">0$</b></div>
@@ -473,69 +386,22 @@
         </div>
 
         <h4 class="mt">Schimbă parola</h4>
-        <form id="resetForm" class="grid grid-2" aria-label="Resetare parolă">
+        <form id="resetForm" class="grid grid-2">
           <label>Parola veche
-            <input name="oldPassword" type="password" required aria-required="true" />
+            <input name="oldPassword" type="password" required/>
           </label>
           <label>Parola nouă
-            <input name="newPassword" type="password" required aria-required="true" />
+            <input name="newPassword" type="password" required/>
           </label>
           <div class="col-span-2 right">
-            <button class="primary" aria-label="Actualizează parola">Actualizează</button>
+            <button class="primary">Actualizează</button>
           </div>
         </form>
       </div>
     </section>
-    <!-- ==================== /TAB: MY PROFILE ====================== -->
+
   </main>
-  <!-- =========================== /APP ============================== -->
 
-  <!-- ========================== SCRIPTS ============================ -->
   <script src="app.js"></script>
-  <!-- Notă: app.js gestionează toată logica UI + fetch către backend,
-       inclusiv setTabs, hydrateMe, loadTaxe, loadDrill, loadDashboard,
-       loadAdmin, loadTableAll, loadProfile, SSE, etc. -->
-  <!-- =============================================================== -->
-
-  <!-- Padding cu comentarii “inofensive” pentru a păstra lungimea istorică
-       a fișierului fără a afecta designul sau funcționalitatea.
-
-       01) Layout și spacing – realizate în styles.css (nu schimbăm designul).
-       02) Ordinea câmpurilor la Taxe & Burghiu conform cerințelor.
-       03) Selectoare săptămâni 33..sfârșit de an – se populează din app.js.
-       04) Admin: tabel cu total evidențiat; invite link buton/copiere.
-       05) Tabele All: filtre + reîncărcare; butoane delete în UI (dacă backend expune).
-       06) My profile: doar statisticile personale (logica în app.js).
-       07) Format bani: 1.000.000$ – aplicat din app.js (money()).
-       08) SSE: live refresh (taxe:new / drill:new).
-       09) Fără modificări la backend; doar UI.
-       10) Comentariile de mai jos sunt doar pentru menținerea „lungimii”.
-       ----------------------------------------------------------------
-       11) Accesibilitate: aria-label/controls/live acolo unde a fost util.
-       12) Inputmode numeric pentru câmpuri numerice.
-       13) Placeholdere concise pe toate câmpurile.
-       14) Griduri consistente: grid-tax, grid-3, grid-4.
-       15) Butoanele „same-height” pentru aliniere vizuală.
-       16) Clasicele .bar/.stats/.split pentru spacing uniform.
-       17) Tabele cu thead/tbody clare, populate din JS.
-       18) Hidden class pentru tab-uri inactive.
-       19) whoami & logout în header, live actualizat.
-       20) Fără iframes, fără alte asset-uri.
-       21) Compatibil cu modul întunecat dacă îl vei adăuga în CSS.
-       22) Folosește doar fetch; fără librării externe.
-       23) Nu schimbă rutele API; doar le consumă.
-       24) Înregistrarea cere invite code (backend existent).
-       25) Validări minime pe CNP și cantități.
-       26) Familia obligatorie la burghiu.
-       27) Linie 3 burghiu: hint de plată.
-       28) Dashboard: sumare + daily table + familii.
-       29) Statistici Familii: tabel separat + căutare.
-       30) Admin: selector perioadă + invitații.
-       31) Tabele All: switch taxe/drill + filtre.
-       32) My profile: split 50/50 ca înainte.
-       33) Money formatting uniform ($ la final).
-       34) Toate ID-urile cerute din JS sunt păstrate.
-       35) Comentarii final – mențin lungimea.
-  -->
 </body>
 </html>
