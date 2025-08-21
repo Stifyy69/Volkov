@@ -48,7 +48,7 @@ function isoYearWeek(d) {
 function mondayOfISOWeek(year, week) {
   const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
   const dow = simple.getUTCDay();
-  const ISOweekStart = simple;
+  const ISOweekStart = new Date(simple);
   if (dow <= 4) ISOweekStart.setUTCDate(simple.getUTCDate() - dow + 1);
   else ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - dow);
   return ISOweekStart;
@@ -76,6 +76,7 @@ function fillWeeks33toEnd(sel) {
 
 // ===================== AUTENTIFICARE =====================
 let currentRole = null;
+let currentUserName = null;
 
 async function hydrateMe() {
   try {
@@ -83,6 +84,7 @@ async function hydrateMe() {
     if (!r.ok) throw 0;
     const me = await r.json();
     currentRole = me.role || null;
+    currentUserName = me.username || null;
     $("#whoami").textContent = `${me.username} [${me.role}]`;
 
     // Vizibilitate tab-uri pe rol (admin/ho/audit)
@@ -245,7 +247,12 @@ function renderTaxe(list) {
         suma = "60.000$";
       }
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="font-mono">${row.cnp}</td><td>${suma}</td><td>${row.remaining || ""}</td><td class="left">${row.user || "-"}</td>`;
+      tr.innerHTML = `
+        <td class="font-mono">${row.cnp}</td>
+        <td>${suma}</td>
+        <td>${row.remaining || ""}</td>
+        <td class="left">${row.user || "-"}</td>
+      `;
       tbody.appendChild(tr);
     });
 }
@@ -307,16 +314,13 @@ function renderDrill(list) {
 }
 
 // ===================== DASHBOARD & STATISTICI FAMILII =====================
-// Notă: backend-ul actual NU are endpoint de „istoric taxe”; pentru dashboard
-// calculăm din ce avem: /drill (ultimele 50) + /taxe (active). Selectorul
-// de săptămână este UI-only până adăugăm un endpoint istoric de taxe.
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 $("#bfPeriod")?.addEventListener("change", loadDashboard);
 $("#bfWeekPicker")?.addEventListener("change", loadDashboard);
 
 async function loadDashboard() {
-  // Dashboard
+  // Dashboard – determinare perioadă selectată
   const dashPeriod = $("#dashPeriod")?.value || "week";
   let dashYear, dashWeek;
   try {
@@ -324,38 +328,48 @@ async function loadDashboard() {
       ({ year: dashYear, week: dashWeek } = JSON.parse($("#dashWeekPicker").value));
   } catch {}
 
-  // 1) Taxe – folosim doar activele (backend actual)
-  let clean = 0,
-    dirty = 0;
+  // === (A) Totaluri corecte pe săptămână folosind /admin/stats ===
+  let totalCleanAll = 0;
+  let totalDirtyAll = 0;
+  try {
+    let url = "/admin/stats";
+    if (dashPeriod === "all") url = "/admin/stats?period=all";
+    else if (dashYear && dashWeek) url = `/admin/stats?year=${dashYear}&week=${dashWeek}`;
+    const rSum = await api(url);
+    if (rSum.ok) {
+      const rows = await rSum.json();
+      rows.forEach((row) => {
+        totalCleanAll += row.totalClean || 0; // doar taxe curate
+        totalDirtyAll += row.totalDirty || 0; // taxe murdare + burghiu (murdar)
+      });
+    }
+  } catch {}
+  $("#statTaxClean").textContent = money(totalCleanAll);
+  $("#statTaxDirty").textContent = money(totalDirtyAll);
+
+  // === (B) Taxe pe zile (limitat de backend: doar active) ===
   const daily = Array.from({ length: 7 }, (_, i) => ({
     day: dayNames[i],
     count: 0,
     clean: 0,
     dirty: 0,
   }));
-
-  const rT = await api("/taxe"); // active only
-  if (rT.ok) {
-    const taxe = await rT.json();
-    taxe.forEach((t) => {
-      // Activele sunt doar în săptămâna curentă în practică; păstrăm UI coerent
-      if (t.tip === "Bani curați") {
-        clean += 40000;
-      }
-      if (t.tip === "Bani murdari") {
-        dirty += 60000;
-      }
-      const created = t.createdAt ? new Date(t.createdAt) : new Date();
-      const wd = (created.getDay() + 6) % 7;
-      const row = daily[wd];
-      row.count += 1;
-      if (t.tip === "Bani curați") row.clean += 40000;
-      if (t.tip === "Bani murdari") row.dirty += 60000;
-    });
-  }
-  $("#statTaxClean").textContent = money(clean);
-  $("#statTaxDirty").textContent = money(dirty);
-
+  try {
+    const rT = await api("/taxe"); // active only
+    if (rT.ok) {
+      const taxe = await rT.json();
+      taxe.forEach((t) => {
+        const created = t.createdAt ? new Date(t.createdAt) : new Date();
+        if (dashPeriod === "week" && dashYear && dashWeek && !inISOWeek(created, dashYear, dashWeek))
+          return;
+        const wd = (created.getDay() + 6) % 7;
+        const row = daily[wd];
+        row.count += 1;
+        if (t.tip === "Bani curați") row.clean += 40000;
+        if (t.tip === "Bani murdari") row.dirty += 60000;
+      });
+    }
+  } catch {}
   const dBody = $("#dashDailyTable tbody");
   dBody.innerHTML = "";
   daily.forEach((d) => {
@@ -366,7 +380,7 @@ async function loadDashboard() {
     dBody.appendChild(tr);
   });
 
-  // 2) Burghiu + familii
+  // === (C) Burghiu + Familii (pe săptămâna selectată) ===
   const rD = await api("/drill");
   const famAgg = new Map(); // fam -> {cadru, teava, mecanism, fixare, total}
   let totalPieces = 0;
@@ -396,7 +410,6 @@ async function loadDashboard() {
     $("#statDrillPieces").textContent = (totalPieces || 0).toLocaleString("ro-RO");
   }
 
-  // Familii table (în Dashboard)
   const famBody = $("#drillFamiliesTable tbody");
   if (famBody) {
     famBody.innerHTML = "";
@@ -430,7 +443,6 @@ async function loadDashboard() {
       ({ year: bfYear, week: bfWeek } = JSON.parse($("#bfWeekPicker").value));
   } catch {}
 
-  // Refolosim jobs din rD (dacă există) – chemăm din nou pentru siguranță
   const bfBody = $("#bfTable tbody");
   if (bfBody) {
     bfBody.innerHTML = "";
@@ -546,6 +558,13 @@ async function loadTableAll() {
 
   const canDelete = currentRole === "ADMIN" || currentRole === "HEAD_OPERATOR";
 
+  const period = $("#tblPeriod")?.value || "week";
+  let selYear, selWeek;
+  try {
+    if (period === "week" && $("#tblWeekPicker")?.value)
+      ({ year: selYear, week: selWeek } = JSON.parse($("#tblWeekPicker").value));
+  } catch {}
+
   if (type === "taxe") {
     head.innerHTML = `<tr><th class="left">CNP</th><th>Sumă</th><th>Timp rămas</th><th class="left">User</th><th class="left">Familie</th><th>Creat</th>${
       canDelete ? "<th>Șterge</th>" : ""
@@ -557,6 +576,11 @@ async function loadTableAll() {
       .filter((x) => !filterUser || (x.user || "").toLowerCase().includes(filterUser))
       .filter((x) => !filterCnp || (x.cnp || "").toLowerCase().includes(filterCnp))
       .filter((x) => !filterFam || (x.gratisFamilie || "").toLowerCase().includes(filterFam))
+      .filter((x) => {
+        if (period === "all" || !selYear || !selWeek) return true;
+        const dt = x.createdAt ? new Date(x.createdAt) : new Date();
+        return inISOWeek(dt, selYear, selWeek);
+      })
       .forEach((x) => {
         let suma =
           x.tip === "GRATIS" ? "GRATIS" : x.tip === "Bani curați" ? "40.000$" : "60.000$";
@@ -583,6 +607,11 @@ async function loadTableAll() {
       .filter((x) => !filterUser || (x.user || "").toLowerCase().includes(filterUser))
       .filter((x) => !filterCnp || (x.cnp || "").toLowerCase().includes(filterCnp))
       .filter((x) => !filterFam || (x.family || "").toLowerCase().includes(filterFam))
+      .filter((x) => {
+        if (period === "all" || !selYear || !selWeek) return true;
+        const dt = x.createdAt ? new Date(x.createdAt) : new Date();
+        return inISOWeek(dt, selYear, selWeek);
+      })
       .forEach((j) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td class="font-mono">${j.cnp}</td><td class="left">${
@@ -601,7 +630,7 @@ async function loadTableAll() {
   }
 }
 
-// Ștergere (delegare, doar UI – backend actual are DELETE /drill/:id și /taxe/:id doar dacă l-ai păstrat; dacă nu, se va ignora)
+// Ștergere (delegare)
 $("#tblAll")?.addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-del-type]");
   if (!btn) return;
@@ -619,7 +648,7 @@ $("#tblAll")?.addEventListener("click", async (e) => {
   loadDashboard();
 });
 
-// ===================== PROFIL =====================
+// ===================== PROFIL (doar datele mele) =====================
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -642,39 +671,44 @@ async function loadProfile() {
     dirty: 0,
   }));
 
-  // Taxe – DOAR active (backend actual)
+  // Taxe – DOAR active (backend actual) – filtrat pe user curent
   const rT = await api("/taxe");
   if (rT.ok) {
     const taxe = await rT.json();
-    taxe.forEach((t) => {
-      const created = t.createdAt ? new Date(t.createdAt) : new Date();
-      if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek))
-        return;
-      if (t.tip === "Bani curați") {
-        clean += 40000;
-        daily[(created.getDay() + 6) % 7].clean += 40000;
-        daily[(created.getDay() + 6) % 7].count++;
-      }
-      if (t.tip === "Bani murdari") {
-        dirty += 60000;
-        daily[(created.getDay() + 6) % 7].dirty += 60000;
-        daily[(created.getDay() + 6) % 7].count++;
-      }
-    });
+    taxe
+      .filter((t) => !currentUserName || (t.user || "") === currentUserName)
+      .forEach((t) => {
+        const created = t.createdAt ? new Date(t.createdAt) : new Date();
+        if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek))
+          return;
+        const wd = (created.getDay() + 6) % 7;
+        if (t.tip === "Bani curați") {
+          clean += 40000;
+          daily[wd].clean += 40000;
+          daily[wd].count++;
+        }
+        if (t.tip === "Bani murdari") {
+          dirty += 60000;
+          daily[wd].dirty += 60000;
+          daily[wd].count++;
+        }
+      });
   }
 
-  // Drill – ultimele 50
+  // Drill – ultimele 50 – filtrat pe user curent
   const rD = await api("/drill");
   if (rD.ok) {
     const jobs = await rD.json();
-    jobs.forEach((j) => {
-      const created = j.createdAt ? new Date(j.createdAt) : new Date();
-      if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek))
-        return;
-      const p = j.cadru + j.teava + j.mecanism + j.fixare;
-      pieces += p;
-      drillMoney += j.costTotal || 0;
-    });
+    jobs
+      .filter((j) => !currentUserName || (j.user || "") === currentUserName)
+      .forEach((j) => {
+        const created = j.createdAt ? new Date(j.createdAt) : new Date();
+        if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek))
+          return;
+        const p = j.cadru + j.teava + j.mecanism + j.fixare;
+        pieces += p;
+        drillMoney += j.costTotal || 0;
+      });
   }
 
   $("#profClean").textContent = money(clean);
