@@ -1,87 +1,58 @@
-import express from "express";
+// backend/routes/stats-fam.js
+import { Router } from "express";
 import prisma from "../db.js";
+import { auth, requireRole } from "../utils.js";
 import { Role } from "@prisma/client";
-import { auth, requireRole, parsePeriodQuery } from "../utils.js";
 
-const router = express.Router();
+const router = Router();
 
-/* GET /stats/fam/summary
-   Query:
-     - period=all  (sau)
-     - year=YYYY&week=WW
-   Răspunde cu:
-     {
-       period: { periodAll, year, week, start, end },
-       families: [
-         { family, cadru, teava, mecanism, fixare, total }
-       ],
-       topUsers: [
-         { username, cadru, teava, mecanism, fixare, total }
-       ]
-     }
-*/
-router.get("/summary", auth(), requireRole(Role.ADMIN), async (req, res) => {
+/**
+ * GET /stats/fam
+ * Statistici agregate pe familii
+ */
+router.get("/", auth(), requireRole(Role.ADMIN, Role.HEAD_OPERATOR, Role.AUDIT), async (req, res) => {
   try {
-    const { periodAll, start, end, year, week } = parsePeriodQuery(req.query);
+    const periodAll = req.query.period === "all";
+    const selYear = req.query.year ? Number(req.query.year) : null;
+    const selWeek = req.query.week ? Number(req.query.week) : null;
 
-    const where = periodAll
-      ? {}
-      : { createdAt: { gte: start, lt: end } };
-
-    // === Agregare pe familii (din DrillJob) ===
-    const famRows = await prisma.drillJob.findMany({
-      where,
-      include: {
-        family: { select: { name: true } },
-        user: { select: { username: true } },
-      },
-      orderBy: { createdAt: "asc" },
+    const families = await prisma.family.findMany({
+      include: { taxEntries: true, drillJobs: true },
     });
 
-    const famMap = new Map();   // key: family name
-    const userMap = new Map();  // key: username
-
-    for (const r of famRows) {
-      const famName = r.family?.name || "—";
-      const uname   = r.user?.username || "—";
-
-      const inc = {
-        cadru: Number(r.cadru || 0),
-        teava: Number(r.teava || 0),
-        mecanism: Number(r.mecanism || 0),
-        fixare: Number(r.fixare || 0),
-      };
-      const sum = inc.cadru + inc.teava + inc.mecanism + inc.fixare;
-
-      // familii
-      const fp = famMap.get(famName) || { family: famName, cadru: 0, teava: 0, mecanism: 0, fixare: 0, total: 0 };
-      fp.cadru += inc.cadru; fp.teava += inc.teava; fp.mecanism += inc.mecanism; fp.fixare += inc.fixare; fp.total += sum;
-      famMap.set(famName, fp);
-
-      // useri (cine a introdus)
-      const up = userMap.get(uname) || { username: uname, cadru: 0, teava: 0, mecanism: 0, fixare: 0, total: 0 };
-      up.cadru += inc.cadru; up.teava += inc.teava; up.mecanism += inc.mecanism; up.fixare += inc.fixare; up.total += sum;
-      userMap.set(uname, up);
+    function inISOWeek(d) {
+      if (periodAll || !selYear || !selWeek) return true;
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const day = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - day);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      const year = date.getUTCFullYear();
+      return year === selYear && weekNo === selWeek;
     }
 
-    const families = Array.from(famMap.values())
-      .sort((a, b) => b.total - a.total);
-
-    const topUsers = Array.from(userMap.values())
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 50);
-
-    res.json({
-      period: {
-        periodAll,
-        year: periodAll ? null : year,
-        week: periodAll ? null : week,
-        start: periodAll ? null : start.toISOString(),
-        end: periodAll ? null : end.toISOString(),
-      },
-      families,
-      topUsers,
+    const out = families.map((f) => {
+      let clean = 0, dirty = 0;
+      for (const t of f.taxEntries) {
+        if (!inISOWeek(t.createdAt)) continue;
+        if (t.payment === "gratis") continue;
+        if (t.currency === "CLEAN") clean += 40000;
+        else if (t.currency === "DIRTY") dirty += 60000;
+      }
+      for (const d of f.drillJobs) {
+        if (!inISOWeek(d.createdAt)) continue;
+        dirty += d.processed * d.unitPrice;
+      }
+      return {
+        familie: f.name,
+        totalClean: clean,
+        totalDirty: dirty,
+        total: clean + dirty,
+      };
     });
+
+    out.sort((a, b) => b.total - a.total);
+    res.json(out);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "eroare server" });
