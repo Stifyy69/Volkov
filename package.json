@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Volkov - taxe & burghiu",
   "type": "module",
-  "main": "backend/server.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
+    "start": "node app.js",
+    "dev": "nodemon app.js",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js"
