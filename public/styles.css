@@ -1,11 +1,6 @@
 /* Reset & Base */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { 
-  height: 100%; 
-  font-family: Arial, sans-serif; 
-  background: #0a0a0a; /* fundal general negru închis */ 
-  color: #f5f5f5; /* text alb-gri deschis */ 
-}
+html, body { height: 100%; font-family: Arial, sans-serif; background: #f7f7f7; color: #222; }
 body { display: flex; flex-direction: column; }
 
 /* Topbar */
@@ -13,17 +8,17 @@ body { display: flex; flex-direction: column; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #000;
+  background: #222;
   color: #fff;
   padding: 10px 20px;
 }
-.topbar .brand { font-weight: bold; font-size: 18px; color: magenta; }
+.topbar .brand { font-weight: bold; font-size: 18px; }
 .topbar .tabs { display: flex; gap: 10px; }
 .topbar .tabbtn {
-  background: #222; border: none; color: #fff; padding: 6px 12px;
+  background: #444; border: none; color: #fff; padding: 6px 12px;
   border-radius: 4px; cursor: pointer; font-size: 14px;
 }
-.topbar .tabbtn:hover { background: magenta; }
+.topbar .tabbtn:hover { background: #666; }
 .topbar .who { display: flex; align-items: center; gap: 10px; }
 
 /* Layout */
@@ -31,15 +26,14 @@ body { display: flex; flex-direction: column; }
 .hidden { display: none; }
 
 .card {
-  background: #1a1a1a;
+  background: #fff;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  color: #f5f5f5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-h2, h3, h4, h5 { margin-bottom: 12px; color: magenta; }
+h2, h3, h4, h5 { margin-bottom: 12px; }
 
 /* Grid helpers */
 .grid { display: grid; gap: 12px; }
@@ -51,52 +45,52 @@ h2, h3, h4, h5 { margin-bottom: 12px; color: magenta; }
 .right { text-align: right; }
 
 /* Special grids */
-.grid-tax { grid-template-columns: 160px 200px 200px auto; gap: 12px; align-items: center; }
+.grid-tax {
+  grid-template-columns: 160px 200px 200px auto;
+  gap: 16px; /* spacing uniform */
+  align-items: center;
+}
 .drill-grid { display: flex; flex-direction: column; gap: 15px; }
 
 /* Inputs */
 input, select, button {
   padding: 8px 10px;
   font-size: 14px;
-  border: 1px solid #555;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  background: #111;
-  color: #f5f5f5;
 }
-input:focus, select:focus { border-color: magenta; outline: none; }
-select { background: #111; }
+input:focus, select:focus { border-color: #666; outline: none; }
+select { background: #fff; }
 
 /* Buttons */
 button { cursor: pointer; }
 button.primary {
-  background: magenta; color: #fff;
+  background: #0077cc; color: #fff;
   border: none; border-radius: 4px;
   padding: 8px 14px; font-weight: bold;
 }
-button.primary:hover { background: #b30086; }
+button.primary:hover { background: #005fa3; }
 button.gold-btn { background: goldenrod; color: #fff; }
 button.danger { background: #cc0000; color: #fff; border: none; padding: 8px 14px; }
 button.sm { padding: 6px 10px; font-size: 13px; }
-
-button.same-height, input.same-height, select.same-height { height: 38px; }
+button.same-height, input.same-height, select.same-height {
+  height: 38px; /* aceeași înălțime pentru input + buton */
+}
 
 /* Tables */
 .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 .table th, .table td {
-  border: 1px solid #333; padding: 8px; text-align: center;
-  color: #f5f5f5;
+  border: 1px solid #ddd; padding: 8px; text-align: center;
 }
 .table th.left, .table td.left { text-align: left; }
-.table thead { background: magenta; color: #fff; font-weight: bold; }
-.table tbody tr:nth-child(even) { background: #111; }
-.table tbody tr:nth-child(odd) { background: #1a1a1a; }
+.table thead { background: #eee; font-weight: bold; }
+.table tbody tr:nth-child(even) { background: #fafafa; }
 
-/* Emphasize total */
-.table.emphasis-total td.total-col {
-  font-weight: 700;
-  border-width: 2px;
-  background: #330022; /* magenta foarte închis */
-  color: #fff;
+/* Special: total row în Admin */
+.table.emphasis-total tfoot td {
+  font-weight: bold;
+  font-size: 16px;
+  background: #ddd;
 }
 
 /* Bars & flex helpers */
@@ -106,21 +100,12 @@ button.same-height, input.same-height, select.same-height { height: 38px; }
 .flex-end { display: flex; justify-content: flex-end; align-items: center; }
 .grow { flex: 1; }
 
-/* Row helper */
-.row { display: flex; gap: 12px; align-items: center; }
-
 /* Stats */
 .stats { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 15px; }
-.stat {
-  background: #222;
-  padding: 10px 14px;
-  border-radius: 6px;
-  min-width: 200px;
-  color: #fff;
-}
+.stat { background: #f0f0f0; padding: 10px 14px; border-radius: 6px; min-width: 200px; }
 
 /* Form hints */
-.hint { font-size: 13px; color: #bbb; margin-top: -8px; }
+.hint { font-size: 13px; color: #555; margin-top: -8px; }
 
 /* Utility */
 .mt { margin-top: 20px; }
@@ -131,3 +116,29 @@ button.same-height, input.same-height, select.same-height { height: 38px; }
 .w-200 { width: 200px; }
 .w-160 { width: 160px; }
 .inner { padding: 15px; }
+
+/* Custom tweaks pentru cerințele tale */
+/* Spacing consistent în secțiunile Taxe & Burghiu */
+#taxeForm label,
+#drillForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* spațiu mic între etichetă și input */
+}
+
+/* CNP - Tip plată - Familie GRATIS - Trimite: aliniere pe aceeași linie */
+#taxeForm select, 
+#taxeForm input, 
+#taxeForm button {
+  width: 100%;
+}
+
+/* Tabele: spacing între linii pentru lizibilitate */
+.table td { padding: 10px; }
+
+/* Dashboard & All Tables: spacing mai clar între secțiuni */
+#tab-dashboard .stats,
+#tab-tables .bar,
+#tab-profile .stats {
+  margin-top: 20px;
+}
