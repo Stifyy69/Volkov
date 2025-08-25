@@ -79,14 +79,14 @@
       <div class="card">
         <h3>Taxe</h3>
 
-        <!-- Linia 1: CNP - Tip plată - (Familie GRATIS) - Trimite -->
+        <!-- Formular Taxe: CNP / Tip plată / Familie / Trimite -->
         <form id="taxeForm" class="grid grid-tax">
           <label>CNP
             <input class="same-height" name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
           </label>
 
           <label>Tip plată
-            <select id="metodaSelect" name="metoda" class="select-strong same-height" required>
+            <select id="metodaSelect" name="metoda" class="same-height" required>
               <option value="" disabled selected>Alege…</option>
               <option value="curat">Bani curați (40.000$)</option>
               <option value="murdar">Bani murdari (60.000$)</option>
@@ -130,7 +130,7 @@
       <div class="card mt">
         <h3>Burghiu</h3>
 
-        <!-- Linia 1: CNP - Familie - Trimite -->
+        <!-- Formular Burghiu -->
         <form id="drillForm" class="grid drill-grid">
           <div class="grid grid-3 align-center">
             <label>CNP
@@ -162,7 +162,6 @@
             </div>
           </div>
 
-          <!-- Linia 2: Cadru - Țeavă - Mecanism - Elemente de fixare -->
           <div class="grid grid-4">
             <label><input class="same-height" name="cadru" type="number" min="0" step="1" placeholder="Cadru" /></label>
             <label><input class="same-height" name="teava" type="number" min="0" step="1" placeholder="Țeavă" /></label>
@@ -170,10 +169,8 @@
             <label><input class="same-height" name="fixare" type="number" min="0" step="1" placeholder="Elemente de fixare" /></label>
           </div>
 
-          <!-- Linia 3: Plata -->
           <div class="hint col-span-2">
-            Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> pentru
-            <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
+            Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> pentru <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
           </div>
         </form>
 
@@ -191,7 +188,7 @@
       </div>
     </section>
 
-    <!-- Taxe Statistici -->
+    <!-- Dashboard (Taxe Statistici) -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -218,22 +215,10 @@
           </thead>
           <tbody></tbody>
         </table>
-
-        <!-- PĂSTRAT doar Top taxe; ȘTERS Top burghiu -->
-        <div class="grid grid-2 mt">
-          <div class="card inner">
-            <h4>Top taxe (CNP) pe user</h4>
-            <table id="topCnpTaxe" class="table">
-              <thead><tr><th class="left">User</th><th>Nr. taxe</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <!-- Slotul din dreapta rămâne gol după ștergerea Top burghiu -->
-        </div>
       </div>
     </section>
 
-    <!-- Statistici Familii (reutilizează agregatele din dashboard) -->
+    <!-- Statistici Familii (tab separat, neschimbat funcțional) -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
         <div class="bar">
