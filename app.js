@@ -168,7 +168,6 @@ app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), asy
     const inv = await prisma.invite.create({
       data: { code, role, createdById: req.user.id },
     });
-    // frontend folosește fie j.link fie j.code
     res.json({ code, link: `invite:${code}` });
   } catch {
     res.status(500).json({ error: "Nu am putut genera invitația" });
@@ -185,7 +184,6 @@ async function getOrCreateFamilyByName(name) {
       create: { name, colorHex: "#888888" },
     });
   } catch {
-    // fallback: încearcă să o citești dacă a apărut concurență
     return await prisma.family.findUnique({ where: { name } });
   }
 }
@@ -195,6 +193,7 @@ async function getOrCreateFamilyByName(name) {
  * POST /taxe
  * body: { cnp, metoda: "curat"|"murdar"|"gratis", gratisFamilie? }
  * Creează o intrare TaxEntry cu validUntil = now + 4h (active).
+ * NU permite 2 taxe ACTIVE simultane pe același CNP.
  */
 app.post("/taxe", auth(), async (req, res) => {
   try {
@@ -202,6 +201,13 @@ app.post("/taxe", auth(), async (req, res) => {
     if (!cnp || !/^\d{1,6}$/.test(cnp)) return res.status(400).json({ error: "CNP invalid" });
     if (!["curat", "murdar", "gratis"].includes(metoda))
       return res.status(400).json({ error: "Metodă invalidă" });
+
+    // Blochează duplicate ACTIVE pe același CNP
+    const active = await prisma.taxEntry.findFirst({
+      where: { type: "TAXA", cnp, validUntil: { gt: new Date() } },
+      select: { id: true },
+    });
+    if (active) return res.status(400).json({ error: "Există deja o taxă activă pentru acest CNP." });
 
     let amount = 0;
     let currency = null;
@@ -216,7 +222,7 @@ app.post("/taxe", auth(), async (req, res) => {
       currency = "DIRTY";
     } else {
       amount = 0;
-      currency = "CLEAN"; // gratis nu afectează murdar; îl punem la clean cu amount=0
+      currency = "CLEAN";
       payment = "GRATIS";
       if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru GRATIS" });
       const fam = await getOrCreateFamilyByName(gratisFamilie);
@@ -256,10 +262,10 @@ app.post("/taxe", auth(), async (req, res) => {
 /**
  * GET /taxe
  * Query:
- *  - scope=active|history (default: active)  -> active = validUntil > now
- *  - period=all | (year, week)              -> filtre timp
- *  - mine=1                                 -> doar intrările userului curent
- * Return: list normalizată pt. frontend (tip/remaining/etc)
+ *  - scope=active|history (default: active)
+ *  - period=all | (year, week)
+ *  - mine=1
+ * history: filtre DOAR pe createdAt (include active + inactive)
  */
 app.get("/taxe", auth(false), async (req, res) => {
   try {
@@ -271,9 +277,7 @@ app.get("/taxe", auth(false), async (req, res) => {
       type: "TAXA",
       ...(scope === "active"
         ? { validUntil: { gt: new Date() } }
-        : scope === "history"
-        ? { OR: [{ validUntil: null }, { validUntil: { lte: new Date() } }] }
-        : {}),
+        : {}), // pentru history NU filtrăm pe validUntil
       ...(from && to ? { createdAt: { gte: from, lt: to } } : {}),
       ...(mine && req.user ? { userId: req.user.id } : {}),
     };
@@ -281,7 +285,7 @@ app.get("/taxe", auth(false), async (req, res) => {
     const rows = await prisma.taxEntry.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 200, // suficient pentru UI curent
+      take: 200,
       include: { user: true, family: true },
     });
 
@@ -322,40 +326,97 @@ app.delete(
 // ---------- BURGHIU ----------
 /**
  * POST /drill
- * body: { cnp, part: "cadru|teava|mecanism|fixare", quantity, family }
- * Creează câte un job per “bucată” trimisă (frontend deja buclează).
- * Preț: 1000$/buc murdar implicit; GRATIS pentru 818/Medelin/Stefanos.
+ * Acceptă:
+ *  - format vechi: { cnp, part: "cadru|teava|mecanism|fixare", quantity, family }
+ *  - format agregat: { cnp, family, cadru?, teava?, mecanism?, fixare? }
+ *
+ * Serverul încearcă să aglutineze în ACELAȘI RÂND dacă există deja
+ * o înregistrare compatibilă (același user, cnp, familie, cashType, unitPrice)
+ * creată în ultimele 10 minute.
  */
 app.post("/drill", auth(), async (req, res) => {
   try {
     const { cnp, part, quantity, family } = req.body || {};
     if (!cnp || !/^\d{1,6}$/.test(cnp)) return res.status(400).json({ error: "CNP invalid" });
-    if (!["cadru", "teava", "mecanism", "fixare"].includes(part))
-      return res.status(400).json({ error: "Piesă invalidă" });
-    const q = parseInt(quantity || 0);
-    if (q <= 0) return res.status(400).json({ error: "Cantitate > 0" });
+    if (!family) return res.status(400).json({ error: "Familie lipsă" });
 
+    // Construieste cantitățile finale din payload (suportă ambele formate)
+    const parts = { cadru: 0, teava: 0, mecanism: 0, fixare: 0 };
+
+    // format vechi
+    if (part) {
+      if (!["cadru", "teava", "mecanism", "fixare"].includes(part))
+        return res.status(400).json({ error: "Piesă invalidă" });
+      const q = parseInt(quantity || 0);
+      if (q <= 0) return res.status(400).json({ error: "Cantitate > 0" });
+      parts[part] = q;
+    }
+
+    // format agregat
+    ["cadru", "teava", "mecanism", "fixare"].forEach((k) => {
+      if (req.body[k] != null) {
+        const v = parseInt(req.body[k] || 0);
+        if (v > 0) parts[k] += v;
+      }
+    });
+
+    const totalIncoming =
+      parts.cadru + parts.teava + parts.mecanism + parts.fixare;
+    if (totalIncoming <= 0) return res.status(400).json({ error: "Cantitate totală 0" });
+
+    // determină familie + policy de preț
     const fam = await getOrCreateFamilyByName(family);
     const gratis = isGratisFamily(fam?.name || "");
-    const cashType = gratis ? "CLEAN" : "DIRTY"; // gratis => nu generăm murdar
+    const cashType = gratis ? "CLEAN" : "DIRTY";
     const unitPrice = gratis ? 0 : 1000;
 
-    const base = { cadru: 0, teava: 0, mecanism: 0, fixare: 0 };
-    base[part] = q;
-
-    const row = await prisma.drillJob.create({
-      data: {
+    // caută un rând existent recent (10 minute)
+    const since = new Date(Date.now() - 10 * 60 * 1000);
+    const existing = await prisma.drillJob.findFirst({
+      where: {
+        userId: req.user.id,
         cnp,
-        processed: q,
+        familyId: fam?.id || null,
         cashType,
         unitPrice,
-        createdAt: new Date(),
-        userId: req.user.id,
-        familyId: fam?.id || null,
-        ...base,
+        createdAt: { gte: since },
       },
-      include: { user: true, family: true },
+      orderBy: { createdAt: "desc" },
     });
+
+    let row;
+    if (existing) {
+      // UPDATE: adună cantitățile
+      row = await prisma.drillJob.update({
+        where: { id: existing.id },
+        data: {
+          processed: existing.processed + totalIncoming,
+          cadru: existing.cadru + parts.cadru,
+          teava: existing.teava + parts.teava,
+          mecanism: existing.mecanism + parts.mecanism,
+          fixare: existing.fixare + parts.fixare,
+        },
+        include: { user: true, family: true },
+      });
+    } else {
+      // CREATE: un singur rând cu tot
+      row = await prisma.drillJob.create({
+        data: {
+          cnp,
+          processed: totalIncoming,
+          cashType,
+          unitPrice,
+          createdAt: new Date(),
+          userId: req.user.id,
+          familyId: fam?.id || null,
+          cadru: parts.cadru,
+          teava: parts.teava,
+          mecanism: parts.mecanism,
+          fixare: parts.fixare,
+        },
+        include: { user: true, family: true },
+      });
+    }
 
     sseBroadcast("drill:new", { id: row.id });
     res.json({
@@ -366,12 +427,12 @@ app.post("/drill", auth(), async (req, res) => {
       teava: row.teava,
       mecanism: row.mecanism,
       fixare: row.fixare,
-      metodaPlata: gratis ? "GRATIS" : "Bani murdari",
+      metodaPlata: unitPrice === 0 ? "GRATIS" : "Bani murdari",
       costTotal: (row.cadru + row.teava + row.mecanism + row.fixare) * row.unitPrice,
       user: row.user?.username || null,
       createdAt: row.createdAt,
     });
-  } catch {
+  } catch (e) {
     res.status(500).json({ error: "Eroare la burghiu" });
   }
 });
@@ -453,13 +514,12 @@ app.get(
       const { from, to } = rangeFromQuery(req.query);
       const timeWhere = from && to ? { createdAt: { gte: from, lt: to } } : {};
 
-      // Taxe (active + history) => doar createdAt în range, indiferent de validUntil
+      // Taxe -> DOAR createdAt în range (active + inactive)
       const taxe = await prisma.taxEntry.findMany({
         where: { type: "TAXA", ...timeWhere },
         include: { user: true },
       });
 
-      // Sume pe user
       const map = new Map();
       function accUser(u, k, v) {
         const key = u?.username || "-";
@@ -478,21 +538,17 @@ app.get(
       }
 
       for (const t of taxe) {
-        if (t.amount === 40000) {
-          accUser(t.user, "totalClean", 40000);
-        } else if (t.amount === 60000) {
-          accUser(t.user, "totalDirty", 60000);
-        }
+        if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
+        else if (t.amount === 60000) accUser(t.user, "totalDirty", 60000);
       }
 
-      // Drill
+      // Drill (murdar sau gratis=0)
       const drill = await prisma.drillJob.findMany({
         where: { ...timeWhere },
         include: { user: true },
       });
       for (const j of drill) {
         const total = (j.cadru + j.teava + j.mecanism + j.fixare) * j.unitPrice;
-        // la noi burghiul e murdar (sau gratis cu 0)
         accUser(j.user, "totalDirty", total);
       }
 
