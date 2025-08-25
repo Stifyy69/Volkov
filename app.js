@@ -165,7 +165,7 @@ app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), asy
   try {
     const { role = "OPERATOR" } = req.body || {};
     const code = crypto.randomBytes(6).toString("hex");
-    const inv = await prisma.invite.create({
+    await prisma.invite.create({
       data: { code, role, createdById: req.user.id },
     });
     res.json({ code, link: `invite:${code}` });
@@ -222,7 +222,7 @@ app.post("/taxe", auth(), async (req, res) => {
       currency = "DIRTY";
     } else {
       amount = 0;
-      currency = "CLEAN";
+      currency = "CLEAN";     // gratis nu afectează murdar; logăm ca CLEAN cu amount=0
       payment = "GRATIS";
       if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru GRATIS" });
       const fam = await getOrCreateFamilyByName(gratisFamilie);
