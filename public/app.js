@@ -160,14 +160,30 @@ app.get("/auth/me", auth(), async (req, res) => {
   res.json({ id: u.id, username: u.username, role: u.role });
 });
 
+// Schimbă parola (profil)
+app.post("/auth/reset", auth(), async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body || {};
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ error: "Completează câmpurile" });
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const ok = await bcrypt.compare(oldPassword, user.password);
+    if (!ok) return res.status(400).json({ error: "Parola veche nu e corectă" });
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Eroare la schimbarea parolei" });
+  }
+});
+
 // Invites
 app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), async (req, res) => {
   try {
     const { role = "OPERATOR" } = req.body || {};
     const code = crypto.randomBytes(6).toString("hex");
-    const inv = await prisma.invite.create({
-      data: { code, role, createdById: req.user.id },
-    });
+    await prisma.invite.create({ data: { code, role, createdById: req.user.id } });
     // frontend folosește fie j.link fie j.code
     res.json({ code, link: `invite:${code}` });
   } catch {
