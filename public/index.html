@@ -12,7 +12,7 @@
 
     <nav class="tabs">
       <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
-      <button class="tabbtn" data-tab="dashboard">Taxe Statistici</button>
+      <button class="tabbtn" data-tab="dashboard">Statistici Taxe</button>
       <button class="tabbtn" data-tab="drillfamilies">Statistici Familii</button>
       <button class="tabbtn" data-tab="admin">Admin</button>
       <button class="tabbtn" data-tab="tables">Tabele All</button>
@@ -191,7 +191,7 @@
       </div>
     </section>
 
-    <!-- Taxe Statistici -->
+    <!-- Statistici Taxe -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -219,7 +219,6 @@
           <tbody></tbody>
         </table>
 
-        <!-- PĂSTRAT doar Top taxe; ȘTERS Top burghiu -->
         <div class="grid grid-2 mt">
           <div class="card inner">
             <h4>Top taxe (CNP) pe user</h4>
@@ -228,12 +227,12 @@
               <tbody></tbody>
             </table>
           </div>
-          <!-- Slotul din dreapta rămâne gol după ștergerea Top burghiu -->
+          <div class="card inner"></div>
         </div>
       </div>
     </section>
 
-    <!-- Statistici Familii (reutilizează agregatele din dashboard) -->
+    <!-- Statistici Familii -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
         <div class="bar">
