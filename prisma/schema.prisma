@@ -15,8 +15,8 @@ enum Role {
 }
 
 enum TaxType {
-  TAXA
-  BURGHIU
+  TAXA       // intrări de taxe (curat / murdar / gratis)
+  BURGHIU    // intrări materiale/bucăți (dacă decizi vreodată să le ții aici)
 }
 
 enum Currency {
@@ -50,6 +50,9 @@ model User {
   drillJobs      DrillJob[]
   invitesCreated Invite[]  @relation("InvitesCreated")
   invitesUsed    Invite[]  @relation("InvitesUsed")
+
+  @@index([username])
+  @@index([role])
 }
 
 model Invite {
@@ -77,42 +80,61 @@ model Family {
 
 model TaxEntry {
   id         Int        @id @default(autoincrement())
+
+  // Clasificare
   type       TaxType
-  currency   Currency?
-  material   Material?
-  amount     Int
-  validUntil DateTime?
-  createdAt  DateTime   @default(now())
-  cnp        String     @db.VarChar(6)
-  payment    String?
+  currency   Currency?   // CLEAN / DIRTY / MATERIAL (pt. viitor)
+  material   Material?   // nefolosit la taxe, rezervat pt. viitor
 
-  userId   Int?
-  familyId Int?
+  // Valori
+  amount     Int         // 40000 (curat), 60000 (murdar), 0 (gratis)
+  payment    String?     // ex: "GRATIS - Stefanos" sau "cash"
+  cnp        String      @db.VarChar(6)
 
-  user     User?    @relation(fields: [userId], references: [id])
-  family   Family?  @relation(fields: [familyId], references: [id])
+  // Timp
+  createdAt  DateTime    @default(now())
+  validUntil DateTime?   // pt. "active (4h)"; NULL = istoric/expirat
+
+  // Legături
+  userId     Int?
+  familyId   Int?
+
+  user       User?       @relation(fields: [userId], references: [id])
+  family     Family?     @relation(fields: [familyId], references: [id])
 
   @@index([cnp, createdAt])
   @@index([validUntil])
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@index([familyId, createdAt])
 }
 
 model DrillJob {
   id        Int       @id @default(autoincrement())
+
+  // Cine / ce
   cnp       String    @db.VarChar(6)
   processed Int
   cadru     Int       @default(0)
   mecanism  Int       @default(0)
   teava     Int       @default(0)
   fixare    Int       @default(0)
-  cashType  CashType
-  unitPrice Int
+
+  // Bani
+  cashType  CashType   // CLEAN/DIRTY
+  unitPrice Int        // 1000 etc.
+
+  // Timp
   createdAt DateTime  @default(now())
 
+  // Legături
   userId   Int
   familyId Int?
 
   user     User    @relation(fields: [userId], references: [id])
   family   Family? @relation(fields: [familyId], references: [id])
 
+  @@index([userId, createdAt])
   @@index([familyId, createdAt])
+  @@index([createdAt])
 }
