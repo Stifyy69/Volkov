@@ -151,7 +151,7 @@ $$(".tabbtn").forEach((b) => {
       loadDrill();
     }
     if (b.dataset.tab === "dashboard") loadDashboard();
-    if (b.dataset.tab === "drillfamilies") loadDashboard(); // agregate reutilizate
+    if (b.dataset.tab === "drillfamilies") loadDashboard(); // agregate drill reutilizate
     if (b.dataset.tab === "admin") loadAdmin();
     if (b.dataset.tab === "tables") loadTableAll();
     if (b.dataset.tab === "profile") loadProfile();
@@ -171,11 +171,13 @@ function connectSSE() {
     loadTaxe();
     loadDashboard();
     loadTableAll();
+    loadProfile();
   });
   es.addEventListener("drill:new", () => {
     loadDrill();
     loadDashboard();
     loadTableAll();
+    loadProfile();
   });
   es.addEventListener("ping", () => {});
 }
@@ -206,6 +208,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   loadTaxe();
   loadDashboard();
   loadTableAll();
+  loadProfile();
 });
 
 // state + search
@@ -213,7 +216,7 @@ let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
 
 async function loadTaxe() {
-  // ACTIVE only (validUntil > now)
+  // ACTIVE only (validUntil > now) pentru prima secțiune
   const r = await api("/taxe?scope=active");
   if (!r.ok) return;
   taxeCache = await r.json();
@@ -243,14 +246,13 @@ function renderTaxe(list) {
     });
 }
 
-// ===== Burghiu =====
+// ===== Burghiu (prima pagină: grupare pe un rând) =====
 $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   const cnp = (f.cnp.value || "").trim();
   if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
 
-  // Notă: momentan API-ul primește câte o piesă/cerere (server update în pasul 4)
   const pieces = [
     { key: "cadru", val: Number(f.cadru.value || 0) },
     { key: "teava", val: Number(f.teava.value || 0) },
@@ -260,6 +262,7 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
   if (!pieces.length) return alert("Introdu minim o cantitate > 0.");
   if (!f.family.value) return alert("Selectează o familie.");
 
+  // trimitem ca până acum (endpoint per piesă)
   for (const p of pieces) {
     const body = { cnp, part: p.key, quantity: p.val, family: f.family.value };
     const r = await api("/drill", { method: "POST", body: JSON.stringify(body) });
@@ -271,6 +274,7 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
   loadDrill();
   loadDashboard();
   loadTableAll();
+  loadProfile();
 });
 
 let drillCache = [];
@@ -278,8 +282,52 @@ async function loadDrill() {
   const r = await api("/drill");
   if (!r.ok) return;
   drillCache = await r.json();
-  renderDrill(drillCache);
+  // Grupăm doar pentru lista „Ultimele joburi” din prima pagină
+  renderDrill(groupDrillRows(drillCache));
 }
+
+// Grupare: combină intrări apropiate în timp pentru același CNP + familie
+function groupDrillRows(list) {
+  const MAX_MIN_DIFF_MS = 2 * 60 * 1000; // 2 minute
+  const byKey = new Map();
+  (list || []).forEach((j) => {
+    const key = `${j.cnp}||${j.family || ""}`;
+    const created = j.createdAt ? new Date(j.createdAt).getTime() : Date.now();
+    const bucket = byKey.get(key) || [];
+    // caută un grup existent suficient de apropiat ca timp
+    let placed = false;
+    for (const g of bucket) {
+      if (Math.abs(created - g._ts) <= MAX_MIN_DIFF_MS) {
+        g.cadru += j.cadru;
+        g.teava += j.teava;
+        g.mecanism += j.mecanism;
+        g.fixare += j.fixare;
+        g.costTotal += j.costTotal || 0;
+        g._ts = Math.max(g._ts, created);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      bucket.push({
+        ...j,
+        cadru: j.cadru,
+        teava: j.teava,
+        mecanism: j.mecanism,
+        fixare: j.fixare,
+        costTotal: j.costTotal || 0,
+        _ts: created,
+      });
+    }
+    byKey.set(key, bucket);
+  });
+
+  // returnăm sortat desc după timp
+  const merged = [];
+  byKey.forEach((arr) => merged.push(...arr));
+  return merged.sort((a, b) => (b._ts || 0) - (a._ts || 0));
+}
+
 function renderDrill(list) {
   const tbody = $("#drillTable tbody");
   if (!tbody) return;
@@ -301,7 +349,7 @@ function renderDrill(list) {
   });
 }
 
-// ===== Taxe Statistici (week/all) =====
+// ===== Dashboard (week/all, include active + inactive) =====
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 $("#bfPeriod")?.addEventListener("change", loadDashboard);
@@ -316,13 +364,21 @@ async function loadDashboard() {
       ({ year: dashYear, week: dashWeek } = JSON.parse($("#dashWeekPicker").value));
   } catch {}
 
-  // Taxe istorice din API: scope=history + (period=all | year&week)
-  const taxParams =
+  // Taxe: combinăm ACTIVE + HISTORY, apoi filtrăm local după week/all
+  const taxUrls = [
     dashPeriod === "all"
-      ? "scope=history&period=all"
+      ? "/taxe?scope=history&period=all"
       : dashYear && dashWeek
-      ? `scope=history&year=${dashYear}&week=${dashWeek}`
-      : "scope=history";
+      ? `/taxe?scope=history&year=${dashYear}&week=${dashWeek}`
+      : "/taxe?scope=history",
+    "/taxe?scope=active",
+  ];
+
+  let taxAll = [];
+  for (const u of taxUrls) {
+    const r = await api(u);
+    if (r.ok) taxAll = taxAll.concat(await r.json());
+  }
 
   let clean = 0,
     dirty = 0;
@@ -333,25 +389,23 @@ async function loadDashboard() {
     dirty: 0,
   }));
 
-  const rT = await api(`/taxe?${taxParams}`);
-  let taxe = [];
-  if (rT.ok) {
-    taxe = await rT.json();
-    taxe.forEach((t) => {
-      const created = t.createdAt ? new Date(t.createdAt) : new Date();
-      if (dashPeriod === "week" && dashYear && dashWeek && !inISOWeek(created, dashYear, dashWeek))
-        return;
+  taxAll.forEach((t) => {
+    const created = t.createdAt ? new Date(t.createdAt) : new Date();
+    if (dashPeriod === "week" && dashYear && dashWeek && !inISOWeek(created, dashYear, dashWeek))
+      return;
 
-      if (t.tip === "Bani curați") clean += 40000;
-      else if (t.tip === "Bani murdari") dirty += 60000;
+    if (t.tip === "Bani curați") {
+      clean += 40000;
+    } else if (t.tip === "Bani murdari") {
+      dirty += 60000;
+    }
+    const wd = (created.getDay() + 6) % 7;
+    const row = daily[wd];
+    row.count += 1;
+    if (t.tip === "Bani curați") row.clean += 40000;
+    if (t.tip === "Bani murdari") row.dirty += 60000;
+  });
 
-      const wd = (created.getDay() + 6) % 7;
-      const row = daily[wd];
-      row.count += 1;
-      if (t.tip === "Bani curați") row.clean += 40000;
-      if (t.tip === "Bani murdari") row.dirty += 60000;
-    });
-  }
   $("#statTaxClean").textContent = money(clean);
   $("#statTaxDirty").textContent = money(dirty);
 
@@ -365,74 +419,6 @@ async function loadDashboard() {
       )}</td><td>${money(d.dirty)}</td>`;
       dBody.appendChild(tr);
     });
-  }
-
-  // Piese burghiu (sumă) – rămâne în cardul de statistici
-  const rD = await api("/drill");
-  let totalPieces = 0;
-  if (rD.ok) {
-    const jobs = await rD.json();
-    const jobsFilt = jobs.filter((j) => {
-      if (dashPeriod === "all") return true;
-      if (!dashYear || !dashWeek) return true;
-      const dt = j.createdAt ? new Date(j.createdAt) : new Date();
-      return inISOWeek(dt, dashYear, dashWeek);
-    });
-    jobsFilt.forEach((j) => {
-      totalPieces += j.cadru + j.teava + j.mecanism + j.fixare;
-    });
-  }
-  $("#statDrillPieces").textContent = (totalPieces || 0).toLocaleString("ro-RO");
-
-  // ===== Statistici Familii (tab separat) – doar tabelul din acel tab =====
-  const bfPeriod = $("#bfPeriod")?.value || "week";
-  let bfYear, bfWeek;
-  try {
-    if (bfPeriod === "week" && $("#bfWeekPicker")?.value)
-      ({ year: bfYear, week: bfWeek } = JSON.parse($("#bfWeekPicker").value));
-  } catch {}
-
-  const bfBody = $("#bfTable tbody");
-  if (bfBody) {
-    bfBody.innerHTML = "";
-    const famAgg2 = new Map();
-    const rD2 = await api("/drill");
-    const jobs2 = rD2.ok ? await rD2.json() : [];
-    const jobs2Filt = jobs2.filter((j) => {
-      if (bfPeriod === "all") return true;
-      if (!bfYear || !bfWeek) return true;
-      const dt = j.createdAt ? new Date(j.createdAt) : new Date();
-      return inISOWeek(dt, bfYear, bfWeek);
-    });
-    jobs2Filt.forEach((j) => {
-      const fam = j.family || "(fără)";
-      const prev = famAgg2.get(fam) || { cadru: 0, teava: 0, mecanism: 0, fixare: 0, total: 0 };
-      prev.cadru += j.cadru;
-      prev.teava += j.teava;
-      prev.mecanism += j.mecanism;
-      prev.fixare += j.fixare;
-      prev.total += j.cadru + j.teava + j.mecanism + j.fixare;
-      famAgg2.set(fam, prev);
-    });
-    [...famAgg2.entries()]
-      .sort((a, b) => b[1].total - a[1].total)
-      .forEach(([fam, agg]) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="left">${fam}</td><td>${agg.cadru}</td><td>${agg.teava}</td><td>${agg.mecanism}</td><td>${agg.fixare}</td><td>${agg.total}</td>`;
-        bfBody.appendChild(tr);
-      });
-
-    const bfSearch = $("#bfSearch");
-    if (bfSearch && !bfSearch._bound) {
-      bfSearch.addEventListener("input", (e) => {
-        const q = (e.target.value || "").toLowerCase();
-        [...$("#bfTable tbody").rows].forEach((tr) => {
-          const name = (tr.cells[0]?.textContent || "").toLowerCase();
-          tr.style.display = name.includes(q) ? "" : "none";
-        });
-      });
-      bfSearch._bound = true;
-    }
   }
 }
 
@@ -500,6 +486,7 @@ async function loadTableAll() {
 
   const canDelete = currentRole === "ADMIN" || currentRole === "HEAD_OPERATOR";
 
+  // formăm parametrii pt API
   const baseParams =
     period === "all"
       ? "period=all"
@@ -512,14 +499,27 @@ async function loadTableAll() {
       canDelete ? "<th>Șterge</th>" : ""
     }</tr>`;
 
-    const r = await api(`/taxe?scope=history${baseParams ? `&${baseParams}` : ""}`);
-    if (!r.ok) return;
-    const list = await r.json();
+    // combinăm history + active
+    let list = [];
+    const rH = await api(`/taxe?scope=history${baseParams ? `&${baseParams}` : ""}`);
+    if (rH.ok) list = list.concat(await rH.json());
+    const rA = await api("/taxe?scope=active");
+    if (rA.ok) list = list.concat(await rA.json());
 
-    list
+    // dacă avem week selectat și scope=active nu era filtrat, filtrăm local
+    const filtered =
+      period === "all" || !(tblYear && tblWeek)
+        ? list
+        : list.filter((x) => {
+            const d = x.createdAt ? new Date(x.createdAt) : new Date();
+            return inISOWeek(d, tblYear, tblWeek);
+          });
+
+    filtered
       .filter((x) => !filterUser || (x.user || "").toLowerCase().includes(filterUser))
       .filter((x) => !filterCnp || (x.cnp || "").toLowerCase().includes(filterCnp))
       .filter((x) => !filterFam || (x.gratisFamilie || "").toLowerCase().includes(filterFam))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .forEach((x) => {
         const suma = x.tip === "GRATIS" ? "GRATIS" : x.tip === "Bani curați" ? "40.000$" : "60.000$";
         const tr = document.createElement("tr");
@@ -581,9 +581,10 @@ $("#tblAll")?.addEventListener("click", async (e) => {
   }
   loadTableAll();
   loadDashboard();
+  loadProfile();
 });
 
-// ===== Profile (DOAR pentru userul curent) =====
+// ===== Profile (MEU) — include taxe active+inactive și piese/zi =====
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -595,12 +596,14 @@ async function loadProfile() {
       ({ year: selYear, week: selWeek } = JSON.parse($("#profWeekPicker").value));
   } catch {}
 
-  const taxParams =
+  const taxUrls = [
     period === "all"
-      ? "scope=history&period=all&mine=1"
+      ? "/taxe?scope=history&period=all&mine=1"
       : selYear && selWeek
-      ? `scope=history&mine=1&year=${selYear}&week=${selWeek}`
-      : "scope=history&mine=1";
+      ? `/taxe?scope=history&mine=1&year=${selYear}&week=${selWeek}`
+      : "/taxe?scope=history&mine=1",
+    "/taxe?scope=active&mine=1",
+  ];
 
   const drillParams =
     period === "all"
@@ -613,32 +616,38 @@ async function loadProfile() {
     dirty = 0,
     pieces = 0,
     drillMoney = 0;
+
   const daily = Array.from({ length: 7 }, (_, i) => ({
     day: dayNames[i],
     count: 0,
     clean: 0,
     dirty: 0,
+    pieces: 0, // <- piese burghiu / zi
   }));
 
-  // Taxele MELE
-  const rT = await api(`/taxe?${taxParams}`);
-  if (rT.ok) {
-    const taxe = await rT.json();
-    taxe.forEach((t) => {
-      const created = t.createdAt ? new Date(t.createdAt) : new Date();
-      const dIdx = (created.getDay() + 6) % 7;
-      if (t.tip === "Bani curați") {
-        clean += 40000;
-        daily[dIdx].clean += 40000;
-        daily[dIdx].count++;
-      }
-      if (t.tip === "Bani murdari") {
-        dirty += 60000;
-        daily[dIdx].dirty += 60000;
-        daily[dIdx].count++;
-      }
-    });
+  // Taxele MELE (active + history)
+  let myTaxes = [];
+  for (const u of taxUrls) {
+    const r = await api(u);
+    if (r.ok) myTaxes = myTaxes.concat(await r.json());
   }
+
+  // pentru week, filtrăm local și pe active
+  myTaxes.forEach((t) => {
+    const created = t.createdAt ? new Date(t.createdAt) : new Date();
+    if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
+
+    if (t.tip === "Bani curați") {
+      clean += 40000;
+      daily[(created.getDay() + 6) % 7].clean += 40000;
+      daily[(created.getDay() + 6) % 7].count++;
+    }
+    if (t.tip === "Bani murdari") {
+      dirty += 60000;
+      daily[(created.getDay() + 6) % 7].dirty += 60000;
+      daily[(created.getDay() + 6) % 7].count++;
+    }
+  });
 
   // Burghiul MEU
   const rD = await api(`/drill?${drillParams}`);
@@ -648,6 +657,9 @@ async function loadProfile() {
       const p = j.cadru + j.teava + j.mecanism + j.fixare;
       pieces += p;
       drillMoney += j.costTotal || 0;
+      const created = j.createdAt ? new Date(j.createdAt) : new Date();
+      if (period === "week" && selYear && selWeek && !inISOWeek(created, selYear, selWeek)) return;
+      daily[(created.getDay() + 6) % 7].pieces += p; // <- piese/zi
     });
   }
 
@@ -656,11 +668,13 @@ async function loadProfile() {
   $("#profPieces").textContent = (pieces || 0).toLocaleString("ro-RO");
   $("#profDrillMoney").textContent = money(drillMoney);
 
+  // Tabelul zilnic (taxe + piese/zi – coloana piese o vom arăta în index)
   const body = $("#profDailyTable tbody");
   if (body) {
     body.innerHTML = "";
     daily.forEach((d) => {
       const tr = document.createElement("tr");
+      // dacă index.html are încă 4 coloane, piese nu se văd (urmează la pasul de index)
       tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${money(
         d.clean
       )}</td><td>${money(d.dirty)}</td>`;
