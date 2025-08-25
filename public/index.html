@@ -20,6 +20,10 @@
     </nav>
 
     <div class="who">
+      <select id="themeSel" title="Theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
       <span id="whoami"></span>
       <button id="logoutBtn" class="danger sm">Logout</button>
     </div>
@@ -226,17 +230,16 @@
           <tbody></tbody>
         </table>
 
-        <!-- Topuri -->
         <div class="grid grid-2 mt">
           <div class="card inner">
-            <h5>Top Taxe (user)</h5>
+            <h4>Top taxe (CNP) pe user</h4>
             <table id="topCnpTaxe" class="table">
               <thead><tr><th class="left">User</th><th>Nr. taxe</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
           <div class="card inner">
-            <h5>Top Burghiu (valoare)</h5>
+            <h4>Top burghiu (valoare murdară) pe user</h4>
             <table id="topCnpDrill" class="table">
               <thead><tr><th class="left">User</th><th>Valoare</th></tr></thead>
               <tbody></tbody>
@@ -246,7 +249,7 @@
       </div>
     </section>
 
-    <!-- Statistici Familii -->
+    <!-- Statistici Familii (reutilizează agregatele din dashboard) -->
     <section id="tab-drillfamilies" class="tab hidden">
       <div class="card">
         <div class="bar">
