@@ -86,10 +86,10 @@
           </label>
 
           <label>Tip plată
-            <select id="metodaSelect" name="metoda" class="select-strong same-height" required>
+            <select id="metodaSelect" name="metoda" class="same-height" required>
               <option value="" disabled selected>Alege…</option>
               <option value="curat">Bani curați (40.000$)</option>
-              <option value="murdar">Bani murdari (60.000$)</option>
+              <option value="murdar">Bani murdari (50.000$)</option>
               <option value="gratis">GRATIS</option>
             </select>
           </label>
@@ -182,7 +182,7 @@
           <thead>
             <tr>
               <th class="left">CNP</th><th class="left">Familie</th>
-              <th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th>
+              <th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Elemente de fixare</th>
               <th>Metodă plată</th><th>Cost total</th><th class="left">User</th>
             </tr>
           </thead>
@@ -207,14 +207,19 @@
 
         <div class="stats">
           <div class="stat">Taxe – Bani curați: <b id="statTaxClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="statTaxDirty">0$</b></div>
-          <div class="stat">Total piese burghiu: <b id="statDrillPieces">0</b></div>
+          <div class="stat">Taxe – Bani murdari: <b id="statTaxDirty">0$</b></div>
         </div>
 
-        <h4>Taxe pe zile (săptămâna selectată)</h4>
+        <h4>Taxe pe zile (săptămâna selectată / all time)</h4>
         <table id="dashDailyTable" class="table">
           <thead>
-            <tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr>
+            <tr>
+              <th class="left">Zi</th>
+              <th>Nr. taxe</th>
+              <th>Bani curați</th>
+              <th>Bani murdari</th>
+              <th>Total Bani (murdari)</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -227,7 +232,11 @@
               <tbody></tbody>
             </table>
           </div>
-          <div class="card inner"></div>
+          <div class="card inner">
+            <!-- rezervat pentru viitoare carduri, dacă e nevoie -->
+            <h4>&nbsp;</h4>
+            <div>&nbsp;</div>
+          </div>
         </div>
       </div>
     </section>
@@ -251,10 +260,49 @@
 
         <table id="bfTable" class="table">
           <thead>
-            <tr><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Total</th></tr>
+            <tr>
+              <th class="left">Familie</th>
+              <th>Cadru</th>
+              <th>Țeavă</th>
+              <th>Mecanism</th>
+              <th>Elemente de fixare</th>
+              <th>Total</th>
+              <th>Total Bani</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
+
+        <h4 class="mt">Burghiu pe zile</h4>
+        <table id="bfDailyTable" class="table">
+          <thead>
+            <tr>
+              <th class="left">Zi</th>
+              <th>Nr. taxe</th>
+              <th>Bani curați</th>
+              <th>Bani murdari</th>
+              <th>Total Bani</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="grid grid-2 mt">
+          <div class="card inner">
+            <h4>Top user Burghiu</h4>
+            <table id="topDrillUsers" class="table">
+              <thead><tr><th class="left">User</th><th>Materiale</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="card inner">
+            <h4>Top User Intrări</h4>
+            <table id="topDrillEntries" class="table">
+              <thead><tr><th class="left">User</th><th>Intrări</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
