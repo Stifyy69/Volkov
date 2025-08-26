@@ -165,7 +165,7 @@ app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), asy
   try {
     const { role = "OPERATOR" } = req.body || {};
     const code = crypto.randomBytes(6).toString("hex");
-    await prisma.invite.create({
+    const inv = await prisma.invite.create({
       data: { code, role, createdById: req.user.id },
     });
     res.json({ code, link: `invite:${code}` });
@@ -194,6 +194,7 @@ async function getOrCreateFamilyByName(name) {
  * body: { cnp, metoda: "curat"|"murdar"|"gratis", gratisFamilie? }
  * Creează o intrare TaxEntry cu validUntil = now + 4h (active).
  * NU permite 2 taxe ACTIVE simultane pe același CNP.
+ * Murdar = 50.000$ (actualizat conform cerinței).
  */
 app.post("/taxe", auth(), async (req, res) => {
   try {
@@ -218,11 +219,11 @@ app.post("/taxe", auth(), async (req, res) => {
       amount = 40000;
       currency = "CLEAN";
     } else if (metoda === "murdar") {
-      amount = 60000;
+      amount = 50000; // <- 50.000$ aici
       currency = "DIRTY";
     } else {
       amount = 0;
-      currency = "CLEAN";     // gratis nu afectează murdar; logăm ca CLEAN cu amount=0
+      currency = "CLEAN";
       payment = "GRATIS";
       if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru GRATIS" });
       const fam = await getOrCreateFamilyByName(gratisFamilie);
@@ -504,6 +505,7 @@ app.delete(
  *  - familyShareClean / familyShareDirty
  *  - totalClean / totalDirty / total
  *  (split 50/50, ca în UI)
+ *  Murdar per taxă = 50.000$ (actualizat).
  */
 app.get(
   "/admin/stats",
@@ -539,7 +541,7 @@ app.get(
 
       for (const t of taxe) {
         if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
-        else if (t.amount === 60000) accUser(t.user, "totalDirty", 60000);
+        else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000); // <- 50k
       }
 
       // Drill (murdar sau gratis=0)
