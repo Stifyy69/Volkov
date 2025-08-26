@@ -10,14 +10,19 @@ body { display: flex; flex-direction: column; }
 
 /* Topbar */
 .topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  background: #000; color: #fff; padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #000;
+  color: #fff;
+  padding: 10px 20px;
 }
 .topbar .brand { font-weight: bold; font-size: 18px; color: magenta; }
 .topbar .tabs { display: flex; gap: 10px; }
 .topbar .tabbtn {
   background: #222; border: none; color: #fff;
-  padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px;
+  padding: 6px 12px; border-radius: 4px;
+  cursor: pointer; font-size: 14px;
 }
 .topbar .tabbtn:hover { background: magenta; }
 .topbar .who { display: flex; align-items: center; gap: 10px; }
@@ -26,13 +31,16 @@ body { display: flex; flex-direction: column; }
 .container { flex: 1; padding: 20px; }
 .hidden { display: none; }
 .card {
-  background: #1a1a1a; padding: 20px; border-radius: 8px;
-  margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  background: #1a1a1a;
+  padding: 22px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
-h2, h3, h4, h5 { margin-bottom: 12px; color: magenta; }
+h2, h3, h4, h5 { margin-bottom: 14px; color: magenta; }
 
 /* Grids */
-.grid { display: grid; gap: 12px; }
+.grid { display: grid; gap: 14px; }
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
@@ -40,73 +48,82 @@ h2, h3, h4, h5 { margin-bottom: 12px; color: magenta; }
 .align-center { align-items: center; }
 .right { text-align: right; }
 
-/* ===== Forms – Consistency ===== */
-label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+/* ===== Special Grids (Taxe & Burghiu) ===== */
+
+/* TAXE: (CNP | Tip plata | Familie (GRATIS) | Trimite) pe un singur rand */
+.grid-tax {
+  grid-template-columns: 200px 240px 260px 160px;
+  gap: 22px;
+  align-items: center;
+  margin: 6px 0 20px;
+}
+
+/* BURGHIU: formular vertical, dar cu linii bine separate */
+.drill-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 22px; /* spatiere egala intre liniile 1/2/3 */
+  margin-top: 10px;
+}
+
+/* linia 1 din Burghiu (CNP | Familie | Trimite) foloseste o sub-grila */
+.drill-grid .grid-3 {
+  gap: 22px;
+  align-items: center;
+}
+
+/* linia 2 din Burghiu (cele 4 piese) */
+.drill-grid .grid-4 {
+  gap: 22px;
+}
+
+/* Inputs */
+label { display: grid; gap: 8px; }
 input, select, button {
-  padding: 10px 12px; font-size: 14px; border: 1px solid #555;
-  border-radius: 6px; background: #111; color: #f5f5f5;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #111;
+  color: #f5f5f5;
 }
 input:focus, select:focus { border-color: magenta; outline: none; }
 select { background: #111; }
 
-/* Unified control height */
-button.same-height, input.same-height, select.same-height { height: 44px; line-height: 44px; }
+/* Select mai vizibil pentru "Tip plată" */
+.select-strong {
+  border-color: #6b2a5e;
+  font-weight: 600;
+}
 
 /* Buttons */
 button { cursor: pointer; }
 button.primary {
-  background: magenta; color: #fff; border: none; border-radius: 6px;
-  padding: 0 18px; font-weight: bold; height: 44px; line-height: 44px;
+  background: magenta; color: #fff;
+  border: none; border-radius: 6px;
+  padding: 10px 16px; font-weight: bold;
 }
 button.primary:hover { background: #b30086; }
 button.gold-btn { background: goldenrod; color: #fff; }
 button.danger { background: #cc0000; color: #fff; border: none; padding: 8px 14px; }
-button.sm { padding: 0 12px; font-size: 13px; height: 44px; line-height: 44px; } /* mic, dar înălțime egală */
 
-/* Flex helpers */
+button.sm { padding: 8px 12px; font-size: 13px; } /* usor mai mare pentru consistenta */
+button.same-height, input.same-height, select.same-height {
+  height: 40px;                /* inaltime egala la inputuri/butoane */
+  line-height: 1.2;
+}
+/* daca un buton are si .sm si .same-height, fortam paddingul pentru a nu creste inaltimea */
+button.sm.same-height { padding-top: 8px; padding-bottom: 8px; }
+
+/* Aliniere buton la dreapta in celula lui */
 .flex-end { display: flex; justify-content: flex-end; align-items: center; }
-.grow { flex: 1; }
-.row { display: flex; gap: 12px; align-items: center; }
-
-/* ===== Special Grids (Taxe & Burghiu) ===== */
-
-/* TAXE – linia 1: CNP | Tip plată | (Familie GRATIS) | Trimite */
-.grid-tax {
-  grid-template-columns: 220px 260px 280px 1fr;
-  gap: 20px; align-items: end; margin-bottom: 18px;
-}
-.grid-tax .select-strong { font-weight: 600; }
-
-/* BURGHIU – structură pe 3 linii, spacing egal */
-.drill-grid {
-  display: grid; gap: 18px; margin-top: 6px;
-}
-
-/* Linia 1 (CNP | Familie | Trimite) – aliniere bază și aceeași înălțime */
-.drill-grid .grid-3 {
-  grid-template-columns: 220px 280px 1fr;
-  gap: 20px; align-items: end;
-}
-.drill-grid .grid-3 .flex-end { align-items: end; }
-
-/* Linia 2 (Cadru | Țeavă | Mecanism | Elemente de fixare) – spațiu egal */
-.drill-grid .grid-4 {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-
-/* Linia 3 hint */
-.hint {
-  font-size: 13px; color: #ddd; background: #121212; border: 1px dashed #333;
-  padding: 10px 12px; border-radius: 6px; margin-top: 4px;
-}
-
-/* Extra spacing utilitar */
-.section-spacing { margin-top: 24px; margin-bottom: 24px; }
 
 /* Tables */
 .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-.table th, .table td { border: 1px solid #333; padding: 10px; text-align: center; }
+.table th, .table td {
+  border: 1px solid #333;
+  padding: 10px; text-align: center;
+}
 .table th.left, .table td.left { text-align: left; }
 .table thead { background: magenta; color: #fff; font-weight: bold; }
 .table tbody tr:nth-child(even) { background: #111; }
@@ -115,36 +132,63 @@ button.sm { padding: 0 12px; font-size: 13px; height: 44px; line-height: 44px; }
 /* Admin Total */
 .table.emphasis-total tfoot td,
 .table.emphasis-total td.total-col {
-  font-weight: bold; font-size: 16px;
-  background: #330022; color: #fff; border: 2px solid magenta;
+  font-weight: bold;
+  font-size: 16px;
+  background: #330022;
+  color: #fff;
+  border: 2px solid magenta;
 }
 
 /* Bars & Flex */
 .bar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
 .bar .label { font-weight: bold; }
-.bar.compact-under { margin-top: -5px; margin-bottom: 15px; }
+.bar.compact-under { margin-top: -5px; margin-bottom: 16px; }
+.grow { flex: 1; }
+.row { display: flex; gap: 12px; align-items: center; }
+
+/* Hint (linia 3 la Burghiu) */
+.hint {
+  color: #ddd;
+  background: #111;
+  border: 1px dashed #444;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: -6px;
+}
 
 /* Stats */
 .stats { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 15px; }
-.stat { background: #222; padding: 10px 14px; border-radius: 6px; min-width: 200px; }
+.stat {
+  background: #222;
+  padding: 10px 14px;
+  border-radius: 8px;
+  min-width: 220px;
+}
 
 /* Utility Spacing */
 .mt { margin-top: 20px; }
 .mt-compact { margin-top: 10px; }
 .mb { margin-bottom: 12px; }
-.split { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+.split { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
 .w-300 { width: 300px; }
 .w-200 { width: 200px; }
 .w-160 { width: 160px; }
 .inner { padding: 15px; }
 
-/* Responsive tweaks */
-@media (max-width: 1024px) {
-  .grid-tax { grid-template-columns: 1fr; }
-  .drill-grid .grid-3 { grid-template-columns: 1fr; }
-  .drill-grid .grid-4 { grid-template-columns: 1fr 1fr; }
+/* Week select vizual consistent */
+.weekSel { min-width: 180px; }
+
+/* ===== Responsivitate (tablete / mobil) ===== */
+@media (max-width: 1100px) {
+  .grid-tax {
+    grid-template-columns: 1fr 1fr;
+  }
+  .flex-end { justify-content: stretch; }
+  .flex-end > button { width: 100%; }
 }
-@media (max-width: 560px) {
-  .drill-grid .grid-4 { grid-template-columns: 1fr; }
+@media (max-width: 820px) {
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-tax { grid-template-columns: 1fr; }
   .row { flex-wrap: wrap; }
+  .w-300 { width: 100%; }
 }
