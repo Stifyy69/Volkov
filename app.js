@@ -1,4 +1,3 @@
-// app.js
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -14,9 +13,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // servește index/styles/app.js din /public
+app.use(express.static("public"));
 
-// ---------- Utils: ISO Week ----------
 function mondayOfISOWeek(year, week) {
   const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
   const dow = simple.getUTCDay() || 7;
@@ -26,7 +24,6 @@ function mondayOfISOWeek(year, week) {
   return start;
 }
 function rangeFromQuery(q) {
-  // Acceptă ?period=all | ?year&week (ISO)
   if (q.period === "all") return { from: null, to: null };
   const year = q.year ? parseInt(q.year) : null;
   const week = q.week ? parseInt(q.week) : null;
@@ -50,7 +47,6 @@ function fmtRemaining(validUntil) {
   return `${hh}:${mm}`;
 }
 
-// ---------- SSE (live) ----------
 const sseClients = new Set();
 function sseBroadcast(event, data = {}) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -74,7 +70,6 @@ app.get("/events", (req, res) => {
   });
 });
 
-// ---------- Auth ----------
 function sign(user) {
   return jwt.sign({ id: user.id, role: user.role, username: user.username }, JWT_SECRET, {
     expiresIn: "7d",
@@ -107,40 +102,27 @@ function requireRole(...roles) {
   };
 }
 
-// Register (cu invite)
 app.post("/auth/register", async (req, res) => {
   try {
     const { inviteCode, username, nickname, password, cnp } = req.body || {};
     if (!inviteCode || !username || !password) {
       return res.status(400).json({ error: "Lipsește invite/username/password" });
     }
-
     const inv = await prisma.invite.findUnique({ where: { code: inviteCode } });
     if (!inv || inv.usedAt) return res.status(400).json({ error: "Invite invalid/folosit" });
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: {
-        username,
-        password: hashed,
-        nickname: nickname || null,
-        cnp: cnp || null,
-        role: inv.role,
-      },
+      data: { username, password: hashed, nickname: nickname || null, cnp: cnp || null, role: inv.role },
     });
-
-    await prisma.invite.update({
-      where: { id: inv.id },
-      data: { usedAt: new Date(), usedById: user.id },
-    });
+    await prisma.invite.update({ where: { id: inv.id }, data: { usedAt: new Date(), usedById: user.id } });
 
     return res.json({ token: sign(user) });
-  } catch (e) {
+  } catch {
     return res.status(500).json({ error: "Register error" });
   }
 });
 
-// Login
 app.post("/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -154,27 +136,22 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
-// Me
 app.get("/auth/me", auth(), async (req, res) => {
   const u = await prisma.user.findUnique({ where: { id: req.user.id } });
   res.json({ id: u.id, username: u.username, role: u.role });
 });
 
-// Invites
 app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), async (req, res) => {
   try {
     const { role = "OPERATOR" } = req.body || {};
     const code = crypto.randomBytes(6).toString("hex");
-    const inv = await prisma.invite.create({
-      data: { code, role, createdById: req.user.id },
-    });
+    await prisma.invite.create({ data: { code, role, createdById: req.user.id } });
     res.json({ code, link: `invite:${code}` });
   } catch {
     res.status(500).json({ error: "Nu am putut genera invitația" });
   }
 });
 
-// ---------- Families helper ----------
 async function getOrCreateFamilyByName(name) {
   if (!name) return null;
   try {
@@ -188,14 +165,6 @@ async function getOrCreateFamilyByName(name) {
   }
 }
 
-// ---------- TAXE ----------
-/**
- * POST /taxe
- * body: { cnp, metoda: "curat"|"murdar"|"gratis", gratisFamilie? }
- * Creează o intrare TaxEntry cu validUntil = now + 4h (active).
- * NU permite 2 taxe ACTIVE simultane pe același CNP.
- * Murdar = 50.000$ (actualizat conform cerinței).
- */
 app.post("/taxe", auth(), async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
@@ -203,7 +172,6 @@ app.post("/taxe", auth(), async (req, res) => {
     if (!["curat", "murdar", "gratis"].includes(metoda))
       return res.status(400).json({ error: "Metodă invalidă" });
 
-    // Blochează duplicate ACTIVE pe același CNP
     const active = await prisma.taxEntry.findFirst({
       where: { type: "TAXA", cnp, validUntil: { gt: new Date() } },
       select: { id: true },
@@ -219,7 +187,7 @@ app.post("/taxe", auth(), async (req, res) => {
       amount = 40000;
       currency = "CLEAN";
     } else if (metoda === "murdar") {
-      amount = 50000; // <- 50.000$ aici
+      amount = 50000;
       currency = "DIRTY";
     } else {
       amount = 0;
@@ -230,7 +198,7 @@ app.post("/taxe", auth(), async (req, res) => {
       familyId = fam?.id || null;
     }
 
-    const validUntil = new Date(Date.now() + 4 * 60 * 60 * 1000); // 4h active
+    const validUntil = new Date(Date.now() + 4 * 60 * 60 * 1000);
     const row = await prisma.taxEntry.create({
       data: {
         type: "TAXA",
@@ -255,19 +223,11 @@ app.post("/taxe", auth(), async (req, res) => {
       gratisFamilie: row.family?.name || null,
       createdAt: row.createdAt,
     });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: "Eroare la creare taxă" });
   }
 });
 
-/**
- * GET /taxe
- * Query:
- *  - scope=active|history (default: active)
- *  - period=all | (year, week)
- *  - mine=1
- * history: filtre DOAR pe createdAt (include active + inactive)
- */
 app.get("/taxe", auth(false), async (req, res) => {
   try {
     const scope = req.query.scope || "active";
@@ -276,9 +236,7 @@ app.get("/taxe", auth(false), async (req, res) => {
 
     const where = {
       type: "TAXA",
-      ...(scope === "active"
-        ? { validUntil: { gt: new Date() } }
-        : {}), // pentru history NU filtrăm pe validUntil
+      ...(scope === "active" ? { validUntil: { gt: new Date() } } : {}),
       ...(from && to ? { createdAt: { gte: from, lt: to } } : {}),
       ...(mine && req.user ? { userId: req.user.id } : {}),
     };
@@ -286,7 +244,6 @@ app.get("/taxe", auth(false), async (req, res) => {
     const rows = await prisma.taxEntry.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 200,
       include: { user: true, family: true },
     });
 
@@ -307,44 +264,24 @@ app.get("/taxe", auth(false), async (req, res) => {
   }
 });
 
-// DELETE /taxe/:id (ADMIN/HEAD_OPERATOR)
-app.delete(
-  "/taxe/:id",
-  auth(),
-  requireRole("ADMIN", "HEAD_OPERATOR"),
-  async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await prisma.taxEntry.delete({ where: { id } });
-      sseBroadcast("taxe:new", { id });
-      res.json({ ok: true });
-    } catch {
-      res.status(400).json({ error: "Nu s-a putut șterge taxa" });
-    }
+app.delete("/taxe/:id", auth(), requireRole("ADMIN", "HEAD_OPERATOR"), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await prisma.taxEntry.delete({ where: { id } });
+    sseBroadcast("taxe:new", { id });
+    res.json({ ok: true });
+  } catch {
+    res.status(400).json({ error: "Nu s-a putut șterge taxa" });
   }
-);
+});
 
-// ---------- BURGHIU ----------
-/**
- * POST /drill
- * Acceptă:
- *  - format vechi: { cnp, part: "cadru|teava|mecanism|fixare", quantity, family }
- *  - format agregat: { cnp, family, cadru?, teava?, mecanism?, fixare? }
- *
- * Serverul încearcă să aglutineze în ACELAȘI RÂND dacă există deja
- * o înregistrare compatibilă (același user, cnp, familie, cashType, unitPrice)
- * creată în ultimele 10 minute.
- */
 app.post("/drill", auth(), async (req, res) => {
   try {
     const { cnp, part, quantity, family } = req.body || {};
     if (!cnp || !/^\d{1,6}$/.test(cnp)) return res.status(400).json({ error: "CNP invalid" });
     if (!family) return res.status(400).json({ error: "Familie lipsă" });
 
-    // Construieste cantitățile finale din payload (suportă ambele formate)
     const parts = { cadru: 0, teava: 0, mecanism: 0, fixare: 0 };
-
-    // format vechi
     if (part) {
       if (!["cadru", "teava", "mecanism", "fixare"].includes(part))
         return res.status(400).json({ error: "Piesă invalidă" });
@@ -352,8 +289,6 @@ app.post("/drill", auth(), async (req, res) => {
       if (q <= 0) return res.status(400).json({ error: "Cantitate > 0" });
       parts[part] = q;
     }
-
-    // format agregat
     ["cadru", "teava", "mecanism", "fixare"].forEach((k) => {
       if (req.body[k] != null) {
         const v = parseInt(req.body[k] || 0);
@@ -361,17 +296,14 @@ app.post("/drill", auth(), async (req, res) => {
       }
     });
 
-    const totalIncoming =
-      parts.cadru + parts.teava + parts.mecanism + parts.fixare;
+    const totalIncoming = parts.cadru + parts.teava + parts.mecanism + parts.fixare;
     if (totalIncoming <= 0) return res.status(400).json({ error: "Cantitate totală 0" });
 
-    // determină familie + policy de preț
     const fam = await getOrCreateFamilyByName(family);
     const gratis = isGratisFamily(fam?.name || "");
     const cashType = gratis ? "CLEAN" : "DIRTY";
     const unitPrice = gratis ? 0 : 1000;
 
-    // caută un rând existent recent (10 minute)
     const since = new Date(Date.now() - 10 * 60 * 1000);
     const existing = await prisma.drillJob.findFirst({
       where: {
@@ -387,7 +319,6 @@ app.post("/drill", auth(), async (req, res) => {
 
     let row;
     if (existing) {
-      // UPDATE: adună cantitățile
       row = await prisma.drillJob.update({
         where: { id: existing.id },
         data: {
@@ -400,7 +331,6 @@ app.post("/drill", auth(), async (req, res) => {
         include: { user: true, family: true },
       });
     } else {
-      // CREATE: un singur rând cu tot
       row = await prisma.drillJob.create({
         data: {
           cnp,
@@ -433,15 +363,11 @@ app.post("/drill", auth(), async (req, res) => {
       user: row.user?.username || null,
       createdAt: row.createdAt,
     });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: "Eroare la burghiu" });
   }
 });
 
-/**
- * GET /drill
- * Query: mine=1, period=all | year&week
- */
 app.get("/drill", auth(false), async (req, res) => {
   try {
     const mine = req.query.mine === "1";
@@ -455,7 +381,6 @@ app.get("/drill", auth(false), async (req, res) => {
     const rows = await prisma.drillJob.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 50,
       include: { user: true, family: true },
     });
 
@@ -467,7 +392,7 @@ app.get("/drill", auth(false), async (req, res) => {
       teava: r.teava,
       mecanism: r.mecanism,
       fixare: r.fixare,
-      metodaPlata: r.unitPrice === 0 ? "GRATIS" : r.cashType === "CLEAN" ? "Bani curați" : "Bani murdari",
+      metodaPlata: r.unitPrice === 0 ? "GRATIS" : "Bani murdari",
       costTotal: (r.cadru + r.teava + r.mecanism + r.fixare) * r.unitPrice,
       user: r.user?.username || null,
       createdAt: r.createdAt,
@@ -479,99 +404,89 @@ app.get("/drill", auth(false), async (req, res) => {
   }
 });
 
-// DELETE /drill/:id (ADMIN/HEAD_OPERATOR)
-app.delete(
-  "/drill/:id",
-  auth(),
-  requireRole("ADMIN", "HEAD_OPERATOR"),
-  async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await prisma.drillJob.delete({ where: { id } });
-      sseBroadcast("drill:new", { id });
-      res.json({ ok: true });
-    } catch {
-      res.status(400).json({ error: "Nu s-a putut șterge jobul" });
-    }
+app.delete("/drill/:id", auth(), requireRole("ADMIN", "HEAD_OPERATOR"), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await prisma.drillJob.delete({ where: { id } });
+    sseBroadcast("drill:new", { id });
+    res.json({ ok: true });
+  } catch {
+    res.status(400).json({ error: "Nu s-a putut șterge jobul" });
   }
-);
+});
 
-// ---------- Admin: split / stats ----------
-/**
- * GET /admin/stats
- * Query: period=all | year&week
- * Return pe user:
- *  - userShareClean / userShareDirty
- *  - familyShareClean / familyShareDirty
- *  - totalClean / totalDirty / total
- *  (split 50/50, ca în UI)
- *  Murdar per taxă = 50.000$ (actualizat).
- */
-app.get(
-  "/admin/stats",
-  auth(),
-  requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"),
-  async (req, res) => {
-    try {
-      const { from, to } = rangeFromQuery(req.query);
-      const timeWhere = from && to ? { createdAt: { gte: from, lt: to } } : {};
+app.get("/admin/stats", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), async (req, res) => {
+  try {
+    const { from, to } = rangeFromQuery(req.query);
+    const timeWhere = from && to ? { createdAt: { gte: from, lt: to } } : {};
 
-      // Taxe -> DOAR createdAt în range (active + inactive)
-      const taxe = await prisma.taxEntry.findMany({
-        where: { type: "TAXA", ...timeWhere },
-        include: { user: true },
-      });
+    const taxe = await prisma.taxEntry.findMany({
+      where: { type: "TAXA", ...timeWhere },
+      include: { user: true },
+    });
 
-      const map = new Map();
-      function accUser(u, k, v) {
-        const key = u?.username || "-";
-        const row = map.get(key) || {
-          username: key,
-          userShareClean: 0,
-          userShareDirty: 0,
-          familyShareClean: 0,
-          familyShareDirty: 0,
-          totalClean: 0,
-          totalDirty: 0,
-          total: 0,
-        };
-        row[k] += v;
-        map.set(key, row);
-      }
-
-      for (const t of taxe) {
-        if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
-        else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000); // <- 50k
-      }
-
-      // Drill (murdar sau gratis=0)
-      const drill = await prisma.drillJob.findMany({
-        where: { ...timeWhere },
-        include: { user: true },
-      });
-      for (const j of drill) {
-        const total = (j.cadru + j.teava + j.mecanism + j.fixare) * j.unitPrice;
-        accUser(j.user, "totalDirty", total);
-      }
-
-      // Split 50/50
-      for (const [k, r] of map.entries()) {
-        r.userShareClean = r.totalClean * 0.5;
-        r.familyShareClean = r.totalClean * 0.5;
-        r.userShareDirty = r.totalDirty * 0.5;
-        r.familyShareDirty = r.totalDirty * 0.5;
-        r.total = r.totalClean + r.totalDirty;
-        map.set(k, r);
-      }
-
-      res.json([...map.values()].sort((a, b) => b.total - a.total));
-    } catch {
-      res.status(500).json({ error: "Eroare stats" });
+    const map = new Map();
+    function accUser(u, k, v) {
+      const key = u?.username || "-";
+      const row = map.get(key) || {
+        username: key,
+        userShareClean: 0,
+        userShareDirty: 0,
+        familyShareClean: 0,
+        familyShareDirty: 0,
+        totalClean: 0,
+        totalDirty: 0,
+        total: 0,
+      };
+      row[k] += v;
+      map.set(key, row);
     }
-  }
-);
 
-// ---------- Start ----------
+    for (const t of taxe) {
+      if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
+      else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000);
+    }
+
+    const drill = await prisma.drillJob.findMany({
+      where: { ...timeWhere },
+      include: { user: true },
+    });
+    for (const j of drill) {
+      const total = (j.cadru + j.teava + j.mecanism + j.fixare) * j.unitPrice;
+      accUser(j.user, "totalDirty", total);
+    }
+
+    for (const [k, r] of map.entries()) {
+      r.userShareClean = r.totalClean * 0.5;
+      r.familyShareClean = r.totalClean * 0.5;
+      r.userShareDirty = r.totalDirty * 0.5;
+      r.familyShareDirty = r.totalDirty * 0.5;
+      r.total = r.totalClean + r.totalDirty;
+      map.set(k, r);
+    }
+
+    const rows = [...map.values()].sort((a, b) => b.total - a.total);
+
+    const isAll = (req.query.period === "all");
+    if (isAll) {
+      const limit = Math.max(1, parseInt(req.query.limit || "50", 10));
+      const page = Math.max(1, parseInt(req.query.page || "1", 10));
+      const pages = Math.max(1, Math.ceil(rows.length / limit));
+      const pageClamped = Math.min(page, pages);
+      const start = (pageClamped - 1) * limit;
+      const slice = rows.slice(start, start + limit);
+      res.setHeader("X-Page", String(pageClamped));
+      res.setHeader("X-Pages", String(pages));
+      res.setHeader("X-Limit", String(limit));
+      return res.json(slice);
+    }
+
+    res.json(rows);
+  } catch {
+    res.status(500).json({ error: "Eroare stats" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Volkov API running on http://localhost:${PORT}`);
 });
