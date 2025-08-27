@@ -32,7 +32,7 @@ body{
   letter-spacing:.2px;
 }
 
-/* colțuri jos (stânga/dreapta) */
+/* colțuri jos */
 body::after{
   content:"";
   position:fixed; right:-40px; bottom:-40px;
@@ -53,7 +53,7 @@ body::before{
   transform:scaleX(-1);
 }
 
-/* colțuri sus (stânga/dreapta) */
+/* colțuri sus */
 .topbar::before,
 .topbar::after{
   content:"";
@@ -122,7 +122,6 @@ body::before{
 .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .grid-tax{grid-template-columns:220px 260px 1fr 140px; align-items:end; gap:var(--gap)}
-.drill-grid{gap:var(--gap-lg)}
 .col-span-2{grid-column:span 2}
 .align-center{align-items:center}
 .compact-under{display:flex; gap:var(--gap); flex-wrap:wrap}
@@ -176,15 +175,14 @@ h5{font-size:15px; color:#f3c7f1}
   padding:13px 12px;
   font-size:14px;
   font-weight:700;
+  text-align:center;
   border-bottom:1px solid var(--border);
 }
 .table thead th.left,
-.table tbody td.left{ text-align:left } /* CNP/User/Familie */
-.table thead th:not(.left),
-.table tbody td:not(.left){ text-align:center }
+.table tbody td.left{ text-align:left }  /* CNP/User/Familie */
 .table tbody td{
   padding:12px 10px; border-bottom:1px solid #24262e;
-  color:var(--text);
+  color:var(--text); text-align:center
 }
 .table tbody tr:hover{background:rgba(217,113,209,.05)}
 .table tbody tr:last-child td{border-bottom:none}
@@ -193,22 +191,6 @@ h5{font-size:15px; color:#f3c7f1}
 /* spacing la Taxe active */
 #taxeTable{ margin-top:18px }
 .split h4{ margin-top:18px; margin-bottom:10px }
-
-/* Burghiu: linia 1 (CNP – Familie – Trimite) și linia 2 (piese) */
-#drillForm .grid-3{
-  grid-template-columns:220px 1fr 140px;
-  gap:18px;
-  margin-bottom:14px;
-}
-#drillForm .grid-4{
-  grid-template-columns:repeat(4,1fr);
-  margin-top:12px;
-  gap:14px;
-}
-#drillForm .flex-end{ align-self:end }
-#drillForm input.same-height,
-#drillForm select.same-height,
-#drillForm button.same-height{ height:44px }
 
 /* buton Trimite cu pattern */
 #drillForm button::after,
@@ -221,76 +203,5 @@ h5{font-size:15px; color:#f3c7f1}
   filter:drop-shadow(0 2px 10px rgba(217,113,209,.5));
 }
 
-button{
-  appearance:none; border:none; cursor:pointer;
-  color:#0b0b0c; font-weight:800;
-  padding:10px 16px;
-  border-radius:14px;
-  background:
-    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-    linear-gradient(180deg, var(--primary), var(--primary-2));
-  box-shadow:0 10px 18px rgba(217,113,209,.35), inset 0 1px 0 rgba(255,255,255,.3);
-  transition:transform .08s ease, filter .2s ease, box-shadow .2s ease;
-  position:relative; overflow:hidden;
-}
 button:hover{filter:saturate(110%); box-shadow:0 12px 22px rgba(217,113,209,.45)}
 button:active{transform:translateY(1px) scale(.99)}
-button.sm{padding:8px 12px; border-radius:12px; font-weight:700}
-button.primary{
-  background:
-    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-    linear-gradient(180deg, var(--primary), var(--primary-2));
-  color:#0b0b0c
-}
-button.danger{
-  background:
-    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-    linear-gradient(180deg, #ff6c7a, #e63d56);
-  color:#0b0b0c
-}
-.gold-btn{
-  background:
-    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-    linear-gradient(180deg, #ffd476, #f5b24a);
-  color:#2d1f00
-}
-
-.same-height{height:44px}
-.select-strong{font-weight:700}
-
-.stats{display:flex; gap:14px; flex-wrap:wrap; margin:10px 0 8px}
-.stat{
-  background:linear-gradient(180deg, rgba(217,113,209,.14), rgba(217,113,209,.06));
-  border:1px solid var(--border);
-  padding:10px 14px; border-radius:12px; color:#ffe9ff; font-weight:700
-}
-
-.hint{color:var(--text-dim); font-size:12.5px}
-
-.emphasis-total tbody tr:last-child td{border-bottom:none}
-
-.tab{position:relative; z-index:1}
-
-.tabs .tabbtn::before{
-  content:"";
-  position:absolute; inset:-2px;
-  border-radius:12px;
-  background:
-    radial-gradient(250px 150px at 0% 100%, rgba(217,113,209,.12), transparent 50%);
-  opacity:0; transition:opacity .2s ease;
-  z-index:-1;
-}
-.tabs .tabbtn:hover::before{opacity:1}
-
-select.weekSel{min-width:162px; font-weight:700}
-
-#taxeTable tbody td:nth-child(2),
-#drillTable tbody td:nth-child(8),
-#tblAll tbody td:nth-child(8),
-#admTable tbody td:nth-child(2),
-#admTable tbody td:nth-child(3),
-#admTable tbody td:nth-child(6),
-#admTable tbody td:nth-child(7),
-#admTable tbody td:nth-child(8){font-variant-numeric:tabular-nums}
-
-.left{text-align:left}
