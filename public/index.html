@@ -11,12 +11,13 @@
     <div class="brand">Volkov</div>
 
     <nav class="tabs">
+      <!-- Ordinea cerută -->
       <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
+      <button class="tabbtn" data-tab="profile">My profile</button>
       <button class="tabbtn" data-tab="dashboard">Statistici Taxe</button>
       <button class="tabbtn" data-tab="drillfamilies">Statistici Familii</button>
-      <button class="tabbtn" data-tab="admin">Admin</button>
       <button class="tabbtn" data-tab="tables">Tabele All</button>
-      <button class="tabbtn" data-tab="profile">My profile</button>
+      <button class="tabbtn" data-tab="admin">Admin</button>
     </nav>
 
     <div class="who">
@@ -191,6 +192,72 @@
       </div>
     </section>
 
+    <!-- My profile -->
+    <section id="tab-profile" class="tab hidden">
+      <div class="card">
+        <div class="bar">
+          <span class="label">Alege perioada</span>
+        </div>
+        <div class="bar compact-under">
+          <select id="profPeriod">
+            <option value="week" selected>Săptămână</option>
+            <option value="all">All time</option>
+          </select>
+          <select id="profWeekPicker" class="weekSel"></select>
+        </div>
+
+        <div class="stats">
+          <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
+          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
+          <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
+          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0$</b></div>
+        </div>
+
+        <h4>Activitate (zile)</h4>
+        <table id="profDailyTable" class="table">
+          <thead>
+            <tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <h4 class="mt">Split 50/50</h4>
+        <div class="grid grid-3">
+          <div class="card inner">
+            <h5>Bani curați</h5>
+            <div>User: <b id="splitCleanUser">0$</b></div>
+            <div>Familie: <b id="splitCleanFam">0$</b></div>
+            <div>Total: <b id="splitCleanTot">0$</b></div>
+          </div>
+          <div class="card inner">
+            <h5>Bani murdari</h5>
+            <div>User: <b id="splitDirtyUser">0$</b></div>
+            <div>Familie: <b id="splitDirtyFam">0$</b></div>
+            <div>Total: <b id="splitDirtyTot">0$</b></div>
+          </div>
+          <div class="card inner">
+            <h5>Total</h5>
+            <div>User: <b id="splitAllUser">0$</b></div>
+            <div>Familie: <b id="splitAllFam">0$</b></div>
+            <div>Total: <b id="splitAllTot">0$</b></div>
+          </div>
+        </div>
+
+        <h4 class="mt">Schimbă parola</h4>
+        <form id="resetForm" class="grid grid-2">
+          <label>Parola veche
+            <input name="oldPassword" type="password" required/>
+          </label>
+          <label>Parola nouă
+            <input name="newPassword" type="password" required/>
+          </label>
+          <div class="col-span-2 right">
+            <button class="primary">Actualizează</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <!-- Statistici Taxe -->
     <section id="tab-dashboard" class="tab hidden">
       <div class="card">
@@ -233,7 +300,7 @@
             </table>
           </div>
           <div class="card inner">
-            <!-- rezervat pentru viitoare carduri, dacă e nevoie -->
+            <!-- loc rezervat (dacă mai vrei alt card) -->
             <h4>&nbsp;</h4>
             <div>&nbsp;</div>
           </div>
@@ -306,6 +373,40 @@
       </div>
     </section>
 
+    <!-- Tabele All -->
+    <section id="tab-tables" class="tab hidden">
+      <div class="card">
+        <div class="bar">
+          <span class="label">Alege perioada</span>
+        </div>
+        <div class="bar compact-under">
+          <select id="tblPeriod">
+            <option value="week" selected>Săptămână</option>
+            <option value="all">All time</option>
+          </select>
+          <select id="tblWeekPicker" class="weekSel"></select>
+        </div>
+
+        <div class="bar mt-compact">
+          <label>Tip:
+            <select id="tblType">
+              <option value="taxe">Taxe</option>
+              <option value="drill">Burghiu</option>
+            </select>
+          </label>
+          <input id="tblFilterUser" class="w-200" placeholder="User…" />
+          <input id="tblFilterCnp" class="w-160" placeholder="CNP…" />
+          <input id="tblFilterFamily" class="w-200" placeholder="Familie…" />
+          <button id="tblRefresh" class="sm">Reîncarcă</button>
+        </div>
+
+        <table id="tblAll" class="table">
+          <thead id="tblHead"></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- Admin -->
     <section id="tab-admin" class="tab hidden">
       <div class="card">
@@ -349,106 +450,6 @@
           <input id="inviteResult" class="grow" readonly />
           <button id="inviteCopy" class="sm">Copiază</button>
         </div>
-      </div>
-    </section>
-
-    <!-- Tabele All -->
-    <section id="tab-tables" class="tab hidden">
-      <div class="card">
-        <div class="bar">
-          <span class="label">Alege perioada</span>
-        </div>
-        <div class="bar compact-under">
-          <select id="tblPeriod">
-            <option value="week" selected>Săptămână</option>
-            <option value="all">All time</option>
-          </select>
-          <select id="tblWeekPicker" class="weekSel"></select>
-        </div>
-
-        <div class="bar mt-compact">
-          <label>Tip:
-            <select id="tblType">
-              <option value="taxe">Taxe</option>
-              <option value="drill">Burghiu</option>
-            </select>
-          </label>
-          <input id="tblFilterUser" class="w-200" placeholder="User…" />
-          <input id="tblFilterCnp" class="w-160" placeholder="CNP…" />
-          <input id="tblFilterFamily" class="w-200" placeholder="Familie…" />
-          <button id="tblRefresh" class="sm">Reîncarcă</button>
-        </div>
-
-        <table id="tblAll" class="table">
-          <thead id="tblHead"></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- My profile -->
-    <section id="tab-profile" class="tab hidden">
-      <div class="card">
-        <div class="bar">
-          <span class="label">Alege perioada</span>
-        </div>
-        <div class="bar compact-under">
-          <select id="profPeriod">
-            <option value="week" selected>Săptămână</option>
-            <option value="all">All time</option>
-          </select>
-          <select id="profWeekPicker" class="weekSel"></select>
-        </div>
-
-        <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
-          <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
-          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0$</b></div>
-        </div>
-
-        <h4>Activitate (zile)</h4>
-        <table id="profDailyTable" class="table">
-          <thead>
-            <tr><th class="left">Zi</th><th>Nr. taxe</th><th>Bani curați</th><th>Bani murdari</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-
-        <h4 class="mt">Split 50/50</h4>
-        <div class="grid grid-3">
-          <div class="card inner">
-            <h5>Bani curați</h5>
-            <div>User: <b id="splitCleanUser">0$</b></div>
-            <div>Familie: <b id="splitCleanFam">0$</b></div>
-            <div>Total: <b id="splitCleanTot">0$</b></div>
-          </div>
-          <div class="card inner">
-            <h5>Bani murdari</h5>
-            <div>User: <b id="splitDirtyUser">0$</b></div>
-            <div>Familie: <b id="splitDirtyFam">0$</b></div>
-            <div>Total: <b id="splitDirtyTot">0$</b></div>
-          </div>
-          <div class="card inner">
-            <h5>Total</h5>
-            <div>User: <b id="splitAllUser">0$</b></div>
-            <div>Familie: <b id="splitAllFam">0$</b></div>
-            <div>Total: <b id="splitAllTot">0$</b></div>
-          </div>
-        </div>
-
-        <h4 class="mt">Schimbă parola</h4>
-        <form id="resetForm" class="grid grid-2">
-          <label>Parola veche
-            <input name="oldPassword" type="password" required/>
-          </label>
-          <label>Parola nouă
-            <input name="newPassword" type="password" required/>
-          </label>
-          <div class="col-span-2 right">
-            <button class="primary">Actualizează</button>
-          </div>
-        </form>
       </div>
     </section>
 
