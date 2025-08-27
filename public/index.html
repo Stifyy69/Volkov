@@ -13,7 +13,7 @@
     <nav class="tabs">
       <!-- Ordinea cerută -->
       <button class="tabbtn" data-tab="taxe">Taxe &amp; Burghiu</button>
-      <button class="tabbtn" data-tab="profile">My profile</button>
+      <button class="tabbtn" data-tab="profile">My Profile</button>
       <button class="tabbtn" data-tab="dashboard">Statistici Taxe</button>
       <button class="tabbtn" data-tab="drillfamilies">Statistici Familii</button>
       <button class="tabbtn" data-tab="tables">Tabele All</button>
@@ -192,7 +192,7 @@
       </div>
     </section>
 
-    <!-- My profile -->
+    <!-- My Profile -->
     <section id="tab-profile" class="tab hidden">
       <div class="card">
         <div class="bar">
@@ -206,11 +206,15 @@
           <select id="profWeekPicker" class="weekSel"></select>
         </div>
 
+        <!-- KPI-urile cerute -->
         <div class="stats">
-          <div class="stat">Taxe – Bani curați: <b id="profClean">0$</b></div>
-          <div class="stat">Taxe + Burghiu – Bani murdari: <b id="profDirty">0$</b></div>
-          <div class="stat">Piese burghiu: <b id="profPieces">0</b></div>
-          <div class="stat">Valoare burghiu (Bani murdari): <b id="profDrillMoney">0$</b></div>
+          <div class="stat">Taxe – Bani curați: <b id="profTaxClean">0$</b></div>
+          <div class="stat">Taxe – Bani murdari: <b id="profTaxDirty">0$</b></div>
+          <div class="stat">Burghiu – Bani murdari: <b id="profDrillDirty">0$</b></div>
+        </div>
+        <div class="stats">
+          <div class="stat">Taxe luate: <b id="profTaxCount">0</b></div>
+          <div class="stat">Piese burghiu: <b id="profDrillPieces">0</b></div>
         </div>
 
         <h4>Activitate (zile)</h4>
@@ -236,7 +240,7 @@
             <div>Total: <b id="splitDirtyTot">0$</b></div>
           </div>
           <div class="card inner">
-            <h5>Total</h5>
+            <h5>Total (în murdari)</h5>
             <div>User: <b id="splitAllUser">0$</b></div>
             <div>Familie: <b id="splitAllFam">0$</b></div>
             <div>Total: <b id="splitAllTot">0$</b></div>
@@ -437,6 +441,13 @@
           </thead>
           <tbody></tbody>
         </table>
+
+        <!-- Pager pentru All time (50/pagină) -->
+        <div id="admPager" class="row mt hidden">
+          <button id="admPrev" class="sm">◀</button>
+          <div id="admPageInfo">Pagina 1 / 1</div>
+          <button id="admNext" class="sm">▶</button>
+        </div>
 
         <h4 class="mt">Invite link</h4>
         <div class="bar">
