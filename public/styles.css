@@ -32,6 +32,16 @@ body{
   letter-spacing:.2px;
 }
 
+/* background general cu poză */
+html::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:url("/img/backround.png") center/cover no-repeat;
+  opacity:0.6;
+  z-index:-2;
+}
+
 /* colțuri jos (stânga/dreapta) */
 body::after{
   content:"";
@@ -76,7 +86,7 @@ body::before{
   content:"";
   position:fixed;
   top:-40px; width:min(48vw,640px); height:min(48vw,640px);
-  background:url("/img/lace-corner2.png") no-repeat center/contain; /* ← schimbat pentru sus */
+  background:url("/img/lace-corner2.png") no-repeat center/contain;
   opacity:.18; pointer-events:none;
   filter:drop-shadow(0 6px 20px rgba(217,113,209,.25));
   z-index:0;
@@ -121,7 +131,7 @@ body::before{
 .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.grid-tax{grid-template-columns:220px 260px 1fr 140px; align-items:end; gap:12px} /* ← spacing ușor redus la Taxe */
+.grid-tax{grid-template-columns:220px 260px 1fr 140px; align-items:end; gap:12px}
 .drill-grid{gap:var(--gap-lg)}
 .col-span-2{grid-column:span 2}
 .align-center{align-items:center}
@@ -185,7 +195,7 @@ h5{font-size:15px; color:#f3c7f1}
   text-align:center;
 }
 .table thead th.left,
-.table tbody td.left{ text-align:left } /* CNP/User/Familie */
+.table tbody td.left{ text-align:left }
 .table thead th:not(.left),
 .table tbody td:not(.left){ text-align:center }
 .table tbody td{
@@ -203,30 +213,23 @@ h5{font-size:15px; color:#f3c7f1}
 /* === FORMULAR BURGHIU: CNP & FAMILIE PE ACEEAȘI LINIE, LABEL DEASUPRA, BUTON ÎN LINIE CU ELE === */
 #drillForm .grid-3{
   display:grid;
-  grid-template-columns: 220px 260px 140px; /* CNP – Familie – Trimite */
+  grid-template-columns: 220px 260px 140px;
   align-items:end;
-  gap:16px; /* spacing uniform între cele 3 */
+  gap:16px;
   margin-bottom:14px;
 }
-/* etichetele deasupra câmpurilor (doar în Burghiu) */
 #drillForm label{display:flex; flex-direction:column; gap:6px}
 #drillForm label > input,
 #drillForm label > select{ height:44px }
-
-/* buton la aceeași înălțime cu inputurile */
 #drillForm .flex-end{ align-self:end }
 #drillForm .flex-end .gold-btn{ height:44px }
-
-/* Linia 2 cu piesele, păstrată dedesubt */
 #drillForm .grid-4{
   display:grid;
-  grid-template-columns:repeat(4,1fr); /* Cadru – Țeavă – Mecanism – Fixare */
+  grid-template-columns:repeat(4,1fr);
   gap:14px;
   margin-top:12px;
   margin-bottom:12px;
 }
-
-/* hint pe linia 3, full width */
 #drillForm .hint{
   grid-column:1 / -1;
   margin-top:4px;
@@ -269,7 +272,6 @@ button{
   transition:transform .08s ease, filter .2s ease, box-shadow .2s ease;
   position:relative; overflow:hidden;
 }
-/* pattern și pe butoanele de submit */
 #drillForm button::after,
 #taxeForm button::after{
   content:"";
@@ -291,7 +293,7 @@ button.primary{
 button.danger{
   background:
     radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-  linear-gradient(180deg, #ff6c7a, #e63d56);
+    linear-gradient(180deg, #ff6c7a, #e63d56);
   color:#0b0b0c
 }
 .gold-btn{
