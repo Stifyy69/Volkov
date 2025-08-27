@@ -50,6 +50,23 @@ function fmtRemaining(validUntil) {
   return `${hh}:${mm}`;
 }
 
+// helper paginare: aplică skip/take și setează headere meta dacă există limit
+function applyPaginationMeta(res, total, page, limit) {
+  if (!limit || limit <= 0) return;
+  const pages = Math.max(1, Math.ceil(total / limit));
+  res.setHeader("X-Total-Count", String(total));
+  res.setHeader("X-Page", String(page || 1));
+  res.setHeader("X-Limit", String(limit));
+  res.setHeader("X-Pages", String(pages));
+}
+function parseLimitPage(q, defaultLimit = null) {
+  // dacă vrei să forțezi paginarea din UI, trimite ?limit=50&page=1
+  const limit = q.limit != null ? Math.max(0, parseInt(q.limit)) : (defaultLimit ?? 0);
+  const page = Math.max(1, parseInt(q.page || "1"));
+  const skip = limit > 0 ? (page - 1) * limit : 0;
+  return { limit, page, skip };
+}
+
 // ---------- SSE (live) ----------
 const sseClients = new Set();
 function sseBroadcast(event, data = {}) {
@@ -266,6 +283,7 @@ app.post("/taxe", auth(), async (req, res) => {
  *  - scope=active|history (default: active)
  *  - period=all | (year, week)
  *  - mine=1
+ *  - limit, page  (opțional; dacă pui limit>0 -> se activează paginarea și headerele X-Total-Count/X-Page/X-Limit/X-Pages)
  * history: filtre DOAR pe createdAt (include active + inactive)
  */
 app.get("/taxe", auth(false), async (req, res) => {
@@ -283,12 +301,18 @@ app.get("/taxe", auth(false), async (req, res) => {
       ...(mine && req.user ? { userId: req.user.id } : {}),
     };
 
-    const rows = await prisma.taxEntry.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      include: { user: true, family: true },
-    });
+    // paginare opțională
+    const { limit, page, skip } = parseLimitPage(req.query);
+    const [total, rows] = await Promise.all([
+      limit > 0 ? prisma.taxEntry.count({ where }) : Promise.resolve(0),
+      prisma.taxEntry.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        ...(limit > 0 ? { skip, take: limit } : {}), // fără limit -> toate
+        include: { user: true, family: true },
+      }),
+    ]);
+    applyPaginationMeta(res, total, page, limit);
 
     const data = rows.map((r) => ({
       id: r.id,
@@ -440,7 +464,8 @@ app.post("/drill", auth(), async (req, res) => {
 
 /**
  * GET /drill
- * Query: mine=1, period=all | year&week
+ * Query: mine=1, period=all | year&week, limit, page
+ * Dacă trimiți limit>0 -> se activează paginarea + headere meta
  */
 app.get("/drill", auth(false), async (req, res) => {
   try {
@@ -452,12 +477,17 @@ app.get("/drill", auth(false), async (req, res) => {
       ...(mine && req.user ? { userId: req.user.id } : {}),
     };
 
-    const rows = await prisma.drillJob.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: { user: true, family: true },
-    });
+    const { limit, page, skip } = parseLimitPage(req.query);
+    const [total, rows] = await Promise.all([
+      limit > 0 ? prisma.drillJob.count({ where }) : Promise.resolve(0),
+      prisma.drillJob.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        ...(limit > 0 ? { skip, take: limit } : {}), // fără limit -> toate
+        include: { user: true, family: true },
+      }),
+    ]);
+    applyPaginationMeta(res, total, page, limit);
 
     const data = rows.map((r) => ({
       id: r.id,
@@ -500,6 +530,7 @@ app.delete(
 /**
  * GET /admin/stats
  * Query: period=all | year&week
+ *        limit, page (opționale; recomandat limit=50 pentru ALL TIME)
  * Return pe user:
  *  - userShareClean / userShareDirty
  *  - familyShareClean / familyShareDirty
@@ -564,7 +595,17 @@ app.get(
         map.set(k, r);
       }
 
-      res.json([...map.values()].sort((a, b) => b.total - a.total));
+      // sort + paginare opțională (recomandat limit=50 pentru ALL TIME)
+      const allRows = [...map.values()].sort((a, b) => b.total - a.total);
+      const { limit, page } = parseLimitPage(req.query, null);
+      let out = allRows;
+      if (limit > 0) {
+        const start = (page - 1) * limit;
+        out = allRows.slice(start, start + limit);
+        applyPaginationMeta(res, allRows.length, page, limit);
+      }
+
+      res.json(out);
     } catch {
       res.status(500).json({ error: "Eroare stats" });
     }
