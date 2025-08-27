@@ -32,16 +32,16 @@ body{
   letter-spacing:.2px;
 }
 
-/* pattern dreapta */
+/* colțuri jos (stânga/dreapta) */
 body::after{
   content:"";
   position:fixed; right:-40px; bottom:-40px;
   width:min(48vw,640px); height:min(48vw,640px);
   background:url("/img/lace-corner.png") no-repeat center/contain;
-  opacity:.18; pointer-events:none; filter:drop-shadow(0 6px 20px rgba(217,113,209,.25));
+  opacity:.18; pointer-events:none;
+  filter:drop-shadow(0 6px 20px rgba(217,113,209,.25));
   z-index:0;
 }
-/* pattern stânga (oglindit) */
 body::before{
   content:"";
   position:fixed; left:-40px; bottom:-40px;
@@ -70,6 +70,20 @@ body::before{
   font-size:20px;
 }
 
+/* colțuri sus (stânga/dreapta) fără HTML nou */
+.topbar::before,
+.topbar::after{
+  content:"";
+  position:fixed;
+  top:-40px; width:min(48vw,640px); height:min(48vw,640px);
+  background:url("/img/lace-corner.png") no-repeat center/contain;
+  opacity:.18; pointer-events:none;
+  filter:drop-shadow(0 6px 20px rgba(217,113,209,.25));
+  z-index:0;
+}
+.topbar::before{ left:-40px; transform:scaleX(-1) }
+.topbar::after{ right:-40px }
+
 .tabs{display:flex; gap:8px; flex-wrap:wrap}
 .tabbtn{
   position:relative;
@@ -84,15 +98,13 @@ body::before{
 .tabbtn[data-active="true"]{
   color:#0b0b0c;
   background:
-    radial-gradient(36px 36px at 100% 110%, rgba(255,255,255,.18) 0 40%, transparent 41%) ,
+    radial-gradient(36px 36px at 100% 110%, rgba(255,255,255,.18) 0 40%, transparent 41%),
     linear-gradient(180deg, var(--primary), var(--primary-2));
   box-shadow:0 8px 18px rgba(217,113,209,.35);
 }
 
 .who{margin-left:auto; display:flex; align-items:center; gap:10px}
-#themeSel, select, input, button{
-  font:inherit; color:inherit;
-}
+#themeSel, select, input, button{ font:inherit; color:inherit }
 
 .hidden{display:none !important}
 .row{display:flex; align-items:center; gap:var(--gap)}
@@ -116,7 +128,7 @@ body::before{
 .compact-under{display:flex; gap:var(--gap); flex-wrap:wrap}
 
 @media (max-width:1000px){
-  .grid-tax{grid-template-columns:1fr 1fr 1fr; }
+  .grid-tax{grid-template-columns:1fr 1fr 1fr}
   .grid-3{grid-template-columns:1fr 1fr}
   .grid-4{grid-template-columns:1fr 1fr}
 }
@@ -137,10 +149,7 @@ body::before{
   padding:calc(var(--pad) + 4px);
   position:relative;
 }
-.card.inner{
-  background:var(--surface-2);
-  border-radius:var(--radius);
-}
+.card.inner{ background:var(--surface-2); border-radius:var(--radius) }
 .card h2,.card h3,.card h4,.card h5{margin:0 0 12px}
 h2{font-size:22px}
 h3{font-size:18px}
@@ -170,25 +179,34 @@ h5{font-size:15px; color:#f3c7f1}
     var(--surface-2);
   color:#ffe9ff;
   padding:13px 12px;
-  font-size:14px;           /* font mai mare */
+  font-size:14px;
   font-weight:700;
   text-align:center;
   border-bottom:1px solid var(--border);
 }
 .table thead th.left,
-.table tbody td.left { text-align:left }
-.table tbody td{ padding:12px 10px; border-bottom:1px solid #24262e; color:var(--text); text-align:center }
+.table tbody td.left{ text-align:left }
+.table tbody td{
+  padding:12px 10px; border-bottom:1px solid #24262e;
+  color:var(--text); text-align:center
+}
 .table tbody tr:hover{background:rgba(217,113,209,.05)}
 .table tbody tr:last-child td{border-bottom:none}
 .total-col{font-weight:800; color:#fff}
 
-/* spacing suplimentar la taxe active */
+/* spacing la Taxe active */
 #taxeTable{ margin-top:18px }
 .split h4{ margin-top:18px; margin-bottom:10px }
 
-/* drill form linie 1 și 2 separate */
-.drill-grid .grid-3{ gap:18px; margin-bottom:14px }
-.drill-grid .grid-4{ margin-top:12px; gap:14px }
+/* Burghiu: linia 1 (CNP – Familie – Trimite) și linia 2 (piese) */
+.drill-grid .grid-3{
+  grid-template-columns:220px 1fr 140px;
+  gap:18px; margin-bottom:14px;
+}
+.drill-grid .grid-4{
+  grid-template-columns:repeat(4,1fr);
+  margin-top:12px; gap:14px;
+}
 .drill-grid .flex-end{ align-self:end }
 #drillForm input.same-height,
 #drillForm select.same-height,
@@ -225,28 +243,37 @@ button{
   transition:transform .08s ease, filter .2s ease, box-shadow .2s ease;
   position:relative; overflow:hidden;
 }
-button::after{
+/* pattern și pe butoanele de submit */
+#drillForm button::after,
+#taxeForm button::after{
   content:"";
   position:absolute; inset:-2px;
   background:url("/img/lace-corner.png") no-repeat bottom right / 58%;
-  opacity:.18; pointer-events:none;
+  opacity:.22; pointer-events:none;
   mix-blend-mode:screen;
   filter:drop-shadow(0 2px 10px rgba(217,113,209,.5));
-  transform:rotate(0deg);
 }
 button:hover{filter:saturate(110%); box-shadow:0 12px 22px rgba(217,113,209,.45)}
 button:active{transform:translateY(1px) scale(.99)}
-
 button.sm{padding:8px 12px; border-radius:12px; font-weight:700}
-button.primary{background:
-  radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-  linear-gradient(180deg, var(--primary), var(--primary-2)); color:#0b0b0c}
-button.danger{background:
-  radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-  linear-gradient(180deg, #ff6c7a, #e63d56); color:#0b0b0c}
-.gold-btn{background:
-  radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
-  linear-gradient(180deg, #ffd476, #f5b24a); color:#2d1f00}
+button.primary{
+  background:
+    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
+    linear-gradient(180deg, var(--primary), var(--primary-2));
+  color:#0b0b0c
+}
+button.danger{
+  background:
+    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
+    linear-gradient(180deg, #ff6c7a, #e63d56);
+  color:#0b0b0c
+}
+.gold-btn{
+  background:
+    radial-gradient(32px 32px at 110% 110%, rgba(255,255,255,.25), transparent 40%),
+    linear-gradient(180deg, #ffd476, #f5b24a);
+  color:#2d1f00
+}
 
 .same-height{height:44px}
 .select-strong{font-weight:700}
