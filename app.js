@@ -1,3 +1,4 @@
+// app.js
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -13,8 +14,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static("public")); // servește index/styles/app.js din /public
 
+// ---------- Utils: ISO Week ----------
 function mondayOfISOWeek(year, week) {
   const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
   const dow = simple.getUTCDay() || 7;
@@ -47,6 +49,7 @@ function fmtRemaining(validUntil) {
   return `${hh}:${mm}`;
 }
 
+// ---------- SSE (live) ----------
 const sseClients = new Set();
 function sseBroadcast(event, data = {}) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -70,6 +73,7 @@ app.get("/events", (req, res) => {
   });
 });
 
+// ---------- Auth ----------
 function sign(user) {
   return jwt.sign({ id: user.id, role: user.role, username: user.username }, JWT_SECRET, {
     expiresIn: "7d",
@@ -102,27 +106,40 @@ function requireRole(...roles) {
   };
 }
 
+// Register (cu invite)
 app.post("/auth/register", async (req, res) => {
   try {
     const { inviteCode, username, nickname, password, cnp } = req.body || {};
     if (!inviteCode || !username || !password) {
       return res.status(400).json({ error: "Lipsește invite/username/password" });
     }
+
     const inv = await prisma.invite.findUnique({ where: { code: inviteCode } });
     if (!inv || inv.usedAt) return res.status(400).json({ error: "Invite invalid/folosit" });
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { username, password: hashed, nickname: nickname || null, cnp: cnp || null, role: inv.role },
+      data: {
+        username,
+        password: hashed,
+        nickname: nickname || null,
+        cnp: cnp || null,
+        role: inv.role,
+      },
     });
-    await prisma.invite.update({ where: { id: inv.id }, data: { usedAt: new Date(), usedById: user.id } });
+
+    await prisma.invite.update({
+      where: { id: inv.id },
+      data: { usedAt: new Date(), usedById: user.id },
+    });
 
     return res.json({ token: sign(user) });
-  } catch {
+  } catch (e) {
     return res.status(500).json({ error: "Register error" });
   }
 });
 
+// Login
 app.post("/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -136,22 +153,33 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
+// Me (include nickname + displayName)
 app.get("/auth/me", auth(), async (req, res) => {
   const u = await prisma.user.findUnique({ where: { id: req.user.id } });
-  res.json({ id: u.id, username: u.username, role: u.role });
+  res.json({
+    id: u.id,
+    username: u.username,
+    nickname: u.nickname,
+    displayName: u.nickname || u.username,
+    role: u.role
+  });
 });
 
+// Invites
 app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), async (req, res) => {
   try {
     const { role = "OPERATOR" } = req.body || {};
     const code = crypto.randomBytes(6).toString("hex");
-    await prisma.invite.create({ data: { code, role, createdById: req.user.id } });
+    const inv = await prisma.invite.create({
+      data: { code, role, createdById: req.user.id },
+    });
     res.json({ code, link: `invite:${code}` });
   } catch {
     res.status(500).json({ error: "Nu am putut genera invitația" });
   }
 });
 
+// ---------- Families helper ----------
 async function getOrCreateFamilyByName(name) {
   if (!name) return null;
   try {
@@ -165,6 +193,7 @@ async function getOrCreateFamilyByName(name) {
   }
 }
 
+// ---------- TAXE ----------
 app.post("/taxe", auth(), async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
@@ -219,11 +248,11 @@ app.post("/taxe", auth(), async (req, res) => {
       cnp: row.cnp,
       tip: amount === 0 ? "GRATIS" : amount === 40000 ? "Bani curați" : "Bani murdari",
       remaining: fmtRemaining(row.validUntil),
-      user: row.user?.username || null,
+      user: row.user ? (row.user.nickname || row.user.username) : null,
       gratisFamilie: row.family?.name || null,
       createdAt: row.createdAt,
     });
-  } catch {
+  } catch (e) {
     res.status(500).json({ error: "Eroare la creare taxă" });
   }
 });
@@ -244,6 +273,7 @@ app.get("/taxe", auth(false), async (req, res) => {
     const rows = await prisma.taxEntry.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      take: 200,
       include: { user: true, family: true },
     });
 
@@ -252,7 +282,7 @@ app.get("/taxe", auth(false), async (req, res) => {
       cnp: r.cnp,
       tip: r.amount === 0 ? "GRATIS" : r.amount === 40000 ? "Bani curați" : "Bani murdari",
       remaining: r.validUntil ? fmtRemaining(r.validUntil) : "",
-      user: r.user?.username || null,
+      user: r.user ? (r.user.nickname || r.user.username) : null,
       createdAt: r.createdAt,
       gratisFamilie: r.family?.name || null,
       metoda: r.payment === "GRATIS" ? "gratis" : r.amount === 40000 ? "curat" : "murdar",
@@ -264,17 +294,23 @@ app.get("/taxe", auth(false), async (req, res) => {
   }
 });
 
-app.delete("/taxe/:id", auth(), requireRole("ADMIN", "HEAD_OPERATOR"), async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    await prisma.taxEntry.delete({ where: { id } });
-    sseBroadcast("taxe:new", { id });
-    res.json({ ok: true });
-  } catch {
-    res.status(400).json({ error: "Nu s-a putut șterge taxa" });
+app.delete(
+  "/taxe/:id",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR"),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await prisma.taxEntry.delete({ where: { id } });
+      sseBroadcast("taxe:new", { id });
+      res.json({ ok: true });
+    } catch {
+      res.status(400).json({ error: "Nu s-a putut șterge taxa" });
+    }
   }
-});
+);
 
+// ---------- BURGHIU ----------
 app.post("/drill", auth(), async (req, res) => {
   try {
     const { cnp, part, quantity, family } = req.body || {};
@@ -282,6 +318,7 @@ app.post("/drill", auth(), async (req, res) => {
     if (!family) return res.status(400).json({ error: "Familie lipsă" });
 
     const parts = { cadru: 0, teava: 0, mecanism: 0, fixare: 0 };
+
     if (part) {
       if (!["cadru", "teava", "mecanism", "fixare"].includes(part))
         return res.status(400).json({ error: "Piesă invalidă" });
@@ -289,6 +326,7 @@ app.post("/drill", auth(), async (req, res) => {
       if (q <= 0) return res.status(400).json({ error: "Cantitate > 0" });
       parts[part] = q;
     }
+
     ["cadru", "teava", "mecanism", "fixare"].forEach((k) => {
       if (req.body[k] != null) {
         const v = parseInt(req.body[k] || 0);
@@ -296,7 +334,8 @@ app.post("/drill", auth(), async (req, res) => {
       }
     });
 
-    const totalIncoming = parts.cadru + parts.teava + parts.mecanism + parts.fixare;
+    const totalIncoming =
+      parts.cadru + parts.teava + parts.mecanism + parts.fixare;
     if (totalIncoming <= 0) return res.status(400).json({ error: "Cantitate totală 0" });
 
     const fam = await getOrCreateFamilyByName(family);
@@ -358,12 +397,12 @@ app.post("/drill", auth(), async (req, res) => {
       teava: row.teava,
       mecanism: row.mecanism,
       fixare: row.fixare,
-      metodaPlata: unitPrice === 0 ? "GRATIS" : "Bani murdari",
+      metodaPlata: row.unitPrice === 0 ? "GRATIS" : "Bani murdari",
       costTotal: (row.cadru + row.teava + row.mecanism + row.fixare) * row.unitPrice,
-      user: row.user?.username || null,
+      user: row.user ? (row.user.nickname || row.user.username) : null,
       createdAt: row.createdAt,
     });
-  } catch {
+  } catch (e) {
     res.status(500).json({ error: "Eroare la burghiu" });
   }
 });
@@ -381,6 +420,7 @@ app.get("/drill", auth(false), async (req, res) => {
     const rows = await prisma.drillJob.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      take: 50,
       include: { user: true, family: true },
     });
 
@@ -392,9 +432,9 @@ app.get("/drill", auth(false), async (req, res) => {
       teava: r.teava,
       mecanism: r.mecanism,
       fixare: r.fixare,
-      metodaPlata: r.unitPrice === 0 ? "GRATIS" : "Bani murdari",
+      metodaPlata: r.unitPrice === 0 ? "GRATIS" : r.cashType === "CLEAN" ? "Bani curați" : "Bani murdari",
       costTotal: (r.cadru + r.teava + r.mecanism + r.fixare) * r.unitPrice,
-      user: r.user?.username || null,
+      user: r.user ? (r.user.nickname || r.user.username) : null,
       createdAt: r.createdAt,
     }));
 
@@ -404,88 +444,83 @@ app.get("/drill", auth(false), async (req, res) => {
   }
 });
 
-app.delete("/drill/:id", auth(), requireRole("ADMIN", "HEAD_OPERATOR"), async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    await prisma.drillJob.delete({ where: { id } });
-    sseBroadcast("drill:new", { id });
-    res.json({ ok: true });
-  } catch {
-    res.status(400).json({ error: "Nu s-a putut șterge jobul" });
+app.delete(
+  "/drill/:id",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR"),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await prisma.drillJob.delete({ where: { id } });
+      sseBroadcast("drill:new", { id });
+      res.json({ ok: true });
+    } catch {
+      res.status(400).json({ error: "Nu s-a putut șterge jobul" });
+    }
   }
-});
+);
 
-app.get("/admin/stats", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), async (req, res) => {
-  try {
-    const { from, to } = rangeFromQuery(req.query);
-    const timeWhere = from && to ? { createdAt: { gte: from, lt: to } } : {};
+// ---------- Admin: split / stats ----------
+app.get(
+  "/admin/stats",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"),
+  async (req, res) => {
+    try {
+      const { from, to } = rangeFromQuery(req.query);
+      const timeWhere = from && to ? { createdAt: { gte: from, lt: to } } : {};
 
-    const taxe = await prisma.taxEntry.findMany({
-      where: { type: "TAXA", ...timeWhere },
-      include: { user: true },
-    });
+      const taxe = await prisma.taxEntry.findMany({
+        where: { type: "TAXA", ...timeWhere },
+        include: { user: true },
+      });
 
-    const map = new Map();
-    function accUser(u, k, v) {
-      const key = u?.username || "-";
-      const row = map.get(key) || {
-        username: key,
-        userShareClean: 0,
-        userShareDirty: 0,
-        familyShareClean: 0,
-        familyShareDirty: 0,
-        totalClean: 0,
-        totalDirty: 0,
-        total: 0,
-      };
-      row[k] += v;
-      map.set(key, row);
+      const map = new Map();
+      function accUser(u, k, v) {
+        const key = (u?.nickname || u?.username || "-");
+        const row = map.get(key) || {
+          username: key, // afișăm displayName în câmpul folosit de UI
+          userShareClean: 0,
+          userShareDirty: 0,
+          familyShareClean: 0,
+          familyShareDirty: 0,
+          totalClean: 0,
+          totalDirty: 0,
+          total: 0,
+        };
+        row[k] += v;
+        map.set(key, row);
+      }
+
+      for (const t of taxe) {
+        if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
+        else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000);
+      }
+
+      const drill = await prisma.drillJob.findMany({
+        where: { ...timeWhere },
+        include: { user: true },
+      });
+      for (const j of drill) {
+        const total = (j.cadru + j.teava + j.mecanism + j.fixare) * j.unitPrice;
+        accUser(j.user, "totalDirty", total);
+      }
+
+      for (const [k, r] of map.entries()) {
+        r.userShareClean = r.totalClean * 0.5;
+        r.familyShareClean = r.totalClean * 0.5;
+        r.userShareDirty = r.totalDirty * 0.5;
+        r.familyShareDirty = r.totalDirty * 0.5;
+        r.total = r.totalClean + r.totalDirty;
+        map.set(k, r);
+      }
+
+      res.json([...map.values()].sort((a, b) => b.total - a.total));
+    } catch {
+      res.status(500).json({ error: "Eroare stats" });
     }
-
-    for (const t of taxe) {
-      if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
-      else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000);
-    }
-
-    const drill = await prisma.drillJob.findMany({
-      where: { ...timeWhere },
-      include: { user: true },
-    });
-    for (const j of drill) {
-      const total = (j.cadru + j.teava + j.mecanism + j.fixare) * j.unitPrice;
-      accUser(j.user, "totalDirty", total);
-    }
-
-    for (const [k, r] of map.entries()) {
-      r.userShareClean = r.totalClean * 0.5;
-      r.familyShareClean = r.totalClean * 0.5;
-      r.userShareDirty = r.totalDirty * 0.5;
-      r.familyShareDirty = r.totalDirty * 0.5;
-      r.total = r.totalClean + r.totalDirty;
-      map.set(k, r);
-    }
-
-    const rows = [...map.values()].sort((a, b) => b.total - a.total);
-
-    const isAll = (req.query.period === "all");
-    if (isAll) {
-      const limit = Math.max(1, parseInt(req.query.limit || "50", 10));
-      const page = Math.max(1, parseInt(req.query.page || "1", 10));
-      const pages = Math.max(1, Math.ceil(rows.length / limit));
-      const pageClamped = Math.min(page, pages);
-      const start = (pageClamped - 1) * limit;
-      const slice = rows.slice(start, start + limit);
-      res.setHeader("X-Page", String(pageClamped));
-      res.setHeader("X-Pages", String(pages));
-      res.setHeader("X-Limit", String(limit));
-      return res.json(slice);
-    }
-
-    res.json(rows);
-  } catch {
-    res.status(500).json({ error: "Eroare stats" });
   }
-});
+);
 
 app.listen(PORT, () => {
   console.log(`Volkov API running on http://localhost:${PORT}`);
