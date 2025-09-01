@@ -1,3 +1,4 @@
+// ===== Helpers & Theme =====
 (function () {
   const saved = localStorage.getItem("theme") || "dark";
   document.body.setAttribute("data-theme", saved);
@@ -26,6 +27,7 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (n = 0) => `${(n || 0).toLocaleString("ro-RO")}$`;
 
+// Conversii
 const toDirty = (clean = 0) => Math.round((clean || 0) * 0.65);
 const toClean = (dirty = 0) => Math.round((dirty || 0) / 0.65);
 
@@ -36,6 +38,7 @@ function setTabs(active) {
   );
 }
 
+// ===== ISO week utils =====
 function getISOWeek(d = new Date()) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const dayNum = date.getUTCDay() || 7;
@@ -60,6 +63,7 @@ function inISOWeek(d, year, week) {
 }
 const dayNames = ["Lun", "Mar", "Mie", "Joi", "Vin", "Sâm", "Dum"];
 
+// Populează doar W33..W53 și selectează săptămâna curentă dacă e în interval
 function fillWeeksCurrent(sel) {
   if (!sel) return;
   sel.innerHTML = "";
@@ -74,6 +78,7 @@ function fillWeeksCurrent(sel) {
   if (nowWeek < 33) sel.selectedIndex = 0;
 }
 
+// ===== Auth =====
 let currentRole = null;
 
 async function hydrateMe() {
@@ -82,7 +87,10 @@ async function hydrateMe() {
     if (!r.ok) throw 0;
     const me = await r.json();
     currentRole = me.role || null;
-    $("#whoami").textContent = `${me.username} [${me.role}]`;
+
+    // Afișează nickname dacă există; altfel username
+    const display = me.displayName || me.nickname || me.username;
+    $("#whoami").textContent = `${display} [${me.role}]`;
 
     const show = (tab, cond) => {
       const btn = $$(".tabbtn").find((b) => b.dataset.tab === tab);
@@ -161,6 +169,7 @@ $("#registerForm")?.addEventListener("submit", async (e) => {
   hydrateMe();
 });
 
+// ===== Tabs =====
 $$(".tabbtn").forEach((b) => {
   b.addEventListener("click", async () => {
     setTabs(b.dataset.tab);
@@ -176,6 +185,7 @@ $$(".tabbtn").forEach((b) => {
   });
 });
 
+// ===== SSE (live) =====
 let es;
 function connectSSE() {
   if (es) { try { es.close(); } catch {} }
@@ -197,6 +207,7 @@ function connectSSE() {
   es.addEventListener("ping", () => {});
 }
 
+// ===== Taxe (ACTIVE 4h) =====
 const metodaSelect = $("#metodaSelect");
 const gratisWrap = $("#gratisWrap");
 
@@ -225,6 +236,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   loadProfile();
 });
 
+// state + search
 let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
 
@@ -251,13 +263,14 @@ function renderTaxe(list) {
         suma = "50.000$";
       }
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="font-mono">${row.cnp}</td><td>${suma}</td><td>${
+      tr.innerHTML = `<td class="font-mono left">${row.cnp}</td><td>${suma}</td><td>${
         row.remaining || ""
       }</td><td class="left">${row.user || "-"}</td>`;
       tbody.appendChild(tr);
     });
 }
 
+// ===== Burghiu (ultime joburi) =====
 $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -289,7 +302,7 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
 
 let drillCache = [];
 async function loadDrill() {
-  const r = await api(`/drill`);
+  const r = await api("/drill");
   if (!r.ok) return;
   drillCache = await r.json();
   renderDrill(drillCache.slice(0, 5));
@@ -301,7 +314,7 @@ function renderDrill(list) {
   (list || []).forEach((j) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="font-mono">${j.cnp}</td>
+      <td class="font-mono left">${j.cnp}</td>
       <td class="left">${j.family || "-"}</td>
       <td>${j.cadru}</td>
       <td>${j.teava}</td>
@@ -315,6 +328,7 @@ function renderDrill(list) {
   });
 }
 
+// ===== Statistici Taxe + Statistici Familii =====
 $("#dashPeriod")?.addEventListener("change", loadDashboard);
 $("#dashWeekPicker")?.addEventListener("change", loadDashboard);
 $("#bfPeriod")?.addEventListener("change", loadDashboard);
@@ -516,6 +530,7 @@ async function loadDashboard() {
   }
 }
 
+// ===== Admin =====
 $("#admPeriod")?.addEventListener("change", () => { admPage = 1; loadAdmin(); });
 $("#weekSelect")?.addEventListener("change", () => { admPage = 1; loadAdmin(); });
 
@@ -587,6 +602,7 @@ $("#admNext")?.addEventListener("click", () => {
   if (admPage < admPages) { admPage++; loadAdmin(); }
 });
 
+// ===== Tabele All =====
 $("#tblPeriod")?.addEventListener("change", loadTableAll);
 $("#tblWeekPicker")?.addEventListener("change", loadTableAll);
 $("#tblRefresh")?.addEventListener("click", loadTableAll);
@@ -633,7 +649,7 @@ async function loadTableAll() {
         const suma =
           x.tip === "GRATIS" ? "GRATIS" : x.tip === "Bani curați" ? "40.000$" : "50.000$";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="font-mono">${x.cnp}</td><td>${suma}</td><td>${
+        tr.innerHTML = `<td class="font-mono left">${x.cnp}</td><td>${suma}</td><td>${
           x.remaining || ""
         }</td><td class="left">${x.user || "-"}</td><td class="left">${
           x.gratisFamilie || "-"
@@ -665,7 +681,7 @@ async function loadTableAll() {
       .filter((x) => !filterFam || (x.family || "").toLowerCase().includes(filterFam))
       .forEach((j) => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="font-mono">${j.cnp}</td><td class="left">${
+        tr.innerHTML = `<td class="font-mono left">${j.cnp}</td><td class="left">${
           j.family || "-"
         }</td><td>${j.cadru}</td><td>${j.teava}</td><td>${j.mecanism}</td><td>${
           j.fixare
@@ -699,6 +715,7 @@ $("#tblAll")?.addEventListener("click", async (e) => {
   loadProfile();
 });
 
+// ===== Profile (MEU) — KPI-uri separate și Total split în murdari =====
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -799,6 +816,7 @@ async function loadProfile() {
   $("#splitAllTot").textContent = money(totalDirtyConverted);
 }
 
+// ===== Admin Invite =====
 $("#inviteBtn")?.addEventListener("click", async () => {
   const role = $("#inviteRole").value;
   const r = await api("/invites", { method: "POST", body: JSON.stringify({ role }) });
@@ -812,5 +830,6 @@ $("#inviteCopy")?.addEventListener("click", () => {
   document.execCommand?.("copy");
 });
 
+// ===== Init =====
 hydrateMe();
 setTabs("taxe");
