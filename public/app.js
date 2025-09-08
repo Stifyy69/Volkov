@@ -270,7 +270,7 @@ function renderTaxe(list) {
     });
 }
 
-// ===== Burghiu (ultime joburi) =====
+// ===== Burghiu (mini listă în tab-ul Taxe) =====
 $("#drillForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -302,6 +302,7 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
 
 let drillCache = [];
 async function loadDrill() {
+  // serverul nu mai limitează; mini-tabelul păstrează doar 5 ultime vizual
   const r = await api("/drill");
   if (!r.ok) return;
   drillCache = await r.json();
@@ -542,6 +543,7 @@ async function loadAdmin() {
   let url = "/admin/stats";
   let usePaging = false;
   if (period === "all") {
+    // numai aici păstrăm paginația de 50 (serverul setează X-Pages/X-Page)
     usePaging = true;
     url = `/admin/stats?period=all&limit=50&page=${admPage}`;
   } else if ($("#weekSelect")?.value) {
