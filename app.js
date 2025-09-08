@@ -257,6 +257,7 @@ app.post("/taxe", auth(), async (req, res) => {
   }
 });
 
+// ❗ LISTĂ TAXE — FĂRĂ LIMITĂ (decât dacă se cere explicit cu ?limit=)
 app.get("/taxe", auth(false), async (req, res) => {
   try {
     const scope = req.query.scope || "active";
@@ -270,10 +271,12 @@ app.get("/taxe", auth(false), async (req, res) => {
       ...(mine && req.user ? { userId: req.user.id } : {}),
     };
 
+    const take = req.query.limit ? parseInt(req.query.limit) || undefined : undefined;
+
     const rows = await prisma.taxEntry.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 200,
+      ...(take ? { take } : {}), // fără limită implicit
       include: { user: true, family: true },
     });
 
@@ -407,6 +410,7 @@ app.post("/drill", auth(), async (req, res) => {
   }
 });
 
+// ❗ LISTĂ BURGHIU — FĂRĂ LIMITĂ (decât dacă se cere explicit cu ?limit=)
 app.get("/drill", auth(false), async (req, res) => {
   try {
     const mine = req.query.mine === "1";
@@ -417,10 +421,12 @@ app.get("/drill", auth(false), async (req, res) => {
       ...(mine && req.user ? { userId: req.user.id } : {}),
     };
 
+    const take = req.query.limit ? parseInt(req.query.limit) || undefined : undefined;
+
     const rows = await prisma.drillJob.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 50,
+      ...(take ? { take } : {}), // fără limită implicit
       include: { user: true, family: true },
     });
 
@@ -473,6 +479,7 @@ app.get(
       const taxe = await prisma.taxEntry.findMany({
         where: { type: "TAXA", ...timeWhere },
         include: { user: true },
+        orderBy: { createdAt: "desc" },
       });
 
       const map = new Map();
@@ -500,22 +507,42 @@ app.get(
       const drill = await prisma.drillJob.findMany({
         where: { ...timeWhere },
         include: { user: true },
+        orderBy: { createdAt: "desc" },
       });
       for (const j of drill) {
         const total = (j.cadru + j.teava + j.mecanism + j.fixare) * j.unitPrice;
         accUser(j.user, "totalDirty", total);
       }
 
+      const all = [];
       for (const [k, r] of map.entries()) {
         r.userShareClean = r.totalClean * 0.5;
         r.familyShareClean = r.totalClean * 0.5;
         r.userShareDirty = r.totalDirty * 0.5;
         r.familyShareDirty = r.totalDirty * 0.5;
         r.total = r.totalClean + r.totalDirty;
-        map.set(k, r);
+        all.push(r);
+      }
+      all.sort((a, b) => b.total - a.total);
+
+      // ❗ Dacă perioada e ALL (fără filtru de week), aplicăm paginare/limit (implicit 50)
+      const isAll = !from && !to;
+      let page = parseInt(req.query.page || "1", 10);
+      let limit = parseInt(req.query.limit || (isAll ? "50" : "0"), 10);
+      if (!isAll) { page = 1; limit = 0; }
+
+      let sliced = all;
+      if (isAll && limit > 0) {
+        const pages = Math.max(1, Math.ceil(all.length / limit));
+        if (page < 1) page = 1;
+        if (page > pages) page = pages;
+        const start = (page - 1) * limit;
+        sliced = all.slice(start, start + limit);
+        res.setHeader("X-Pages", String(pages));
+        res.setHeader("X-Page", String(page));
       }
 
-      res.json([...map.values()].sort((a, b) => b.total - a.total));
+      res.json(sliced);
     } catch {
       res.status(500).json({ error: "Eroare stats" });
     }
