@@ -105,7 +105,8 @@ async function hydrateMe() {
       show("taxe", true);
       show("profile", true);
     } else {
-      show("admin", me.role === "ADMIN" || me.role === "HEAD_OPERATOR" || me.role === "AUDIT"));
+      // FIX: fără paranteza suplimentară la final
+      show("admin", me.role === "ADMIN" || me.role === "HEAD_OPERATOR" || me.role === "AUDIT");
       show("tables", true);
       show("dashboard", true);
       show("drillfamilies", true);
