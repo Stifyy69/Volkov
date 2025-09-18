@@ -70,9 +70,11 @@ model Invite {
 }
 
 model Family {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  colorHex  String
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  colorHex     String
+  discountDrill Int     @default(0)
+  discountTax   Int     @default(0)
 
   taxEntries TaxEntry[]
   drillJobs  DrillJob[]

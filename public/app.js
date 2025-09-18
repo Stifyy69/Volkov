@@ -78,6 +78,53 @@ function fillWeeksCurrent(sel) {
   if (nowWeek < 33) sel.selectedIndex = 0;
 }
 
+// ===== Families =====
+let familiesCache = [];
+
+async function loadFamilies() {
+  try {
+    const r = await api("/families");
+    if (!r.ok) throw new Error("Failed to load families");
+    familiesCache = await r.json();
+    populateFamilySelects();
+  } catch {
+    console.error("Failed to load families");
+  }
+}
+
+function populateFamilySelects() {
+  const drillFamilySelect = $("#drillFamily");
+  const gratisFamilySelect = $('select[name="gratisFamilie"]');
+  
+  if (drillFamilySelect) {
+    // Keep the first option as placeholder
+    const placeholder = drillFamilySelect.querySelector('option[disabled]');
+    drillFamilySelect.innerHTML = "";
+    if (placeholder) drillFamilySelect.appendChild(placeholder);
+    
+    familiesCache
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(family => {
+        const option = document.createElement("option");
+        option.value = family.name;
+        option.textContent = family.name;
+        drillFamilySelect.appendChild(option);
+      });
+  }
+  
+  if (gratisFamilySelect) {
+    gratisFamilySelect.innerHTML = "";
+    familiesCache
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(family => {
+        const option = document.createElement("option");
+        option.value = family.name;
+        option.textContent = family.name;
+        gratisFamilySelect.appendChild(option);
+      });
+  }
+}
+
 // ===== Auth =====
 let currentRole = null;
 
@@ -120,6 +167,7 @@ async function hydrateMe() {
       (id) => fillWeeksCurrent(document.getElementById(id))
     );
 
+    loadFamilies();
     loadTaxe();
     loadDrill();
     loadDashboard();
@@ -603,6 +651,92 @@ $("#admPrev")?.addEventListener("click", () => {
 $("#admNext")?.addEventListener("click", () => {
   if (admPage < admPages) { admPage++; loadAdmin(); }
 });
+
+// ===== Family Discounts Admin =====
+async function renderFamiliesAdminTable() {
+  const tbody = $("#familiesTableBody");
+  if (!tbody) return;
+  
+  tbody.innerHTML = "";
+  familiesCache.forEach((family) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="left">${family.name}</td>
+      <td>
+        <input type="number" min="0" max="100" value="${family.discountDrill}" 
+               data-family-id="${family.id}" data-field="discountDrill" 
+               class="discount-input" style="width: 80px;" />
+      </td>
+      <td>
+        <input type="number" min="0" max="100" value="${family.discountTax}" 
+               data-family-id="${family.id}" data-field="discountTax" 
+               class="discount-input" style="width: 80px;" />
+      </td>
+      <td>${family.discountDrill === 100 ? "DA" : "NU"}</td>
+      <td>
+        <button class="sm primary save-discount-btn" data-family-id="${family.id}">
+          Salvează
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  // Add event listeners for save buttons
+  $$(".save-discount-btn").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const familyId = parseInt(e.target.dataset.familyId);
+      await saveFamilyDiscounts(familyId);
+    });
+  });
+}
+
+async function saveFamilyDiscounts(familyId) {
+  try {
+    const drillInput = $(`.discount-input[data-family-id="${familyId}"][data-field="discountDrill"]`);
+    const taxInput = $(`.discount-input[data-family-id="${familyId}"][data-field="discountTax"]`);
+    
+    if (!drillInput || !taxInput) return;
+    
+    const discountDrill = parseInt(drillInput.value) || 0;
+    const discountTax = parseInt(taxInput.value) || 0;
+    
+    const r = await api(`/families/${familyId}/discounts`, {
+      method: "PUT",
+      body: JSON.stringify({ discountDrill, discountTax })
+    });
+    
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert(j.error || "Eroare la salvarea reducerilor");
+      return;
+    }
+    
+    // Update cache and re-render
+    const familyIndex = familiesCache.findIndex(f => f.id === familyId);
+    if (familyIndex !== -1) {
+      familiesCache[familyIndex].discountDrill = discountDrill;
+      familiesCache[familyIndex].discountTax = discountTax;
+    }
+    
+    renderFamiliesAdminTable();
+    populateFamilySelects(); // Update selects with new data
+    
+    alert("Reduceri salvate cu succes!");
+  } catch {
+    alert("Eroare la salvarea reducerilor");
+  }
+}
+
+// Load families admin table when admin tab is accessed
+const originalLoadAdmin = window.loadAdmin || loadAdmin;
+async function loadAdmin() {
+  await originalLoadAdmin();
+  if (currentRole === "ADMIN" || currentRole === "HEAD_OPERATOR") {
+    await loadFamilies(); // Refresh families data
+    renderFamiliesAdminTable();
+  }
+}
 
 // ===== Tabele All =====
 $("#tblPeriod")?.addEventListener("change", loadTableAll);

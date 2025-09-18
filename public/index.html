@@ -97,9 +97,7 @@
 
           <label id="gratisWrap" class="hidden">Familie (GRATIS)
             <select name="gratisFamilie" class="same-height">
-              <option value="Medelin Cartel">Medelin Cartel</option>
-              <option value="818">818</option>
-              <option value="Stefanos Cartel">Stefanos Cartel</option>
+              <!-- Options will be populated dynamically from backend -->
             </select>
           </label>
 
@@ -140,22 +138,7 @@
             <label>Familie
               <select name="family" id="drillFamily" class="same-height" required>
                 <option value="" disabled selected>Alege…</option>
-                <option>Medelin Cartel</option>
-                <option>Stefanos Cartel</option>
-                <option>818</option>
-                <option>Bogota Thugs</option>
-                <option>LowLine</option>
-                <option>Casa Blanca</option>
-                <option>LaPuentes</option>
-                <option>Mali Strip</option>
-                <option>Garda Veche</option>
-                <option>NDR</option>
-                <option>Velvet</option>
-                <option>Santos Gruppo</option>
-                <option>Mayans MC</option>
-                <option>La CosaNostra</option>
-                <option>Hells Riders</option>
-                <option>BACM</option>
+                <!-- Options will be populated dynamically from backend -->
               </select>
             </label>
             <div class="flex-end">
@@ -461,6 +444,24 @@
           <input id="inviteResult" class="grow" readonly />
           <button id="inviteCopy" class="sm">Copiază</button>
         </div>
+      </div>
+
+      <div class="card mt">
+        <h3>Familii & Reduceri</h3>
+        <table id="familiesTable" class="table">
+          <thead>
+            <tr>
+              <th class="left">Familie</th>
+              <th>Reducere Burghiu (%)</th>
+              <th>Reducere Taxe (%)</th>
+              <th>Gratuit?</th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody id="familiesTableBody">
+            <!-- Populated by JavaScript -->
+          </tbody>
+        </table>
       </div>
     </section>
 
