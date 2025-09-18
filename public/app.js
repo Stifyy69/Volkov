@@ -171,7 +171,7 @@ async function hydrateMe() {
     loadTaxe();
     loadDrill();
     loadDashboard();
-    loadAdmin();
+    enhancedLoadAdmin();
     loadTableAll();
     loadProfile();
     connectSSE();
@@ -227,7 +227,7 @@ $$(".tabbtn").forEach((b) => {
     }
     if (b.dataset.tab === "dashboard") loadDashboard();
     if (b.dataset.tab === "drillfamilies") loadDashboard();
-    if (b.dataset.tab === "admin") loadAdmin();
+    if (b.dataset.tab === "admin") enhancedLoadAdmin();
     if (b.dataset.tab === "tables") loadTableAll();
     if (b.dataset.tab === "profile") loadProfile();
   });
@@ -243,14 +243,14 @@ function connectSSE() {
     loadDashboard();
     loadTableAll();
     loadProfile();
-    loadAdmin();
+    enhancedLoadAdmin();
   });
   es.addEventListener("drill:new", () => {
     loadDrill();
     loadDashboard();
     loadTableAll();
     loadProfile();
-    loadAdmin();
+    enhancedLoadAdmin();
   });
   es.addEventListener("ping", () => {});
 }
@@ -580,8 +580,8 @@ async function loadDashboard() {
 }
 
 // ===== Admin =====
-$("#admPeriod")?.addEventListener("change", () => { admPage = 1; loadAdmin(); });
-$("#weekSelect")?.addEventListener("change", () => { admPage = 1; loadAdmin(); });
+$("#admPeriod")?.addEventListener("change", () => { admPage = 1; enhancedLoadAdmin(); });
+$("#weekSelect")?.addEventListener("change", () => { admPage = 1; enhancedLoadAdmin(); });
 
 let admPage = 1;
 let admPages = 1;
@@ -646,10 +646,10 @@ async function loadAdmin() {
 }
 
 $("#admPrev")?.addEventListener("click", () => {
-  if (admPage > 1) { admPage--; loadAdmin(); }
+  if (admPage > 1) { admPage--; enhancedLoadAdmin(); }
 });
 $("#admNext")?.addEventListener("click", () => {
-  if (admPage < admPages) { admPage++; loadAdmin(); }
+  if (admPage < admPages) { admPage++; enhancedLoadAdmin(); }
 });
 
 // ===== Family Discounts Admin =====
@@ -729,14 +729,17 @@ async function saveFamilyDiscounts(familyId) {
 }
 
 // Load families admin table when admin tab is accessed
-const originalLoadAdmin = window.loadAdmin || loadAdmin;
-async function loadAdmin() {
+const originalLoadAdmin = loadAdmin;
+async function enhancedLoadAdmin() {
   await originalLoadAdmin();
   if (currentRole === "ADMIN" || currentRole === "HEAD_OPERATOR") {
     await loadFamilies(); // Refresh families data
     renderFamiliesAdminTable();
   }
 }
+
+// Replace the original loadAdmin with enhanced version
+window.loadAdmin = enhancedLoadAdmin;
 
 // ===== Tabele All =====
 $("#tblPeriod")?.addEventListener("change", loadTableAll);

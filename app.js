@@ -253,6 +253,10 @@ app.put(
 // ---------- TAXE ----------
 app.post("/taxe", auth(), async (req, res) => {
   try {
+    // TODO: In next PR, integrate discountTax for non-GRATIS methods
+    // Allow optional Family selection and apply discountTax to amounts
+    // This will require updating UI to display actual amounts instead of fixed labels
+    
     const { cnp, metoda, gratisFamilie } = req.body || {};
     if (!cnp || !/^\d{1,6}$/.test(cnp)) return res.status(400).json({ error: "CNP invalid" });
     if (!["curat", "murdar", "gratis"].includes(metoda))
