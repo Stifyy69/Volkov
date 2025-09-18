@@ -48,6 +48,7 @@ function fmtRemaining(validUntil) {
   const mm = String(m % 60).padStart(2, "0");
   return `${hh}:${mm}`;
 }
+const clampPct = (n) => Math.max(0, Math.min(100, parseInt(n ?? 0)));
 
 // ---------- SSE (live) ----------
 const sseClients = new Set();
@@ -186,12 +187,60 @@ async function getOrCreateFamilyByName(name) {
     return await prisma.family.upsert({
       where: { name },
       update: {},
-      create: { name, colorHex: "#888888" },
+      create: {
+        name,
+        colorHex: "#888888",
+        discountDrill: isGratisFamily(name) ? 100 : 0,
+        discountTax: 0,
+      },
     });
   } catch {
     return await prisma.family.findUnique({ where: { name } });
   }
 }
+
+// ---------- FAMILIES API ----------
+app.get("/families", auth(), async (req, res) => {
+  try {
+    const fams = await prisma.family.findMany({ orderBy: { name: "asc" } });
+    res.json(
+      fams.map((f) => ({
+        id: f.id,
+        name: f.name,
+        colorHex: f.colorHex,
+        discountDrill: f.discountDrill ?? 0,
+        discountTax: f.discountTax ?? 0,
+      }))
+    );
+  } catch {
+    res.status(500).json({ error: "Eroare la listare familii" });
+  }
+});
+
+app.put(
+  "/families/:id/discounts",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR"),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!id) return res.status(400).json({ error: "ID invalid" });
+      const data = {};
+      if (req.body.hasOwnProperty("discountDrill")) data.discountDrill = clampPct(req.body.discountDrill);
+      if (req.body.hasOwnProperty("discountTax")) data.discountTax = clampPct(req.body.discountTax);
+      const fam = await prisma.family.update({ where: { id }, data });
+      res.json({
+        id: fam.id,
+        name: fam.name,
+        colorHex: fam.colorHex,
+        discountDrill: fam.discountDrill ?? 0,
+        discountTax: fam.discountTax ?? 0,
+      });
+    } catch (e) {
+      res.status(400).json({ error: "Nu s-a putut actualiza familia" });
+    }
+  }
+);
 
 // ---------- TAXE ----------
 app.post("/taxe", auth(), async (req, res) => {
@@ -342,9 +391,9 @@ app.post("/drill", auth(), async (req, res) => {
     if (totalIncoming <= 0) return res.status(400).json({ error: "Cantitate totală 0" });
 
     const fam = await getOrCreateFamilyByName(family);
-    const gratis = isGratisFamily(fam?.name || "");
-    const cashType = gratis ? "CLEAN" : "DIRTY";
-    const unitPrice = gratis ? 0 : 1000;
+    const discount = clampPct(fam?.discountDrill ?? 0);
+    const unitPrice = Math.round(1000 * (1 - discount / 100));
+    const cashType = unitPrice === 0 ? "CLEAN" : "DIRTY";
 
     const since = new Date(Date.now() - 10 * 60 * 1000);
     const existing = await prisma.drillJob.findFirst({
