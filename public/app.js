@@ -105,7 +105,7 @@ async function hydrateMe() {
       show("taxe", true);
       show("profile", true);
     } else {
-      show("admin", me.role === "ADMIN" || me.role === "HEAD_OPERATOR" || me.role === "AUDIT");
+      show("admin", me.role === "ADMIN" || me.role === "HEAD_OPERATOR" || me.role === "AUDIT"));
       show("tables", true);
       show("dashboard", true);
       show("drillfamilies", true);
@@ -126,6 +126,7 @@ async function hydrateMe() {
     loadAdmin();
     loadTableAll();
     loadProfile();
+    await loadFamilies(); // pentru select-uri + Admin UI
     connectSSE();
   } catch {
     $("#auth").classList.remove("hidden");
@@ -179,7 +180,10 @@ $$(".tabbtn").forEach((b) => {
     }
     if (b.dataset.tab === "dashboard") loadDashboard();
     if (b.dataset.tab === "drillfamilies") loadDashboard();
-    if (b.dataset.tab === "admin") loadAdmin();
+    if (b.dataset.tab === "admin") {
+      loadAdmin();
+      loadFamilies();
+    }
     if (b.dataset.tab === "tables") loadTableAll();
     if (b.dataset.tab === "profile") loadProfile();
   });
@@ -663,9 +667,7 @@ async function loadTableAll() {
         body.appendChild(tr);
       });
   } else {
-    head.innerHTML = `<tr><th class="left">CNP</th><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Plată</th><th>Valoare</th><th class="left">User</th><th>Creat</th>${
-      canDelete ? "<th>Șterge</th>" : ""
-    }</tr>`;
+    head.innerHTML = `<tr><th class="left">CNP</th><th class="left">Familie</th><th>Cadru</th><th>Țeavă</th><th>Mecanism</th><th>Fixare</th><th>Plată</th><th>Valoare</th><th class="left">User</th><th>Creat</th>${canDelete ? "<th>Șterge</th>" : ""}</tr>`;
 
     const params =
       period === "all"
@@ -831,6 +833,90 @@ $("#inviteCopy")?.addEventListener("click", () => {
   el.select();
   document.execCommand?.("copy");
 });
+
+// ===== Families (Admin + select-uri dinamice) =====
+let familiesCache = [];
+
+async function loadFamilies() {
+  try {
+    const r = await api("/families");
+    if (!r.ok) throw 0;
+    familiesCache = await r.json();
+    renderFamiliesAdminTable(familiesCache);
+    populateFamilySelects(familiesCache);
+  } catch {
+    familiesCache = [];
+    renderFamiliesAdminTable([]);
+  }
+}
+
+function populateFamilySelects(list = []) {
+  const fill = (sel) => {
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
+    list
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((f) => {
+        const opt = document.createElement("option");
+        opt.value = f.name;
+        opt.textContent = f.name;
+        sel.appendChild(opt);
+      });
+    if (prev) sel.value = prev;
+  };
+  fill(document.getElementById("drillFamily"));
+  fill(document.querySelector('[name="gratisFamilie"]'));
+}
+
+function renderFamiliesAdminTable(list = []) {
+  const tbody = document.querySelector("#familiesTable tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  list
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((f) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="left">${f.name}</td>
+        <td><input type="number" min="0" max="100" value="${f.discountDrill ?? 0}" data-fid="${f.id}" data-k="discountDrill" style="width:80px"/></td>
+        <td><input type="number" min="0" max="100" value="${f.discountTax ?? 0}" data-fid="${f.id}" data-k="discountTax" style="width:80px"/></td>
+        <td><button class="sm" data-save="${f.id}">Salvează</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  if (!tbody._bound) {
+    tbody.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-save]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-save");
+      const rowInputs = [...tbody.querySelectorAll(`input[data-fid="${id}"]`)];
+      const payload = {};
+      rowInputs.forEach((inp) => {
+        const k = inp.getAttribute("data-k");
+        const v = Math.max(0, Math.min(100, parseInt(inp.value || 0)));
+        payload[k] = v;
+        inp.value = v;
+      });
+      try {
+        const r = await api(`/families/${id}/discounts`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return alert(j.error || "Eroare la salvare");
+        alert("Salvat");
+        loadFamilies();
+      } catch {
+        alert("Eroare la salvare");
+      }
+    });
+    tbody._bound = true;
+  }
+}
 
 // ===== Init =====
 hydrateMe();
