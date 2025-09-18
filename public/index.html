@@ -97,9 +97,8 @@
 
           <label id="gratisWrap" class="hidden">Familie (GRATIS)
             <select name="gratisFamilie" class="same-height">
-              <option value="Medelin Cartel">Medelin Cartel</option>
-              <option value="818">818</option>
-              <option value="Stefanos Cartel">Stefanos Cartel</option>
+              <option value="" disabled selected>Alege…</option>
+              <!-- Populat dinamic -->
             </select>
           </label>
 
@@ -140,22 +139,7 @@
             <label>Familie
               <select name="family" id="drillFamily" class="same-height" required>
                 <option value="" disabled selected>Alege…</option>
-                <option>Medelin Cartel</option>
-                <option>Stefanos Cartel</option>
-                <option>818</option>
-                <option>Bogota Thugs</option>
-                <option>LowLine</option>
-                <option>Casa Blanca</option>
-                <option>LaPuentes</option>
-                <option>Mali Strip</option>
-                <option>Garda Veche</option>
-                <option>NDR</option>
-                <option>Velvet</option>
-                <option>Santos Gruppo</option>
-                <option>Mayans MC</option>
-                <option>La CosaNostra</option>
-                <option>Hells Riders</option>
-                <option>BACM</option>
+                <!-- Populat dinamic -->
               </select>
             </label>
             <div class="flex-end">
@@ -173,8 +157,7 @@
 
           <!-- Linia 3: Plata -->
           <div class="hint col-span-2">
-            Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> pentru
-            <b>818</b> / <b>Medelin</b> / <b>Stefanos</b>.
+            Plată: <b>Bani murdari</b> (1.000$ / buc). <b>GRATIS</b> dacă reducere Burghiu = 100%.
           </div>
         </form>
 
@@ -304,7 +287,7 @@
             </table>
           </div>
           <div class="card inner">
-            <!-- loc rezervat (dacă mai vrei alt card) -->
+            <!-- loc rezervat -->
             <h4>&nbsp;</h4>
             <div>&nbsp;</div>
           </div>
@@ -461,6 +444,21 @@
           <input id="inviteResult" class="grow" readonly />
           <button id="inviteCopy" class="sm">Copiază</button>
         </div>
+      </div>
+
+      <div class="card mt">
+        <h4>Familii &amp; Reduceri</h4>
+        <table id="familiesTable" class="table">
+          <thead>
+            <tr>
+              <th class="left">Familie</th>
+              <th>Reducere Burghiu (%)</th>
+              <th>Reducere Taxe (%)</th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody><!-- populat din JS --></tbody>
+        </table>
       </div>
     </section>
 
