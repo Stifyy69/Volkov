@@ -70,9 +70,13 @@ model Invite {
 }
 
 model Family {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  colorHex  String
+  id            Int    @id @default(autoincrement())
+  name          String @unique
+  colorHex      String
+
+  // Reduceri
+  discountDrill Int    @default(0) // % reducere la Burghiu (0..100)
+  discountTax   Int    @default(0) // % reducere la Taxe (rezervat pt. viitor)
 
   taxEntries TaxEntry[]
   drillJobs  DrillJob[]
@@ -87,7 +91,7 @@ model TaxEntry {
   material   Material?   // nefolosit la taxe, rezervat pt. viitor
 
   // Valori
-  amount     Int         // 40000 (curat), 60000 (murdar), 0 (gratis)
+  amount     Int         // 40000 (curat), 50000 (murdar), 0 (gratis)
   payment    String?     // ex: "GRATIS - Stefanos" sau "cash"
   cnp        String      @db.VarChar(6)
 
