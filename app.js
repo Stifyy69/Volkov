@@ -202,11 +202,16 @@ async function getOrCreateFamilyByName(name) {
     return await prisma.family.findUnique({ where: { name } });
   }
 }
+function isDeletedFamilyName(name) {
+  return (name || "").startsWith("__deleted__");
+}
 
 // ---------- FAMILIES API ----------
 app.get("/families", auth(), async (req, res) => {
   try {
-    const fams = await prisma.family.findMany({ orderBy: { name: "asc" } });
+    const includeDeleted = req.query.includeDeleted === "1";
+    const where = includeDeleted ? {} : { NOT: { name: { startsWith: "__deleted__" } } };
+    const fams = await prisma.family.findMany({ where, orderBy: { name: "asc" } });
     res.json(
       fams.map((f) => ({
         id: f.id,
@@ -220,6 +225,40 @@ app.get("/families", auth(), async (req, res) => {
     res.status(500).json({ error: "Eroare la listare familii" });
   }
 });
+
+app.post(
+  "/families",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR"),
+  async (req, res) => {
+    try {
+      const { name, colorHex } = req.body || {};
+      const n = (name || "").trim();
+      if (!n) return res.status(400).json({ error: "Numele familiei este obligatoriu" });
+      if (isDeletedFamilyName(n)) return res.status(400).json({ error: "Nume invalid" });
+      const fam = await prisma.family.create({
+        data: {
+          name: n,
+          colorHex: (colorHex || "#888888").trim() || "#888888",
+          discountDrill: isGratisFamily(n) ? 100 : 0,
+          discountTax: 0,
+        },
+      });
+      res.json({
+        id: fam.id,
+        name: fam.name,
+        colorHex: fam.colorHex,
+        discountDrill: fam.discountDrill ?? 0,
+        discountTax: fam.discountTax ?? 0,
+      });
+    } catch (e) {
+      if ((e?.code || "") === "P2002") {
+        return res.status(400).json({ error: "Există deja o familie cu acest nume" });
+      }
+      res.status(500).json({ error: "Eroare la creare familie" });
+    }
+  }
+);
 
 app.put(
   "/families/:id/discounts",
@@ -242,6 +281,36 @@ app.put(
       });
     } catch (e) {
       res.status(400).json({ error: "Nu s-a putut actualiza familia" });
+    }
+  }
+);
+
+app.delete(
+  "/families/:id",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR"),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!id) return res.status(400).json({ error: "ID invalid" });
+      const fam = await prisma.family.findUnique({ where: { id } });
+      if (!fam) return res.status(404).json({ error: "Familie inexistentă" });
+
+      // Soft-delete prin redenumire, pentru a păstra istoricul intact
+      const newName = `__deleted__${fam.id}__${fam.name}`;
+      if (fam.name === newName) return res.json({ ok: true });
+      await prisma.family.update({
+        where: { id: fam.id },
+        data: {
+          name: newName,
+          colorHex: "#444444",
+          discountDrill: 0,
+          discountTax: 0,
+        },
+      });
+      return res.json({ ok: true });
+    } catch {
+      res.status(500).json({ error: "Nu s-a putut șterge familia" });
     }
   }
 );
@@ -277,6 +346,8 @@ app.post("/taxe", auth(), async (req, res) => {
       payment = "GRATIS";
       if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru GRATIS" });
       const fam = await getOrCreateFamilyByName(gratisFamilie);
+      // dacă familia a fost soft-deleted, nu o lăsăm aleasă
+      if (!fam || isDeletedFamilyName(fam.name)) return res.status(400).json({ error: "Familie invalidă" });
       familyId = fam?.id || null;
     }
 
@@ -395,6 +466,8 @@ app.post("/drill", auth(), async (req, res) => {
     if (totalIncoming <= 0) return res.status(400).json({ error: "Cantitate totală 0" });
 
     const fam = await getOrCreateFamilyByName(family);
+    if (!fam || isDeletedFamilyName(fam.name)) return res.status(400).json({ error: "Familie invalidă" });
+
     const discount = clampPct(fam?.discountDrill ?? 0);
     const unitPrice = Math.round(1000 * (1 - discount / 100));
     const cashType = unitPrice === 0 ? "CLEAN" : "DIRTY";
