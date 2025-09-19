@@ -27,9 +27,12 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (n = 0) => `${(n || 0).toLocaleString("ro-RO")}$`;
 
-// Conversii
-const toDirty = (clean = 0) => Math.round((clean || 0) * 0.65);
-const toClean = (dirty = 0) => Math.round((dirty || 0) / 0.65);
+// Conversii — aliniat cu Stefanos (rate = 0.65, cu floor)
+// Curați -> Murdari: floor(curat / 0.65)
+// Murdari -> Curați: floor(murdar * 0.65)
+const RATE = 0.65;
+const toDirty = (clean = 0) => Math.floor((clean || 0) / RATE);
+const toClean = (dirty = 0) => Math.floor((dirty || 0) * RATE);
 
 function setTabs(active) {
   $$(".tabbtn").forEach((b) => (b.dataset.active = b.dataset.tab === active));
@@ -105,7 +108,6 @@ async function hydrateMe() {
       show("taxe", true);
       show("profile", true);
     } else {
-      // FIX: fără paranteza suplimentară la final
       show("admin", me.role === "ADMIN" || me.role === "HEAD_OPERATOR" || me.role === "AUDIT");
       show("tables", true);
       show("dashboard", true);
