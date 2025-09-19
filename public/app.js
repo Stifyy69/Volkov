@@ -877,6 +877,25 @@ function renderFamiliesAdminTable(list = []) {
   const tbody = document.querySelector("#familiesTable tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
+
+  // Row pentru adăugare
+  const addTr = document.createElement("tr");
+  addTr.innerHTML = `
+    <td class="left">
+      <input type="text" id="famAddName" class="input" placeholder="Nume familie"/>
+    </td>
+    <td>
+      <input type="number" value="0" class="input" disabled style="width:80px"/>
+    </td>
+    <td>
+      <input type="number" value="0" class="input" disabled style="width:80px"/>
+    </td>
+    <td>
+      <button class="sm" id="famAddBtn">Adaugă</button>
+    </td>
+  `;
+  tbody.appendChild(addTr);
+
   list
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -886,35 +905,72 @@ function renderFamiliesAdminTable(list = []) {
         <td class="left">${f.name}</td>
         <td><input type="number" min="0" max="100" value="${f.discountDrill ?? 0}" data-fid="${f.id}" data-k="discountDrill" style="width:80px"/></td>
         <td><input type="number" min="0" max="100" value="${f.discountTax ?? 0}" data-fid="${f.id}" data-k="discountTax" style="width:80px"/></td>
-        <td><button class="sm" data-save="${f.id}">Salvează</button></td>
+        <td>
+          <button class="sm" data-save="${f.id}">Salvează</button>
+          <button class="sm danger" data-del="${f.id}">Șterge</button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
 
   if (!tbody._bound) {
     tbody.addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-save]");
-      if (!btn) return;
-      const id = btn.getAttribute("data-save");
-      const rowInputs = [...tbody.querySelectorAll(`input[data-fid="${id}"]`)];
-      const payload = {};
-      rowInputs.forEach((inp) => {
-        const k = inp.getAttribute("data-k");
-        const v = Math.max(0, Math.min(100, parseInt(inp.value || 0)));
-        payload[k] = v;
-        inp.value = v;
-      });
-      try {
-        const r = await api(`/families/${id}/discounts`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
+      // Add family
+      if (e.target.id === "famAddBtn") {
+        const inp = document.getElementById("famAddName");
+        const name = (inp?.value || "").trim();
+        if (!name) return alert("Introdu numele familiei.");
+        try {
+          const r = await api("/families", { method: "POST", body: JSON.stringify({ name }) });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) return alert(j.error || "Eroare la creare");
+          alert("Familie adăugată.");
+          loadFamilies();
+        } catch {
+          alert("Eroare la creare");
+        }
+        return;
+      }
+
+      const btnSave = e.target.closest("[data-save]");
+      if (btnSave) {
+        const id = btnSave.getAttribute("data-save");
+        const rowInputs = [...tbody.querySelectorAll(`input[data-fid="${id}"]`)];
+        const payload = {};
+        rowInputs.forEach((inp) => {
+          const k = inp.getAttribute("data-k");
+          const v = Math.max(0, Math.min(100, parseInt(inp.value || 0)));
+          payload[k] = v;
+          inp.value = v;
         });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) return alert(j.error || "Eroare la salvare");
-        alert("Salvat");
-        loadFamilies();
-      } catch {
-        alert("Eroare la salvare");
+        try {
+          const r = await api(`/families/${id}/discounts`, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) return alert(j.error || "Eroare la salvare");
+          alert("Salvat");
+          loadFamilies();
+        } catch {
+          alert("Eroare la salvare");
+        }
+        return;
+      }
+
+      const btnDel = e.target.closest("[data-del]");
+      if (btnDel) {
+        const id = btnDel.getAttribute("data-del");
+        if (!confirm("Sigur vrei să ștergi această familie? (nu afectează istoricul)")) return;
+        try {
+          const r = await api(`/families/${id}`, { method: "DELETE" });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) return alert(j.error || "Eroare la ștergere");
+          alert("Familie ștearsă.");
+          loadFamilies();
+        } catch {
+          alert("Eroare la ștergere");
+        }
       }
     });
     tbody._bound = true;
