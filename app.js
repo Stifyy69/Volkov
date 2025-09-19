@@ -50,6 +50,10 @@ function fmtRemaining(validUntil) {
 }
 const clampPct = (n) => Math.max(0, Math.min(100, parseInt(n ?? 0)));
 
+// Conversie bani — alinieri cu Stefanos
+const CONVERSION_RATE = 0.65;
+const cleanToDirtyEq = (clean = 0) => Math.floor((clean || 0) / CONVERSION_RATE);
+
 // ---------- SSE (live) ----------
 const sseClients = new Set();
 function sseBroadcast(event, data = {}) {
@@ -569,7 +573,8 @@ app.get(
         r.familyShareClean = r.totalClean * 0.5;
         r.userShareDirty = r.totalDirty * 0.5;
         r.familyShareDirty = r.totalDirty * 0.5;
-        r.total = r.totalClean + r.totalDirty;
+        // Total exprimat în MURDARI: dirty + floor(clean / 0.65)
+        r.total = r.totalDirty + cleanToDirtyEq(r.totalClean);
         all.push(r);
       }
       all.sort((a, b) => b.total - a.total);
