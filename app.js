@@ -342,14 +342,15 @@ app.post("/taxe", auth(), async (req, res) => {
       amount = 50000;
       currency = "DIRTY";
     } else {
-      // discountat (fostul "GRATIS")
+      // discountat (fostul "GRATIS" în UI)
       amount = 0;
       currency = "CLEAN";
       payment = "DISCOUNTAT";
       if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru Discountat" });
-      const fam = await getOrCreateFamilyByName(gratisFamilie);
-      // dacă familia a fost soft-deleted, nu o lăsăm aleasă
+      const fam = await prisma.family.findUnique({ where: { name: gratisFamilie } }) || await getOrCreateFamilyByName(gratisFamilie);
+      // dacă familia a fost soft-deleted sau nu are discount activ de taxe, nu o acceptăm
       if (!fam || isDeletedFamilyName(fam.name)) return res.status(400).json({ error: "Familie invalidă" });
+      if ((fam.discountTax || 0) <= 0) return res.status(400).json({ error: "Familia nu are discount de taxe activ" });
       familyId = fam?.id || null;
     }
 
@@ -630,7 +631,6 @@ app.get(
       for (const t of taxe) {
         if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
         else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000);
-        // amount 0 (DISCOUNTAT) nu intră la clean/dirty totals directe
       }
 
       const drill = await prisma.drillJob.findMany({
