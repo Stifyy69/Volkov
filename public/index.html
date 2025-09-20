@@ -22,80 +22,35 @@
 
     <div class="who">
       <select id="themeSel" title="Theme">
-        <option value="dark">Dark</option>
+        <option value="dark" selected>Dark</option>
         <option value="light">Light</option>
       </select>
       <span id="whoami"></span>
-      <button id="logoutBtn" class="danger sm">Logout</button>
+      <button id="logoutBtn" class="sm">Logout</button>
     </div>
   </header>
 
-  <!-- Auth -->
-  <main id="auth" class="container">
-    <section class="card">
-      <h2>Autentificare</h2>
-      <form id="loginForm" class="grid grid-2">
-        <label>Username
-          <input name="username" required />
-        </label>
-        <label>Parolă
-          <input name="password" type="password" required />
-        </label>
-        <div class="col-span-2 right">
-          <button class="primary">Login</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="card">
-      <h2>Register</h2>
-      <form id="registerForm" class="grid grid-2">
-        <label>Invite code
-          <input name="inviteCode" required />
-        </label>
-        <label>Username
-          <input name="username" required />
-        </label>
-        <label>Nickname
-          <input name="nickname" />
-        </label>
-        <label>Parolă
-          <input name="password" type="password" required />
-        </label>
-        <label>CNP (max 6)
-          <input name="cnp" pattern="\d{0,6}" />
-        </label>
-        <div class="col-span-2 right">
-          <button class="primary">Register</button>
-        </div>
-      </form>
-    </section>
-  </main>
-
-  <!-- App -->
-  <main id="app" class="container hidden">
-
+  <main id="app">
     <!-- Taxe & Burghiu -->
     <section id="tab-taxe" class="tab">
       <div class="card">
-        <h3>Taxe</h3>
-
-        <!-- Linia 1: CNP - Tip plată - (Familie GRATIS) - Trimite -->
-        <form id="taxeForm" class="grid grid-tax">
+        <div class="bar">
+          <h3>Taxe</h3>
+        </div>
+        <form id="taxeForm" class="grid grid-2 gap">
           <label>CNP
-            <input class="same-height" name="cnp" placeholder="CNP" pattern="\d{1,6}" required />
+            <input name="cnp" class="same-height" placeholder="CNP" pattern="\d{1,6}" required />
           </label>
-
           <label>Tip plată
             <select id="metodaSelect" name="metoda" class="same-height" required>
               <option value="" disabled selected>Alege…</option>
               <option value="curat">Bani curați (40.000$)</option>
               <option value="murdar">Bani murdari (50.000$)</option>
-              <option value="gratis">GRATIS</option>
+              <option value="discountat">Discountat</option>
             </select>
           </label>
 
-          <label id="gratisWrap" class="hidden">Familie (GRATIS)
+          <label id="gratisWrap" class="hidden">Familie (Discountat)
             <select name="gratisFamilie" class="same-height">
               <option value="" disabled selected>Alege…</option>
               <!-- Populat dinamic -->
@@ -109,6 +64,10 @@
 
         <div class="split">
           <h4>Taxe active</h4>
+          <label>
+            <input type="checkbox" id="filterDiscountatTaxe" />
+            Arată doar Discountat
+          </label>
         </div>
         <div class="row mb">
           <input id="taxSearch" class="w-300" placeholder="Caută CNP…" />
@@ -223,25 +182,12 @@
             <div>Total: <b id="splitDirtyTot">0$</b></div>
           </div>
           <div class="card inner">
-            <h5>Total (în murdari)</h5>
+            <h5>Toate (exprimate în murdari)</h5>
             <div>User: <b id="splitAllUser">0$</b></div>
             <div>Familie: <b id="splitAllFam">0$</b></div>
             <div>Total: <b id="splitAllTot">0$</b></div>
           </div>
         </div>
-
-        <h4 class="mt">Schimbă parola</h4>
-        <form id="resetForm" class="grid grid-2">
-          <label>Parola veche
-            <input name="oldPassword" type="password" required/>
-          </label>
-          <label>Parola nouă
-            <input name="newPassword" type="password" required/>
-          </label>
-          <div class="col-span-2 right">
-            <button class="primary">Actualizează</button>
-          </div>
-        </form>
       </div>
     </section>
 
@@ -321,21 +267,7 @@
               <th>Mecanism</th>
               <th>Elemente de fixare</th>
               <th>Total</th>
-              <th>Total Bani</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-
-        <h4 class="mt">Burghiu pe zile</h4>
-        <table id="bfDailyTable" class="table">
-          <thead>
-            <tr>
-              <th class="left">Zi</th>
-              <th>Nr. taxe</th>
-              <th>Bani curați</th>
-              <th>Bani murdari</th>
-              <th>Total Bani</th>
+              <th>Total bani</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -343,14 +275,14 @@
 
         <div class="grid grid-2 mt">
           <div class="card inner">
-            <h4>Top user Burghiu</h4>
+            <h4>Top materiale pe user</h4>
             <table id="topDrillUsers" class="table">
-              <thead><tr><th class="left">User</th><th>Materiale</th></tr></thead>
+              <thead><tr><th class="left">User</th><th>Total materiale</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
           <div class="card inner">
-            <h4>Top User Intrări</h4>
+            <h4>Top intrări pe user</h4>
             <table id="topDrillEntries" class="table">
               <thead><tr><th class="left">User</th><th>Intrări</th></tr></thead>
               <tbody></tbody>
@@ -381,6 +313,8 @@
               <option value="drill">Burghiu</option>
             </select>
           </label>
+
+          <div class="grow"></div>
           <input id="tblFilterUser" class="w-200" placeholder="User…" />
           <input id="tblFilterCnp" class="w-160" placeholder="CNP…" />
           <input id="tblFilterFamily" class="w-200" placeholder="Familie…" />
@@ -408,32 +342,32 @@
           <select id="weekSelect" class="weekSel"></select>
         </div>
 
-        <h4>Split pe utilizator</h4>
-        <table id="admTable" class="table emphasis-total">
+        <table id="admTable" class="table">
           <thead>
             <tr>
               <th class="left">User</th>
-              <th>Bani curați</th>
-              <th>Bani murdari</th>
-              <th>Bani curați (Familie)</th>
-              <th>Bani murdari (Familie)</th>
-              <th>Total Bani curați</th>
-              <th>Total Bani murdari</th>
-              <th>Total</th>
+              <th>User Clean</th>
+              <th>User Dirty</th>
+              <th>Family Clean</th>
+              <th>Family Dirty</th>
+              <th>Total Clean</th>
+              <th>Total Dirty</th>
+              <th>Total (murdari)</th>
             </tr>
           </thead>
-          <tbody></tbody>
+        <tbody></tbody>
         </table>
 
-        <!-- Pager pentru All time (50/pagină) -->
-        <div id="admPager" class="row mt hidden">
-          <button id="admPrev" class="sm">◀</button>
-          <div id="admPageInfo">Pagina 1 / 1</div>
-          <button id="admNext" class="sm">▶</button>
+        <div id="admPager" class="pager hidden">
+          <button id="admPrev" class="sm">«</button>
+          <span id="admPageInfo">Pagina 1 / 1</span>
+          <button id="admNext" class="sm">»</button>
         </div>
+      </div>
 
-        <h4 class="mt">Invite link</h4>
-        <div class="bar">
+      <div class="card mt">
+        <h4>Invite</h4>
+        <div class="bar compact-under">
           <select id="inviteRole">
             <option value="OPERATOR">OPERATOR</option>
             <option value="HEAD_OPERATOR">HEAD_OPERATOR</option>
@@ -461,8 +395,48 @@
         </table>
       </div>
     </section>
-
   </main>
+
+  <!-- Auth -->
+  <section id="auth" class="tab hidden">
+    <div class="card">
+      <h3>Login</h3>
+      <form id="loginForm" class="grid grid-2">
+        <label>Username
+          <input name="username" required />
+        </label>
+        <label>Password
+          <input name="password" type="password" required />
+        </label>
+        <div class="col-span-2 right">
+          <button class="primary">Login</button>
+        </div>
+      </form>
+    </div>
+    <div class="card mt">
+      <h3>Register (cu invite)</h3>
+      <form id="registerForm" class="grid grid-2">
+        <label>Invite
+          <input name="inviteCode" required />
+        </label>
+        <label>Username
+          <input name="username" required />
+        </label>
+        <label>Nickname
+          <input name="nickname" />
+        </label>
+        <label>CNP
+          <input name="cnp" pattern="\d{1,6}" />
+        </label>
+        <label>Parolă
+          <input name="password" type="password" required />
+        </label>
+        <div class="col-span-2 right">
+          <button class="primary">Înregistrează</button>
+        </div>
+      </form>
+    </div>
+  </section>
 
   <script src="app.js"></script>
 </body>
