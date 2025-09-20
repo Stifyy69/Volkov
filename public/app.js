@@ -91,7 +91,6 @@ async function hydrateMe() {
     const me = await r.json();
     currentRole = me.role || null;
 
-    // Afișează nickname dacă există; altfel username
     const display = me.displayName || me.nickname || me.username;
     $("#whoami").textContent = `${display} [${me.role}]`;
 
@@ -116,24 +115,39 @@ async function hydrateMe() {
     }
 
     $("#auth").classList.add("hidden");
-    $("#app").classList.remove("hidden");
+    $("#app")?.classList.remove("hidden");
     setTabs("taxe");
 
     ["dashWeekPicker", "bfWeekPicker", "weekSelect", "tblWeekPicker", "profWeekPicker"].forEach(
       (id) => fillWeeksCurrent(document.getElementById(id))
     );
 
+    // Convertim opțiunea "GRATIS" în "Discountat" dacă există deja în HTML
+    const metodaSelect = $("#metodaSelect");
+    const gratisOpt = metodaSelect?.querySelector('option[value="gratis"]');
+    if (gratisOpt) {
+      gratisOpt.value = "discountat";
+      gratisOpt.textContent = "Discountat";
+    }
+    const gratisWrapLbl = $("#gratisWrap");
+    if (gratisWrapLbl) {
+      const firstNode = gratisWrapLbl.childNodes[0];
+      if (firstNode && firstNode.nodeType === Node.TEXT_NODE) {
+        firstNode.textContent = "Familie (Discountat)";
+      }
+    }
+
+    await loadFamilies(); // pentru select-uri + Admin UI
     loadTaxe();
     loadDrill();
     loadDashboard();
     loadAdmin();
     loadTableAll();
     loadProfile();
-    await loadFamilies(); // pentru select-uri + Admin UI
     connectSSE();
   } catch {
     $("#auth").classList.remove("hidden");
-    $("#app").classList.add("hidden");
+    $("#app")?.classList.add("hidden");
     setTabs("taxe");
   }
 }
@@ -215,12 +229,18 @@ function connectSSE() {
 }
 
 // ===== Taxe (ACTIVE 4h) =====
-const metodaSelect = $("#metodaSelect");
+const metodaSelectEl = $("#metodaSelect");
 const gratisWrap = $("#gratisWrap");
 
-metodaSelect?.addEventListener("change", () => {
-  const isGratis = metodaSelect.value === "gratis";
-  gratisWrap?.classList.toggle("hidden", !isGratis);
+metodaSelectEl?.addEventListener("change", () => {
+  const isDiscount = metodaSelectEl.value === "discountat";
+  gratisWrap?.classList.toggle("hidden", !isDiscount);
+  // Filtrare automată: dacă e selectat Discountat, arătăm doar Discountat în lista de taxe
+  const chk = $("#filterDiscountatTaxe");
+  if (chk) {
+    chk.checked = isDiscount;
+  }
+  renderTaxe(taxeCache);
 });
 
 $("#taxeForm")?.addEventListener("submit", async (e) => {
@@ -230,13 +250,13 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
   if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6).");
 
   const body = { cnp, metoda: f.metoda.value };
-  if (f.metoda.value === "gratis") body.gratisFamilie = f.gratisFamilie.value;
+  if (f.metoda.value === "discountat") body.gratisFamilie = f.gratisFamilie.value;
 
   const r = await api("/taxe", { method: "POST", body: JSON.stringify(body) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) return alert(j.error || "Eroare la taxă");
   f.reset();
-  metodaSelect?.dispatchEvent(new Event("change"));
+  metodaSelectEl?.dispatchEvent(new Event("change"));
   loadTaxe();
   loadDashboard();
   loadTableAll();
@@ -246,6 +266,7 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
 // state + search
 let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
+$("#filterDiscountatTaxe")?.addEventListener("change", () => renderTaxe(taxeCache));
 
 async function loadTaxe() {
   const r = await api("/taxe?scope=active");
@@ -255,15 +276,17 @@ async function loadTaxe() {
 }
 function renderTaxe(list) {
   const q = ($("#taxSearch")?.value || "").trim().toLowerCase();
+  const onlyDiscountat = $("#filterDiscountatTaxe")?.checked || (metodaSelectEl?.value === "discountat");
   const tbody = $("#taxeTable tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
   (list || [])
     .filter((row) => !q || String(row.cnp).toLowerCase().includes(q))
+    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT")
     .forEach((row) => {
       let suma = "";
-      if (row.metoda === "gratis" || row.tip === "GRATIS") {
-        suma = "GRATIS";
+      if (row.metoda === "discountat" || row.tip === "DISCOUNTAT") {
+        suma = "DISCOUNTAT";
       } else if (row.tip === "Bani curați") {
         suma = "40.000$";
       } else if (row.tip === "Bani murdari") {
@@ -309,7 +332,6 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
 
 let drillCache = [];
 async function loadDrill() {
-  // serverul nu mai limitează; mini-tabelul păstrează doar 5 ultime vizual
   const r = await api("/drill");
   if (!r.ok) return;
   drillCache = await r.json();
@@ -550,7 +572,6 @@ async function loadAdmin() {
   let url = "/admin/stats";
   let usePaging = false;
   if (period === "all") {
-    // numai aici păstrăm paginația de 50 (serverul setează X-Pages/X-Page)
     usePaging = true;
     url = `/admin/stats?period=all&limit=50&page=${admPage}`;
   } else if ($("#weekSelect")?.value) {
@@ -656,7 +677,7 @@ async function loadTableAll() {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .forEach((x) => {
         const suma =
-          x.tip === "GRATIS" ? "GRATIS" : x.tip === "Bani curați" ? "40.000$" : "50.000$";
+          x.tip === "DISCOUNTAT" ? "DISCOUNTAT" : x.tip === "Bani curați" ? "40.000$" : "50.000$";
         const tr = document.createElement("tr");
         tr.innerHTML = `<td class="font-mono left">${x.cnp}</td><td>${suma}</td><td>${
           x.remaining || ""
@@ -769,6 +790,10 @@ async function loadProfile() {
       if (t.tip === "Bani murdari") {
         dirtyTax += 50000;
         daily[wd].dirty += 50000;
+        daily[wd].count++;
+        taxesCount++;
+      }
+      if (t.tip === "DISCOUNTAT") {
         daily[wd].count++;
         taxesCount++;
       }
