@@ -221,9 +221,7 @@ const gratisWrap = $("#gratisWrap");
 metodaSelect?.addEventListener("change", () => {
   const isDiscount = metodaSelect.value === "discountat";
   gratisWrap?.classList.toggle("hidden", !isDiscount);
-  // când selectezi Discountat, filtrează vizual lista de taxe active la doar Discountat
-  const chk = $("#filterDiscountatTaxe");
-  if (chk) chk.checked = isDiscount;
+  // când selectezi Discountat, lista de taxe active se filtrează automat doar la Discountat (fără checkbox separat)
   renderTaxe(taxeCache);
 });
 
@@ -250,7 +248,6 @@ $("#taxeForm")?.addEventListener("submit", async (e) => {
 // state + search
 let taxeCache = [];
 $("#taxSearch")?.addEventListener("input", () => renderTaxe(taxeCache));
-$("#filterDiscountatTaxe")?.addEventListener("change", () => renderTaxe(taxeCache));
 
 async function loadTaxe() {
   const r = await api("/taxe?scope=active");
@@ -260,13 +257,13 @@ async function loadTaxe() {
 }
 function renderTaxe(list) {
   const q = ($("#taxSearch")?.value || "").trim().toLowerCase();
-  const onlyDiscountat = $("#filterDiscountatTaxe")?.checked || (metodaSelect?.value === "discountat");
+  const onlyDiscountat = metodaSelect?.value === "discountat";
   const tbody = $("#taxeTable tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
   (list || [])
     .filter((row) => !q || String(row.cnp).toLowerCase().includes(q))
-    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT")
+    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT"))
     .forEach((row) => {
       let suma = "";
       if (row.metoda === "discountat" || row.tip === "DISCOUNTAT") {
@@ -277,9 +274,7 @@ function renderTaxe(list) {
         suma = "50.000$";
       }
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="font-mono left">${row.cnp}</td><td>${suma}</td><td>${
-        row.remaining || ""
-      }</td><td class="left">${row.user || "-"}</td>`;
+      tr.innerHTML = `<td class="font-mono left">${row.cnp}</td><td>${suma}</td><td>${row.remaining || ""}</td><td class="left">${row.user || "-"}</td>`;
       tbody.appendChild(tr);
     });
 }
@@ -316,7 +311,7 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
 
 let drillCache = [];
 async function loadDrill() {
-  // serverul nu mai limitează; mini-tabelul păstrează doar 5 ultime vizual
+  // serverul nu limitează; mini-tabelul păstrează doar 5 ultime vizual
   const r = await api("/drill");
   if (!r.ok) return;
   drillCache = await r.json();
@@ -865,7 +860,7 @@ async function loadFamilies() {
 }
 
 function populateFamilySelects(list = []) {
-  const fillAll = (sel) => {
+  const fill = (sel) => {
     if (!sel) return;
     const prev = sel.value;
     sel.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
@@ -880,25 +875,23 @@ function populateFamilySelects(list = []) {
       });
     if (prev) sel.value = prev;
   };
-  const fillOnlyTaxDiscount = (sel) => {
-    if (!sel) return;
-    const prev = sel.value;
-    sel.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
+  fill(document.getElementById("drillFamily")); // fără limită: toate familiile
+  // pentru Discountat, păstrăm doar familiile cu discount de taxe activ (>0)
+  const selGratis = document.querySelector('[name="gratisFamilie"]');
+  if (selGratis) {
+    const prev = selGratis.value;
+    selGratis.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
     list
-      .filter((f) => (f.discountTax || 0) > 0) // doar familii cu discount de taxe activ
-      .slice()
+      .filter((f) => (f.discountTax || 0) > 0)
       .sort((a, b) => a.name.localeCompare(b.name))
       .forEach((f) => {
         const opt = document.createElement("option");
         opt.value = f.name;
         opt.textContent = `${f.name} (${f.discountTax}%)`;
-        sel.appendChild(opt);
+        selGratis.appendChild(opt);
       });
-    if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
-  };
-
-  fillAll(document.getElementById("drillFamily")); // toate familiile pentru burghiu
-  fillOnlyTaxDiscount(document.querySelector('[name="gratisFamilie"]')); // doar cu discount taxe pentru Discountat
+    if (prev && [...selGratis.options].some((o) => o.value === prev)) selGratis.value = prev;
+  }
 }
 
 function renderFamiliesAdminTable(list = []) {
