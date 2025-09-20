@@ -263,7 +263,7 @@ function renderTaxe(list) {
   tbody.innerHTML = "";
   (list || [])
     .filter((row) => !q || String(row.cnp).toLowerCase().includes(q))
-    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT"))
+    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT")
     .forEach((row) => {
       let suma = "";
       if (row.metoda === "discountat" || row.tip === "DISCOUNTAT") {
@@ -724,7 +724,7 @@ $("#tblAll")?.addEventListener("click", async (e) => {
   loadProfile();
 });
 
-// ===== Profile (MEU) — KPI-uri separate și Total split în murdari =====
+// ===== Profile (MEU) =====
 $("#profPeriod")?.addEventListener("change", loadProfile);
 $("#profWeekPicker")?.addEventListener("change", loadProfile);
 
@@ -860,10 +860,11 @@ async function loadFamilies() {
 }
 
 function populateFamilySelects(list = []) {
-  const fill = (sel) => {
-    if (!sel) return;
-    const prev = sel.value;
-    sel.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
+  // Drill: toate familiile (fără limită)
+  const drillSel = document.getElementById("drillFamily");
+  if (drillSel) {
+    const prev = drillSel.value;
+    drillSel.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
     list
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -871,26 +872,27 @@ function populateFamilySelects(list = []) {
         const opt = document.createElement("option");
         opt.value = f.name;
         opt.textContent = f.name;
-        sel.appendChild(opt);
+        drillSel.appendChild(opt);
       });
-    if (prev) sel.value = prev;
-  };
-  fill(document.getElementById("drillFamily")); // fără limită: toate familiile
-  // pentru Discountat, păstrăm doar familiile cu discount de taxe activ (>0)
-  const selGratis = document.querySelector('[name="gratisFamilie"]');
-  if (selGratis) {
-    const prev = selGratis.value;
-    selGratis.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
+    if (prev) drillSel.value = prev;
+  }
+
+  // Discountat (taxe): doar familiile cu discountTax > 0
+  const gratisSel = document.querySelector('[name="gratisFamilie"]');
+  if (gratisSel) {
+    const prev = gratisSel.value;
+    gratisSel.innerHTML = `<option value="" disabled ${prev ? "" : "selected"}>Alege…</option>`;
     list
       .filter((f) => (f.discountTax || 0) > 0)
+      .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
       .forEach((f) => {
         const opt = document.createElement("option");
         opt.value = f.name;
         opt.textContent = `${f.name} (${f.discountTax}%)`;
-        selGratis.appendChild(opt);
+        gratisSel.appendChild(opt);
       });
-    if (prev && [...selGratis.options].some((o) => o.value === prev)) selGratis.value = prev;
+    if (prev && [...gratisSel.options].some((o) => o.value === prev)) gratisSel.value = prev;
   }
 }
 
