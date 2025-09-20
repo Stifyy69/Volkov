@@ -175,7 +175,7 @@ app.post("/invites", auth(), requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"), asy
   try {
     const { role = "OPERATOR" } = req.body || {};
     const code = crypto.randomBytes(6).toString("hex");
-    const inv = await prisma.invite.create({
+    await prisma.invite.create({
       data: { code, role, createdById: req.user.id },
     });
     res.json({ code, link: `invite:${code}` });
@@ -320,7 +320,8 @@ app.post("/taxe", auth(), async (req, res) => {
   try {
     const { cnp, metoda, gratisFamilie } = req.body || {};
     if (!cnp || !/^\d{1,6}$/.test(cnp)) return res.status(400).json({ error: "CNP invalid" });
-    if (!["curat", "murdar", "gratis"].includes(metoda))
+    // Metode permise: curat / murdar / discountat
+    if (!["curat", "murdar", "discountat"].includes(metoda))
       return res.status(400).json({ error: "Metodă invalidă" });
 
     const active = await prisma.taxEntry.findFirst({
@@ -341,10 +342,11 @@ app.post("/taxe", auth(), async (req, res) => {
       amount = 50000;
       currency = "DIRTY";
     } else {
+      // discountat (fostul "GRATIS")
       amount = 0;
       currency = "CLEAN";
-      payment = "GRATIS";
-      if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru GRATIS" });
+      payment = "DISCOUNTAT";
+      if (!gratisFamilie) return res.status(400).json({ error: "Alege familia pentru Discountat" });
       const fam = await getOrCreateFamilyByName(gratisFamilie);
       // dacă familia a fost soft-deleted, nu o lăsăm aleasă
       if (!fam || isDeletedFamilyName(fam.name)) return res.status(400).json({ error: "Familie invalidă" });
@@ -370,7 +372,7 @@ app.post("/taxe", auth(), async (req, res) => {
     res.json({
       id: row.id,
       cnp: row.cnp,
-      tip: amount === 0 ? "GRATIS" : amount === 40000 ? "Bani curați" : "Bani murdari",
+      tip: amount === 0 ? "DISCOUNTAT" : amount === 40000 ? "Bani curați" : "Bani murdari",
       remaining: fmtRemaining(row.validUntil),
       user: row.user ? (row.user.nickname || row.user.username) : null,
       gratisFamilie: row.family?.name || null,
@@ -407,12 +409,12 @@ app.get("/taxe", auth(false), async (req, res) => {
     const data = rows.map((r) => ({
       id: r.id,
       cnp: r.cnp,
-      tip: r.amount === 0 ? "GRATIS" : r.amount === 40000 ? "Bani curați" : "Bani murdari",
+      tip: r.amount === 0 ? "DISCOUNTAT" : r.amount === 40000 ? "Bani curați" : "Bani murdari",
       remaining: r.validUntil ? fmtRemaining(r.validUntil) : "",
       user: r.user ? (r.user.nickname || r.user.username) : null,
       createdAt: r.createdAt,
       gratisFamilie: r.family?.name || null,
-      metoda: r.payment === "GRATIS" ? "gratis" : r.amount === 40000 ? "curat" : "murdar",
+      metoda: r.payment === "DISCOUNTAT" ? "discountat" : r.amount === 40000 ? "curat" : "murdar",
     }));
 
     res.json(data);
@@ -628,6 +630,7 @@ app.get(
       for (const t of taxe) {
         if (t.amount === 40000) accUser(t.user, "totalClean", 40000);
         else if (t.amount === 50000) accUser(t.user, "totalDirty", 50000);
+        // amount 0 (DISCOUNTAT) nu intră la clean/dirty totals directe
       }
 
       const drill = await prisma.drillJob.findMany({
