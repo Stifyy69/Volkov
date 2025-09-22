@@ -28,15 +28,14 @@ const $$ = (s) => [...document.querySelectorAll(s)];
 const money = (n = 0) => `${(n || 0).toLocaleString("ro-RO")}$`;
 
 // Conversii — aliniat cu Stefanos (rate = 0.65, cu floor)
-// Curați -> Murdari: floor(curat / 0.65)
-// Murdari -> Curați: floor(murdar * 0.65)
 const RATE = 0.65;
 const toDirty = (clean = 0) => Math.floor((clean || 0) / RATE);
 const toClean = (dirty = 0) => Math.floor((dirty || 0) * RATE);
 
+// Doar secțiunile cu id ce începe cu "tab-" sunt controlate de setTabs (nu afectăm #auth)
 function setTabs(active) {
   $$(".tabbtn").forEach((b) => (b.dataset.active = b.dataset.tab === active));
-  $$(".tab").forEach((sec) =>
+  $$('section[id^="tab-"]').forEach((sec) =>
     sec.id === `tab-${active}` ? sec.classList.remove("hidden") : sec.classList.add("hidden")
   );
 }
@@ -91,7 +90,6 @@ async function hydrateMe() {
     const me = await r.json();
     currentRole = me.role || null;
 
-    // Afișează nickname dacă există; altfel username
     const display = me.displayName || me.nickname || me.username;
     $("#whoami").textContent = `${display} [${me.role}]`;
 
@@ -115,30 +113,32 @@ async function hydrateMe() {
       show("profile", true);
     }
 
-    $("#auth").classList.add("hidden");
-    $("#app").classList.remove("hidden");
+    // Autentificat
+    $("#auth")?.classList.add("hidden");
+    $("#app")?.classList.remove("hidden");
     setTabs("taxe");
 
     ["dashWeekPicker", "bfWeekPicker", "weekSelect", "tblWeekPicker", "profWeekPicker"].forEach(
       (id) => fillWeeksCurrent(document.getElementById(id))
     );
 
+    await loadFamilies(); // pentru select-uri + Admin UI
     loadTaxe();
     loadDrill();
     loadDashboard();
     loadAdmin();
     loadTableAll();
     loadProfile();
-    await loadFamilies(); // pentru select-uri + Admin UI
     connectSSE();
   } catch {
-    $("#auth").classList.remove("hidden");
-    $("#app").classList.add("hidden");
-    setTabs("taxe");
+    // Neautentificat: arătăm formularul de login și ascundem app-ul
+    $("#auth")?.classList.remove("hidden");
+    $("#app")?.classList.add("hidden");
+    // nu mai apelăm setTabs aici, ca să nu afectăm #auth
   }
 }
 
-$("#logoutBtn").addEventListener("click", () => {
+$("#logoutBtn")?.addEventListener("click", () => {
   localStorage.removeItem("token");
   location.reload();
 });
@@ -195,7 +195,11 @@ $$(".tabbtn").forEach((b) => {
 // ===== SSE (live) =====
 let es;
 function connectSSE() {
-  if (es) { try { es.close(); } catch {} }
+  if (es) {
+    try {
+      es.close();
+    } catch {}
+  }
   es = new EventSource("/events");
   es.addEventListener("taxe:new", () => {
     loadTaxe();
@@ -221,7 +225,7 @@ const gratisWrap = $("#gratisWrap");
 metodaSelect?.addEventListener("change", () => {
   const isDiscount = metodaSelect.value === "discountat";
   gratisWrap?.classList.toggle("hidden", !isDiscount);
-  // când selectezi Discountat, lista de taxe active se filtrează automat doar la Discountat (fără checkbox separat)
+  // când selectezi Discountat, lista vizuală arată doar Discountat (fără checkbox separat)
   renderTaxe(taxeCache);
 });
 
@@ -311,7 +315,6 @@ $("#drillForm")?.addEventListener("submit", async (e) => {
 
 let drillCache = [];
 async function loadDrill() {
-  // serverul nu limitează; mini-tabelul păstrează doar 5 ultime vizual
   const r = await api("/drill");
   if (!r.ok) return;
   drillCache = await r.json();
@@ -359,9 +362,14 @@ async function loadDashboard() {
       ? `scope=history&year=${dashYear}&week=${dashWeek}`
       : "scope=history";
 
-  let clean = 0, dirty = 0;
+  let clean = 0,
+    dirty = 0;
   const daily = Array.from({ length: 7 }, (_, i) => ({
-    day: dayNames[i], count: 0, clean: 0, dirty: 0, totalDirtyAll: 0,
+    day: dayNames[i],
+    count: 0,
+    clean: 0,
+    dirty: 0,
+    totalDirtyAll: 0,
   }));
 
   const rT = await api(`/taxe?${taxParams}`);
@@ -448,7 +456,12 @@ async function loadDashboard() {
   jobsFilt.forEach((j) => {
     const fam = j.family || "(fără)";
     const prev = famAgg.get(fam) || {
-      cadru: 0, teava: 0, mecanism: 0, fixare: 0, total: 0, totalMoney: 0,
+      cadru: 0,
+      teava: 0,
+      mecanism: 0,
+      fixare: 0,
+      total: 0,
+      totalMoney: 0,
     };
     prev.cadru += j.cadru;
     prev.teava += j.teava;
@@ -466,7 +479,9 @@ async function loadDashboard() {
       .sort((a, b) => b[1].total - a[1].total)
       .forEach(([fam, agg]) => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="left">${fam}</td><td>${agg.cadru}</td><td>${agg.teava}</td><td>${agg.mecanism}</td><td>${agg.fixare}</td><td>${agg.total}</td><td>${money(agg.totalMoney)}</td>`;
+        tr.innerHTML = `<td class="left">${fam}</td><td>${agg.cadru}</td><td>${agg.teava}</td><td>${agg.mecanism}</td><td>${agg.fixare}</td><td>${agg.total}</td><td>${money(
+          agg.totalMoney
+        )}</td>`;
         famBody.appendChild(tr);
       });
 
@@ -486,7 +501,11 @@ async function loadDashboard() {
   const bfDailyBody = $("#bfDailyTable tbody");
   if (bfDailyBody) {
     const daily2 = Array.from({ length: 7 }, (_, i) => ({
-      day: dayNames[i], count: 0, clean: 0, dirty: 0, total: 0,
+      day: dayNames[i],
+      count: 0,
+      clean: 0,
+      dirty: 0,
+      total: 0,
     }));
     jobsFilt.forEach((j) => {
       const created = j.createdAt ? new Date(j.createdAt) : new Date();
@@ -541,8 +560,14 @@ async function loadDashboard() {
 }
 
 // ===== Admin =====
-$("#admPeriod")?.addEventListener("change", () => { admPage = 1; loadAdmin(); });
-$("#weekSelect")?.addEventListener("change", () => { admPage = 1; loadAdmin(); });
+$("#admPeriod")?.addEventListener("change", () => {
+  admPage = 1;
+  loadAdmin();
+});
+$("#weekSelect")?.addEventListener("change", () => {
+  admPage = 1;
+  loadAdmin();
+});
 
 let admPage = 1;
 let admPages = 1;
@@ -552,7 +577,6 @@ async function loadAdmin() {
   let url = "/admin/stats";
   let usePaging = false;
   if (period === "all") {
-    // numai aici păstrăm paginația de 50 (serverul setează X-Pages/X-Page)
     usePaging = true;
     url = `/admin/stats?period=all&limit=50&page=${admPage}`;
   } else if ($("#weekSelect")?.value) {
@@ -607,10 +631,16 @@ async function loadAdmin() {
 }
 
 $("#admPrev")?.addEventListener("click", () => {
-  if (admPage > 1) { admPage--; loadAdmin(); }
+  if (admPage > 1) {
+    admPage--;
+    loadAdmin();
+  }
 });
 $("#admNext")?.addEventListener("click", () => {
-  if (admPage < admPages) { admPage++; loadAdmin(); }
+  if (admPage < admPages) {
+    admPage++;
+    loadAdmin();
+  }
 });
 
 // ===== Tabele All =====
@@ -750,10 +780,17 @@ async function loadProfile() {
       ? `mine=1&year=${selYear}&week=${selWeek}`
       : "mine=1";
 
-  let cleanTax = 0, dirtyTax = 0, pieces = 0, drillMoney = 0, taxesCount = 0;
+  let cleanTax = 0,
+    dirtyTax = 0,
+    pieces = 0,
+    drillMoney = 0,
+    taxesCount = 0;
 
   const daily = Array.from({ length: 7 }, (_, i) => ({
-    day: dayNames[i], count: 0, clean: 0, dirty: 0,
+    day: dayNames[i],
+    count: 0,
+    clean: 0,
+    dirty: 0,
   }));
 
   const rT = await api(`/taxe?${taxParams}`);
@@ -813,8 +850,10 @@ async function loadProfile() {
   const userAllDirty = totalDirtyConverted * 0.5;
   const famAllDirty = totalDirtyConverted * 0.5;
 
-  const userClean = cleanTax * 0.5, famClean = cleanTax * 0.5;
-  const userDirty = (dirtyTax + drillMoney) * 0.5, famDirty = (dirtyTax + drillMoney) * 0.5;
+  const userClean = cleanTax * 0.5,
+    famClean = cleanTax * 0.5;
+  const userDirty = (dirtyTax + drillMoney) * 0.5,
+    famDirty = (dirtyTax + drillMoney) * 0.5;
 
   $("#splitCleanUser").textContent = money(userClean);
   $("#splitCleanFam").textContent = money(famClean);
@@ -828,20 +867,6 @@ async function loadProfile() {
   $("#splitAllFam").textContent = money(famAllDirty);
   $("#splitAllTot").textContent = money(totalDirtyConverted);
 }
-
-// ===== Admin Invite =====
-$("#inviteBtn")?.addEventListener("click", async () => {
-  const role = $("#inviteRole").value;
-  const r = await api("/invites", { method: "POST", body: JSON.stringify({ role }) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) return alert(j.error || "Eroare");
-  $("#inviteResult").value = j.link || j.code || "";
-});
-$("#inviteCopy")?.addEventListener("click", () => {
-  const el = $("#inviteResult");
-  el.select();
-  document.execCommand?.("copy");
-});
 
 // ===== Families (Admin + select-uri dinamice) =====
 let familiesCache = [];
