@@ -1026,6 +1026,55 @@ function renderFamiliesAdminTable(list = []) {
   }
 }
 
+// ===== Invites (Admin) =====
+$("#inviteBtn")?.addEventListener("click", async () => {
+  const btn = $("#inviteBtn");
+  const role = $("#inviteRole")?.value || "OPERATOR";
+  if (btn) btn.disabled = true;
+  try {
+    const r = await api("/invites", { method: "POST", body: JSON.stringify({ role }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 403) {
+      alert("Acces doar pentru ADMIN/HEAD_OPERATOR/AUDIT.");
+      return;
+    }
+    if (!r.ok) {
+      alert(j.error || "Nu am putut genera invitația");
+      return;
+    }
+    const link = j.link || (j.code ? `invite:${j.code}` : "");
+    const out = $("#inviteResult");
+    if (out) {
+      out.value = link;
+      out.select?.();
+    } else {
+      alert(link);
+    }
+  } catch {
+    alert("Nu am putut genera invitația");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
+
+$("#inviteCopy")?.addEventListener("click", async () => {
+  const val = ($("#inviteResult")?.value || "").trim();
+  if (!val) return;
+  try {
+    await navigator.clipboard.writeText(val);
+    alert("Copiat!");
+  } catch {
+    try {
+      const inp = $("#inviteResult");
+      inp?.select();
+      document.execCommand?.("copy");
+      alert("Copiat!");
+    } catch {
+      alert("Nu s-a putut copia");
+    }
+  }
+});
+
 // ===== Init =====
 hydrateMe();
 setTabs("taxe");
