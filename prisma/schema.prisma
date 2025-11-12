@@ -142,3 +142,16 @@ model DrillJob {
   @@index([familyId, createdAt])
   @@index([createdAt])
 }
+
+// ===== BLACKLIST =====
+model Blacklist {
+  id          Int       @id @default(autoincrement())
+  cnp         String
+  isBlocked   Boolean   @default(true)
+  blockedById Int?
+  blockedBy   User?     @relation(fields: [blockedById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([cnp])
+}
