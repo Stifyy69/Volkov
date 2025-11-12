@@ -13,7 +13,6 @@
   }
 })();
 
-
 const api = (path, opts = {}) =>
   fetch(path, {
     ...opts,
@@ -64,7 +63,11 @@ function inISOWeek(d, year, week) {
   end.setUTCDate(end.getUTCDate() + 7);
   return d >= start && d < end;
 }
+
+// Abrevieri folosite în dashboard/alte tabele
 const dayNames = ["Lun", "Mar", "Mie", "Joi", "Vin", "Sâm", "Dum"];
+// Denumiri complete pentru My Profile (cerință: “luni marti ... duminica”)
+const dayNamesFull = ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"];
 
 // Populează doar W33..W53 și selectează săptămâna curentă dacă e în interval
 function fillWeeksCurrent(sel) {
@@ -136,7 +139,6 @@ async function hydrateMe() {
     // Neautentificat: arătăm formularul de login și ascundem app-ul
     $("#auth")?.classList.remove("hidden");
     $("#app")?.classList.add("hidden");
-    // nu mai apelăm setTabs aici, ca să nu afectăm #auth
   }
 }
 
@@ -210,7 +212,7 @@ function connectSSE() {
     loadTableAll();
     loadProfile();
     loadAdmin();
-    loadBlacklist(); // refresh la schimbări care pot afecta admin
+    loadBlacklist();
   });
   es.addEventListener("drill:new", () => {
     loadDrill();
@@ -218,10 +220,10 @@ function connectSSE() {
     loadTableAll();
     loadProfile();
     loadAdmin();
-    loadBlacklist(); // refresh
+    loadBlacklist();
   });
   es.addEventListener("blacklist:new", () => {
-    loadBlacklist(); // refresh UI Blacklist live
+    loadBlacklist();
     loadAdmin();
   });
   es.addEventListener("ping", () => {});
@@ -276,7 +278,7 @@ function renderTaxe(list) {
   tbody.innerHTML = "";
   (list || [])
     .filter((row) => !q || String(row.cnp).toLowerCase().includes(q))
-    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT")
+    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT"))
     .forEach((row) => {
       let suma = "";
       if (row.metoda === "discountat" || row.tip === "DISCOUNTAT") {
@@ -795,8 +797,9 @@ async function loadProfile() {
     drillMoney = 0,
     taxesCount = 0;
 
+  // Folosim denumiri complete pentru My Profile
   const daily = Array.from({ length: 7 }, (_, i) => ({
-    day: dayNames[i],
+    day: dayNamesFull[i],
     count: 0,
     clean: 0,
     dirty: 0,
@@ -807,23 +810,17 @@ async function loadProfile() {
     const taxe = await rT.json();
     taxe.forEach((t) => {
       const created = t.createdAt ? new Date(t.createdAt) : new Date();
-      const wd = (created.getDay() + 6) % 7;
+      const wd = (created.getDay() + 6) % 7; // luni index 0
       if (t.tip === "Bani curați") {
         cleanTax += 40000;
         daily[wd].clean += 40000;
-        daily[wd].count++;
-        taxesCount++;
       }
       if (t.tip === "Bani murdari") {
         dirtyTax += 50000;
         daily[wd].dirty += 50000;
-        daily[wd].count++;
-        taxesCount++;
       }
-      if (t.tip === "DISCOUNTAT") {
-        daily[wd].count++;
-        taxesCount++;
-      }
+      daily[wd].count++;
+      taxesCount++;
     });
   }
 
@@ -842,6 +839,24 @@ async function loadProfile() {
   $("#profDrillDirty").textContent = money(drillMoney);
   $("#profTaxCount").textContent = (taxesCount || 0).toLocaleString("ro-RO");
   $("#profDrillPieces").textContent = (pieces || 0).toLocaleString("ro-RO");
+
+  // Garantează existența tbody și populează 7 rânduri (Luni..Duminică) întotdeauna
+  const table = document.getElementById("profDailyTable");
+  if (table) {
+    let body = table.querySelector("tbody");
+    if (!body) {
+      body = document.createElement("tbody");
+      table.appendChild(body);
+    }
+    body.innerHTML = "";
+    daily.forEach((d) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${money(
+        d.clean
+      )}</td><td>${money(d.dirty)}</td>`;
+      body.appendChild(tr);
+    });
+  }
 
   const totalDirtyConverted = dirtyTax + drillMoney + toDirty(cleanTax);
   const userAllDirty = totalDirtyConverted * 0.5;
