@@ -13,6 +13,7 @@
   }
 })();
 
+
 const api = (path, opts = {}) =>
   fetch(path, {
     ...opts,
@@ -63,10 +64,7 @@ function inISOWeek(d, year, week) {
   end.setUTCDate(end.getUTCDate() + 7);
   return d >= start && d < end;
 }
-
-// Abrevieri folosite în dashboard/alte tabele
 const dayNames = ["Lun", "Mar", "Mie", "Joi", "Vin", "Sâm", "Dum"];
-// Denumiri complete pentru My Profile (cerință: “luni marti ... duminica”)
 const dayNamesFull = ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"];
 
 // Populează doar W33..W53 și selectează săptămâna curentă dacă e în interval
@@ -139,6 +137,7 @@ async function hydrateMe() {
     // Neautentificat: arătăm formularul de login și ascundem app-ul
     $("#auth")?.classList.remove("hidden");
     $("#app")?.classList.add("hidden");
+    // nu mai apelăm setTabs aici, ca să nu afectăm #auth
   }
 }
 
@@ -212,7 +211,7 @@ function connectSSE() {
     loadTableAll();
     loadProfile();
     loadAdmin();
-    loadBlacklist();
+    loadBlacklist(); // refresh la schimbări care pot afecta admin
   });
   es.addEventListener("drill:new", () => {
     loadDrill();
@@ -220,10 +219,10 @@ function connectSSE() {
     loadTableAll();
     loadProfile();
     loadAdmin();
-    loadBlacklist();
+    loadBlacklist(); // refresh
   });
   es.addEventListener("blacklist:new", () => {
-    loadBlacklist();
+    loadBlacklist(); // refresh UI Blacklist live
     loadAdmin();
   });
   es.addEventListener("ping", () => {});
@@ -278,7 +277,7 @@ function renderTaxe(list) {
   tbody.innerHTML = "";
   (list || [])
     .filter((row) => !q || String(row.cnp).toLowerCase().includes(q))
-    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT"))
+    .filter((row) => !onlyDiscountat || row.metoda === "discountat" || row.tip === "DISCOUNTAT")
     .forEach((row) => {
       let suma = "";
       if (row.metoda === "discountat" || row.tip === "DISCOUNTAT") {
@@ -536,38 +535,6 @@ async function loadDashboard() {
       bfDailyBody.appendChild(tr);
     });
   }
-
-  const topMatBody = $("#topDrillUsers tbody");
-  const topEntBody = $("#topDrillEntries tbody");
-  if (topMatBody && topEntBody) {
-    const materials = new Map();
-    const entries = new Map();
-
-    jobsFilt.forEach((j) => {
-      const u = j.user || "-";
-      const pieces = j.cadru + j.teava + j.mecanism + j.fixare;
-      materials.set(u, (materials.get(u) || 0) + pieces);
-      entries.set(u, (entries.get(u) || 0) + 1);
-    });
-
-    topMatBody.innerHTML = "";
-    [...materials.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([u, total]) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="left">${u}</td><td>${total}</td>`;
-        topMatBody.appendChild(tr);
-      });
-
-    topEntBody.innerHTML = "";
-    [...entries.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([u, total]) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="left">${u}</td><td>${total}</td>`;
-        topEntBody.appendChild(tr);
-      });
-  }
 }
 
 // ===== Admin =====
@@ -797,7 +764,6 @@ async function loadProfile() {
     drillMoney = 0,
     taxesCount = 0;
 
-  // Folosim denumiri complete pentru My Profile
   const daily = Array.from({ length: 7 }, (_, i) => ({
     day: dayNamesFull[i],
     count: 0,
@@ -810,17 +776,23 @@ async function loadProfile() {
     const taxe = await rT.json();
     taxe.forEach((t) => {
       const created = t.createdAt ? new Date(t.createdAt) : new Date();
-      const wd = (created.getDay() + 6) % 7; // luni index 0
+      const wd = (created.getDay() + 6) % 7;
       if (t.tip === "Bani curați") {
         cleanTax += 40000;
         daily[wd].clean += 40000;
+        daily[wd].count++;
+        taxesCount++;
       }
       if (t.tip === "Bani murdari") {
         dirtyTax += 50000;
         daily[wd].dirty += 50000;
+        daily[wd].count++;
+        taxesCount++;
       }
-      daily[wd].count++;
-      taxesCount++;
+      if (t.tip === "DISCOUNTAT") {
+        daily[wd].count++;
+        taxesCount++;
+      }
     });
   }
 
@@ -840,7 +812,6 @@ async function loadProfile() {
   $("#profTaxCount").textContent = (taxesCount || 0).toLocaleString("ro-RO");
   $("#profDrillPieces").textContent = (pieces || 0).toLocaleString("ro-RO");
 
-  // Garantează existența tbody și populează 7 rânduri (Luni..Duminică) întotdeauna
   const table = document.getElementById("profDailyTable");
   if (table) {
     let body = table.querySelector("tbody");
