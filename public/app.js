@@ -124,6 +124,7 @@ async function hydrateMe() {
     );
 
     await loadFamilies(); // pentru select-uri + Admin UI
+    await loadBlacklist(); // Admin: BLACKLIST
     loadTaxe();
     loadDrill();
     loadDashboard();
@@ -187,6 +188,7 @@ $$(".tabbtn").forEach((b) => {
     if (b.dataset.tab === "admin") {
       loadAdmin();
       loadFamilies();
+      loadBlacklist(); // la deschiderea Admin, încărcăm și Blacklist
     }
     if (b.dataset.tab === "tables") loadTableAll();
     if (b.dataset.tab === "profile") loadProfile();
@@ -208,12 +210,18 @@ function connectSSE() {
     loadTableAll();
     loadProfile();
     loadAdmin();
+    loadBlacklist(); // refresh la schimbări care pot afecta admin
   });
   es.addEventListener("drill:new", () => {
     loadDrill();
     loadDashboard();
     loadTableAll();
     loadProfile();
+    loadAdmin();
+    loadBlacklist(); // refresh
+  });
+  es.addEventListener("blacklist:new", () => {
+    loadBlacklist(); // refresh UI Blacklist live
     loadAdmin();
   });
   es.addEventListener("ping", () => {});
@@ -835,18 +843,6 @@ async function loadProfile() {
   $("#profTaxCount").textContent = (taxesCount || 0).toLocaleString("ro-RO");
   $("#profDrillPieces").textContent = (pieces || 0).toLocaleString("ro-RO");
 
-  const body = $("#profDailyTable tbody");
-  if (body) {
-    body.innerHTML = "";
-    daily.forEach((d) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="left">${d.day}</td><td>${d.count}</td><td>${money(
-        d.clean
-      )}</td><td>${money(d.dirty)}</td>`;
-      body.appendChild(tr);
-    });
-  }
-
   const totalDirtyConverted = dirtyTax + drillMoney + toDirty(cleanTax);
   const userAllDirty = totalDirtyConverted * 0.5;
   const famAllDirty = totalDirtyConverted * 0.5;
@@ -1023,6 +1019,100 @@ function renderFamiliesAdminTable(list = []) {
       }
     });
     tbody._bound = true;
+  }
+}
+
+// ===== BLACKLIST (Admin) =====
+let blacklistCache = [];
+
+async function loadBlacklist() {
+  try {
+    const r = await api("/blacklist");
+    const tbody = document.querySelector("#blacklistTable tbody");
+    if (r.status === 403) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-slate-400">Acces doar pentru ADMIN/HEAD_OPERATOR/AUDIT.</td></tr>`;
+      return;
+    }
+    if (!r.ok) throw 0;
+    blacklistCache = await r.json();
+    renderBlacklistAdminTable(blacklistCache);
+  } catch {
+    renderBlacklistAdminTable([]);
+  }
+}
+
+function renderBlacklistAdminTable(list = []) {
+  const tbody = document.querySelector("#blacklistTable tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  // Row pentru adăugare
+  const addTr = document.createElement("tr");
+  addTr.innerHTML = `
+    <td class="left" colspan="2">
+      <input type="text" id="blAddCnp" class="input" placeholder="CNP (max 6 cifre)" />
+    </td>
+    <td colspan="2">
+      <button class="sm" id="blAddBtn">Adaugă pe blacklist</button>
+    </td>
+  `;
+  tbody.appendChild(addTr);
+
+  list
+    .slice()
+    .sort((a, b) => a.cnp.localeCompare(b.cnp))
+    .forEach((row) => {
+      const tr = document.createElement("tr");
+      const actLabel = row.isBlocked ? "Deblochează" : "Blochează";
+      tr.innerHTML = `
+        <td class="font-mono left">${row.cnp}</td>
+        <td class="left">${row.blockedBy || "-"}</td>
+        <td>
+          <button class="sm" data-bl-toggle="${row.id}">${actLabel}</button>
+        </td>
+        <td>
+          <button class="sm danger" data-bl-del="${row.id}">Șterge</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  if (!tbody._blBound) {
+    tbody.addEventListener("click", async (e) => {
+      if (e.target.id === "blAddBtn") {
+        const inp = document.getElementById("blAddCnp");
+        const cnp = (inp?.value || "").trim();
+        if (!/^\d{1,6}$/.test(cnp)) return alert("CNP invalid (max 6 cifre).");
+        const r = await api("/blacklist", { method: "POST", body: JSON.stringify({ cnp }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return alert(j.error || "Eroare la adăugare");
+        inp.value = "";
+        loadBlacklist();
+        return;
+      }
+
+      const tgl = e.target.closest("[data-bl-toggle]");
+      if (tgl) {
+        const id = tgl.getAttribute("data-bl-toggle");
+        const r = await api(`/blacklist/${id}/toggle`, { method: "PUT" });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return alert(j.error || "Eroare la comutare");
+        loadBlacklist();
+        return;
+      }
+
+      const del = e.target.closest("[data-bl-del]");
+      if (del) {
+        const id = del.getAttribute("data-bl-del");
+        if (!confirm("Sigur vrei să ștergi această intrare din blacklist?")) return;
+        const r = await api(`/blacklist/${id}`, { method: "DELETE" });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) return alert(j.error || "Nu s-a putut șterge");
+        loadBlacklist();
+        return;
+      }
+    });
+    tbody._blBound = true;
   }
 }
 
