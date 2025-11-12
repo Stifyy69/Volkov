@@ -48,8 +48,10 @@ model User {
 
   taxEntries     TaxEntry[]
   drillJobs      DrillJob[]
-  invitesCreated Invite[]  @relation("InvitesCreated")
-  invitesUsed    Invite[]  @relation("InvitesUsed")
+  invitesCreated Invite[]   @relation("InvitesCreated")
+  invitesUsed    Invite[]   @relation("InvitesUsed")
+  // Back-relation for Blacklist (required to satisfy Prisma relation validation)
+  blacklists     Blacklist[] @relation("UserBlockedBlacklists")
 
   @@index([username])
   @@index([role])
@@ -92,7 +94,7 @@ model TaxEntry {
 
   // Valori
   amount     Int         // 40000 (curat), 50000 (murdar), 0 (gratis)
-  payment    String?     // ex: "GRATIS - Stefanos" sau "cash"
+  payment    String?     // ex: "DISCOUNTAT"
   cnp        String      @db.VarChar(6)
 
   // Timp
@@ -149,7 +151,7 @@ model Blacklist {
   cnp         String
   isBlocked   Boolean   @default(true)
   blockedById Int?
-  blockedBy   User?     @relation(fields: [blockedById], references: [id])
+  blockedBy   User?     @relation("UserBlockedBlacklists", fields: [blockedById], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
