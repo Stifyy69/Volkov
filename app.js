@@ -315,6 +315,113 @@ app.delete(
   }
 );
 
+// ---------- BLACKLIST API ----------
+app.get(
+  "/blacklist",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"),
+  async (req, res) => {
+    try {
+      const rows = await prisma.blacklist.findMany({
+        orderBy: { createdAt: "desc" },
+        include: { blockedBy: true },
+      });
+      res.json(
+        rows.map((r) => ({
+          id: r.id,
+          cnp: r.cnp,
+          isBlocked: r.isBlocked,
+          blockedBy: r.blockedBy ? (r.blockedBy.nickname || r.blockedBy.username) : "-",
+          createdAt: r.createdAt,
+        }))
+      );
+    } catch {
+      res.status(500).json({ error: "Eroare la listare blacklist" });
+    }
+  }
+);
+
+app.post(
+  "/blacklist",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"),
+  async (req, res) => {
+    try {
+      const { cnp } = req.body || {};
+      if (!cnp || !/^\d{1,6}$/.test(cnp)) return res.status(400).json({ error: "CNP invalid" });
+
+      const row = await prisma.blacklist.upsert({
+        where: { cnp },
+        update: { isBlocked: true, blockedById: req.user.id },
+        create: { cnp, isBlocked: true, blockedById: req.user.id },
+        include: { blockedBy: true },
+      });
+
+      sseBroadcast("blacklist:new", { id: row.id });
+      res.json({
+        id: row.id,
+        cnp: row.cnp,
+        isBlocked: row.isBlocked,
+        blockedBy: row.blockedBy ? (row.blockedBy.nickname || row.blockedBy.username) : "-",
+        createdAt: row.createdAt,
+      });
+    } catch {
+      res.status(500).json({ error: "Nu s-a putut adăuga în blacklist" });
+    }
+  }
+);
+
+app.put(
+  "/blacklist/:id/toggle",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR", "AUDIT"),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (!id) return res.status(400).json({ error: "ID invalid" });
+
+      const existing = await prisma.blacklist.findUnique({ where: { id }, include: { blockedBy: true } });
+      if (!existing) return res.status(404).json({ error: "Intrare inexistentă" });
+
+      const toggled = await prisma.blacklist.update({
+        where: { id },
+        data: {
+          isBlocked: !existing.isBlocked,
+          blockedById: !existing.isBlocked ? req.user.id : existing.blockedById,
+        },
+        include: { blockedBy: true },
+      });
+
+      sseBroadcast("blacklist:new", { id: toggled.id });
+      res.json({
+        id: toggled.id,
+        cnp: toggled.cnp,
+        isBlocked: toggled.isBlocked,
+        blockedBy: toggled.blockedBy ? (toggled.blockedBy.nickname || toggled.blockedBy.username) : "-",
+        createdAt: toggled.createdAt,
+      });
+    } catch {
+      res.status(500).json({ error: "Nu s-a putut comuta starea" });
+    }
+  }
+);
+
+app.delete(
+  "/blacklist/:id",
+  auth(),
+  requireRole("ADMIN", "HEAD_OPERATOR"),
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      await prisma.blacklist.delete({ where: { id } });
+      sseBroadcast("blacklist:new", { id });
+      res.json({ ok: true });
+    } catch {
+      res.status(400).json({ error: "Nu s-a putut șterge intrarea din blacklist" });
+    }
+  }
+);
+
 // ---------- TAXE ----------
 app.post("/taxe", auth(), async (req, res) => {
   try {
@@ -323,6 +430,10 @@ app.post("/taxe", auth(), async (req, res) => {
     // Metode permise: curat / murdar / discountat
     if (!["curat", "murdar", "discountat"].includes(metoda))
       return res.status(400).json({ error: "Metodă invalidă" });
+
+    // Blacklist check — NU taxăm CNP-urile blocate
+    const bl = await prisma.blacklist.findFirst({ where: { cnp, isBlocked: true } });
+    if (bl) return res.status(400).json({ error: "Acest CNP este pe blacklist" });
 
     const active = await prisma.taxEntry.findFirst({
       where: { type: "TAXA", cnp, validUntil: { gt: new Date() } },
